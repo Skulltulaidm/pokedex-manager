@@ -106,6 +106,10 @@ export { meResponseSchema } from "./meResponseSchema"
 export { me200Schema, meQueryResponseSchema } from "./meSchema"
 export { messageRoleSchema } from "./messageRoleSchema"
 export { messageViewSchema } from "./messageViewSchema"
+export {
+  ownedCardIds200Schema,
+  ownedCardIdsQueryResponseSchema,
+} from "./ownedCardIdsSchema"
 export { ownedSlotSchema } from "./ownedSlotSchema"
 export { pageCollectionItemViewSchema } from "./pageCollectionItemViewSchema"
 export { publicCollectionSchema } from "./publicCollectionSchema"

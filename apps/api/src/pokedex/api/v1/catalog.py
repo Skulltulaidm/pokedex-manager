@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from pokedex.api.deps import CurrentUser, DbSession
 from pokedex.schemas.catalog import CardView, SpeciesView
-from pokedex.services import catalog
+from pokedex.services import catalog, collection
 
 router = APIRouter(prefix="/catalog", tags=["catalog"])
 
@@ -13,10 +13,19 @@ async def search_cards(
     db: DbSession,
     q: str | None = None,
     set_id: str | None = None,
+    species_id: int | None = None,
     limit: int = Query(default=30, ge=1, le=100),
 ) -> list[CardView]:
-    found = await catalog.search_cards(db, query=q, set_id=set_id, limit=limit)
+    found = await catalog.search_cards(
+        db, query=q, set_id=set_id, species_id=species_id, limit=limit
+    )
     return [CardView.model_validate(card) for card in found]
+
+
+@router.get("/owned-ids", response_model=list[str])
+async def owned_card_ids(user: CurrentUser, db: DbSession) -> list[str]:
+    """Which catalog cards the user holds, so a card list can mark them."""
+    return await collection.owned_card_ids(db, user.id)
 
 
 @router.get("/cards/{card_id}", response_model=CardView)

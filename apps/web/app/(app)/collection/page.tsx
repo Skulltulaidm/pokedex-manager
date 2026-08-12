@@ -9,7 +9,7 @@ import { BinderMark } from "@/components/binder-mark";
 import { CardPocket } from "@/components/card-pocket";
 import { ScreenHeader } from "@/components/screen-header";
 import { ShareMenu } from "@/components/share-menu";
-import { typeLabel } from "@/components/type-dot";
+import { TYPE_ICON, typeColor, typeLabel } from "@/components/type-dot";
 import { apiClient } from "@/lib/api-client";
 import { useCollectionStats } from "@/lib/api/hooks/useCollectionStats";
 import { useListCollection } from "@/lib/api/hooks/useListCollection";
@@ -177,13 +177,13 @@ function CollectionGrid() {
               Todos
             </Chip>
             {stats.types.map((entry) => (
-              <Chip
+              <TypeFilterChip
                 key={entry.type}
+                type={entry.type}
+                count={entry.count}
                 active={type === entry.type}
                 onClick={() => setParam({ type: entry.type, p: undefined })}
-              >
-                {typeLabel(entry.type)}
-              </Chip>
+              />
             ))}
           </div>
         </div>
@@ -384,6 +384,42 @@ function Picker({
         ))}
       </div>
     </fieldset>
+  );
+}
+
+/**
+ * A filter chip wearing its own type colour and glyph. A row of neutral pills
+ * makes the reader parse eighteen words; this row is read as a legend.
+ */
+function TypeFilterChip({
+  type,
+  count,
+  active,
+  onClick,
+}: {
+  type: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  const color = typeColor(type);
+  const Icon = TYPE_ICON[type];
+
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={active}
+      className="flex shrink-0 items-center gap-1.5 rounded-full py-1.5 pr-3.5 pl-2.5 text-[13px] font-medium transition-colors"
+      style={{
+        color: active ? "var(--background)" : color,
+        background: active ? color : `color-mix(in oklch, ${color} 13%, transparent)`,
+        boxShadow: `inset 0 0 0 1px color-mix(in oklch, ${color} ${active ? 100 : 26}%, transparent)`,
+      }}
+    >
+      {Icon && <Icon className="size-3.5" />}
+      {typeLabel(type)}
+      <span className="font-mono text-[11px] tabular-nums opacity-60">{count}</span>
+    </button>
   );
 }
 

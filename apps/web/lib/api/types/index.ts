@@ -128,6 +128,11 @@ export type { Me200, MeQuery, MeQueryResponse } from "./Me"
 export type { MeResponse } from "./MeResponse"
 export type { MessageRole, MessageRoleEnumKey } from "./MessageRole"
 export type { MessageView } from "./MessageView"
+export type {
+  OwnedCardIds200,
+  OwnedCardIdsQuery,
+  OwnedCardIdsQueryResponse,
+} from "./OwnedCardIds"
 export type { OwnedSlot } from "./OwnedSlot"
 export type { PageCollectionItemView } from "./PageCollectionItemView"
 export type { PublicCollection } from "./PublicCollection"

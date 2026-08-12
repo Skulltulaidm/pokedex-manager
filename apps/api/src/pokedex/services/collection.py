@@ -156,6 +156,13 @@ async def total_quantity(db: AsyncSession, user_id: str) -> int:
     return result.scalar_one()
 
 
+async def owned_card_ids(db: AsyncSession, user_id: str) -> list[str]:
+    result = await db.execute(
+        select(CollectionItem.card_id).where(CollectionItem.user_id == user_id).distinct()
+    )
+    return list(result.scalars())
+
+
 async def get_item(
     db: AsyncSession, user_id: str, item_id: UUID
 ) -> CollectionItem | None:

@@ -10,6 +10,7 @@ import { z } from "zod/v4"
 export const searchCardsQueryParamsSchema = z.object({
   q: z.optional(z.union([z.string(), z.null()])),
   set_id: z.optional(z.union([z.string(), z.null()])),
+  species_id: z.optional(z.union([z.coerce.number().int(), z.null()])),
   limit: z.coerce.number().int().min(1).max(100).default(30),
 })
 

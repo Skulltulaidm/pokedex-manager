@@ -45,7 +45,6 @@ export function StatRadar({
   color: string;
 }) {
   const values = STAT_ORDER.map((key) => stats[key] ?? 0);
-  const total = values.reduce((sum, value) => sum + value, 0);
 
   return (
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
@@ -92,10 +91,6 @@ export function StatRadar({
             </li>
           );
         })}
-        <li className="border-edge col-span-2 mt-1 flex items-center gap-2 border-t pt-2 text-sm sm:col-span-1">
-          <span className="text-muted-foreground flex-1">Total</span>
-          <span className="font-mono font-semibold tabular-nums">{total}</span>
-        </li>
       </ul>
     </div>
   );

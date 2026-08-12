@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { InfoTile } from "@/components/info-tile";
+import { SpeciesStrip } from "@/components/species-strip";
 import { StatRadar } from "@/components/stat-radar";
 import { TypeChip, typeColor } from "@/components/type-dot";
 import { formatUsd } from "@/lib/format";
@@ -191,6 +192,14 @@ export default function ItemDetailPage() {
         </Section>
       )}
 
+      {card.species && (
+        <SpeciesStrip
+          speciesId={card.species.id}
+          currentCardId={card.id}
+          name={card.name}
+        />
+      )}
+
       <Section title="En tu colección">
         {editing ? (
           <EditForm
@@ -265,7 +274,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <h2 className="font-display mb-2 text-sm font-bold tracking-wide uppercase">
         {title}
       </h2>
-      <div className="divide-seam divide-y">{children}</div>
+      {children}
     </section>
   );
 }

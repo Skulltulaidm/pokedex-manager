@@ -9,6 +9,7 @@ import type { HTTPValidationError } from "./HTTPValidationError"
 export type SearchCardsQueryParams = {
   q?: string | null
   set_id?: string | null
+  species_id?: number | null
   /**
    * @minLength 1
    * @maxLength 100

@@ -100,6 +100,8 @@ async def search_cards(
     *,
     query: str | None = None,
     set_id: str | None = None,
+    species_id: int | None = None,
+    owner_id: str | None = None,
     limit: int = 30,
 ) -> Sequence[Card]:
     statement = (
@@ -111,6 +113,8 @@ async def search_cards(
 
     if query:
         statement = statement.where(Card.name_normalized.ilike(f"%{query.lower()}%"))
+    if species_id is not None:
+        statement = statement.where(Card.species_id == species_id)
     if set_id:
         statement = statement.where(Card.set_id == set_id)
 
