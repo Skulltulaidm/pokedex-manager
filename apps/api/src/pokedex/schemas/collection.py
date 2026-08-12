@@ -1,6 +1,10 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 from pokedex.db.models import CardCondition
+
+SortKey = Literal["recent", "name", "number", "price"]
 
 
 class CollectionFilters(BaseModel):
@@ -9,6 +13,7 @@ class CollectionFilters(BaseModel):
     set_id: str | None = None
     condition: CardCondition | None = None
     search: str | None = None
+    sort: SortKey = "recent"
     limit: int = Field(default=50, ge=1, le=200)
     offset: int = Field(default=0, ge=0)
 

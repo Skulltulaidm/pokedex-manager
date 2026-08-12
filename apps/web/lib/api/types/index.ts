@@ -104,6 +104,7 @@ export type {
   ListCollection422,
   ListCollectionQuery,
   ListCollectionQueryParams,
+  ListCollectionQueryParamsSortEnumKey,
   ListCollectionQueryResponse,
 } from "./ListCollection"
 export type {
@@ -200,6 +201,7 @@ export { cardConditionEnum } from "./CardCondition"
 export { cardReadingConfidenceEnum } from "./CardReading"
 export { cardReadingRaritySymbolEnum } from "./CardReading"
 export { exportCollectionQueryParamsFormatEnum } from "./ExportCollection"
+export { listCollectionQueryParamsSortEnum } from "./ListCollection"
 export { messageRoleEnum } from "./MessageRole"
 export { scanResultStatusEnum } from "./ScanResult"
 export { wishlistSourceEnum } from "./WishlistSource"

@@ -140,7 +140,7 @@ export default function ItemDetailPage() {
         </Row>
         {card.rarity && <Row label="Rareza">{card.rarity}</Row>}
         {card.price_eur !== null && card.price_eur !== undefined && (
-          <Row label="Precio de mercado">
+          <Row label="Precio orientativo">
             <span className="font-mono tabular-nums">
               {Number(card.price_eur).toLocaleString("es", {
                 style: "currency",

@@ -182,8 +182,12 @@ function Value({ value }: { value: CollectionStats["value"] }) {
       </p>
       <p className="text-muted-foreground mt-1.5 text-sm">
         {value.unpriced_cards > 0
-          ? `De ${value.priced_cards} ${value.priced_cards === 1 ? "carta" : "cartas"} con precio de mercado. ${value.unpriced_cards} sin precio.`
-          : `Todas tus cartas tienen precio de mercado.`}
+          ? `De ${value.priced_cards} ${value.priced_cards === 1 ? "carta" : "cartas"} con precio. ${value.unpriced_cards} sin precio.`
+          : "Todas tus cartas tienen precio."}
+      </p>
+      <p className="text-muted-foreground/70 mt-3 text-xs leading-relaxed">
+        Orientativo. Es la tendencia de Cardmarket para cada carta, no una
+        tasación: el estado real y la edición cambian el precio.
       </p>
     </div>
   );

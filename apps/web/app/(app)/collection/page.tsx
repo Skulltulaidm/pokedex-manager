@@ -34,6 +34,12 @@ import { cn } from "@workspace/ui/lib/utils";
 
 const PAGE_SIZE = 24;
 
+const SORTS = [
+  { value: "name", label: "Nombre" },
+  { value: "number", label: "Número" },
+  { value: "price", label: "Precio" },
+];
+
 function CollectionGrid() {
   const params = useSearchParams();
   const router = useRouter();
@@ -43,10 +49,13 @@ function CollectionGrid() {
   const generation = params.get("gen") ?? undefined;
   const condition = params.get("estado") ?? undefined;
   const query = params.get("q") ?? "";
+  const sort = params.get("orden") ?? "recent";
   const page = Number(params.get("p") ?? 1);
 
   const [draft, setDraft] = useState(query);
-  const activeFilters = [setId, generation, condition].filter(Boolean).length;
+  const activeFilters = [setId, generation, condition, params.get("orden")].filter(
+    Boolean,
+  ).length;
 
   useEffect(() => setDraft(query), [query]);
 
@@ -65,6 +74,7 @@ function CollectionGrid() {
       generation: generation ? Number(generation) : undefined,
       condition: condition as never,
       search: query || undefined,
+      sort: sort as never,
       limit: PAGE_SIZE,
       offset: (page - 1) * PAGE_SIZE,
     },
@@ -122,6 +132,7 @@ function CollectionGrid() {
           setId={setId}
           generation={generation}
           condition={condition}
+          sort={sort}
           count={activeFilters}
           sets={stats?.sets ?? []}
           generations={stats?.generations ?? []}
@@ -217,6 +228,7 @@ function FilterSheet({
   setId,
   generation,
   condition,
+  sort,
   count,
   sets,
   generations,
@@ -225,6 +237,7 @@ function FilterSheet({
   setId?: string;
   generation?: string;
   condition?: string;
+  sort: string;
   count: number;
   sets: { set_id: string; set_name: string }[];
   generations: { generation: number }[];
@@ -267,6 +280,12 @@ function FilterSheet({
             onChange={(value) => onApply({ gen: value })}
           />
           <Picker
+            label="Ordenar por"
+            value={sort === "recent" ? undefined : sort}
+            options={SORTS}
+            onChange={(value) => onApply({ orden: value })}
+          />
+          <Picker
             label="Estado"
             value={condition}
             options={CONDITION_ORDER.map((value) => ({
@@ -281,7 +300,9 @@ function FilterSheet({
           <Button
             variant="outline"
             className="flex-1"
-            onClick={() => onApply({ set: undefined, gen: undefined, estado: undefined })}
+            onClick={() =>
+              onApply({ set: undefined, gen: undefined, estado: undefined, orden: undefined })
+            }
           >
             Limpiar
           </Button>

@@ -150,6 +150,7 @@ export type {
   ListCollection422,
   ListCollectionQuery,
   ListCollectionQueryParams,
+  ListCollectionQueryParamsSortEnumKey,
   ListCollectionQueryResponse,
 } from "./types/ListCollection"
 export type {
@@ -401,6 +402,7 @@ export { cardConditionEnum } from "./types/CardCondition"
 export { cardReadingConfidenceEnum } from "./types/CardReading"
 export { cardReadingRaritySymbolEnum } from "./types/CardReading"
 export { exportCollectionQueryParamsFormatEnum } from "./types/ExportCollection"
+export { listCollectionQueryParamsSortEnum } from "./types/ListCollection"
 export { messageRoleEnum } from "./types/MessageRole"
 export { scanResultStatusEnum } from "./types/ScanResult"
 export { wishlistSourceEnum } from "./types/WishlistSource"

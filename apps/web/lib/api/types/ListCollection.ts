@@ -7,12 +7,27 @@ import type { CardCondition } from "./CardCondition"
 import type { HTTPValidationError } from "./HTTPValidationError"
 import type { PageCollectionItemView } from "./PageCollectionItemView"
 
+export const listCollectionQueryParamsSortEnum = {
+  recent: "recent",
+  name: "name",
+  number: "number",
+  price: "price",
+} as const
+
+export type ListCollectionQueryParamsSortEnumKey =
+  (typeof listCollectionQueryParamsSortEnum)[keyof typeof listCollectionQueryParamsSortEnum]
+
 export type ListCollectionQueryParams = {
   type?: string | null
   generation?: number | null
   set_id?: string | null
   condition?: CardCondition | null
   search?: string | null
+  /**
+   * @default "recent"
+   * @type string | undefined
+   */
+  sort?: ListCollectionQueryParamsSortEnumKey
   /**
    * @minLength 1
    * @maxLength 200

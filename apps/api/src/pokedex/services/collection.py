@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import Select, func, select
@@ -10,6 +11,7 @@ from pokedex.db.models import Card, CollectionItem, Species
 from pokedex.schemas.collection import (
     AddCardRequest,
     CollectionFilters,
+    SortKey,
     UpdateItemRequest,
 )
 
@@ -19,21 +21,28 @@ class CardNotFoundError(LookupError):
 
 
 def _owned(user_id: str) -> Select[tuple[CollectionItem]]:
-    """Base query. Every read starts scoped to its owner."""
-    return select(CollectionItem).where(CollectionItem.user_id == user_id)
+    """Base query. Every read starts scoped to its owner.
+
+    The card is joined unconditionally: card_id is a non-nullable foreign key, so
+    the inner join never changes the row count, and joining it once here is what
+    keeps filters and ordering from each adding one of their own.
+    """
+    return (
+        select(CollectionItem)
+        .join(Card, Card.id == CollectionItem.card_id)
+        .where(CollectionItem.user_id == user_id)
+    )
 
 
 def _apply_filters(
     statement: Select[tuple[CollectionItem]], filters: CollectionFilters
 ) -> Select[tuple[CollectionItem]]:
     if filters.type or filters.generation is not None:
-        statement = statement.join(Card).join(Species)
+        statement = statement.join(Species, Species.id == Card.species_id)
         if filters.type:
             statement = statement.where(Species.types.contains([filters.type.lower()]))
         if filters.generation is not None:
             statement = statement.where(Species.generation == filters.generation)
-    elif filters.set_id or filters.search:
-        statement = statement.join(Card)
 
     if filters.set_id:
         statement = statement.where(Card.set_id == filters.set_id)
@@ -72,18 +81,38 @@ async def add_card(
     return item
 
 
+def _ordering(sort: SortKey) -> tuple[Any, ...]:
+    """Every ordering ends on the id.
+
+    `now()` is the transaction timestamp, so rows written together tie, and a tie
+    with no tiebreaker means a row can appear on two pages or on neither.
+    """
+    if sort == "name":
+        return (Card.name.asc(), CollectionItem.id.desc())
+    if sort == "number":
+        # Collector numbers are text, so "10" sorts before "9" unless length
+        # comes first.
+        return (
+            Card.set_id.asc(),
+            func.length(Card.number_prefix).asc(),
+            Card.number_prefix.asc(),
+            CollectionItem.id.desc(),
+        )
+    if sort == "price":
+        return (Card.price_eur.desc().nullslast(), CollectionItem.id.desc())
+    return (CollectionItem.created_at.desc(), CollectionItem.id.desc())
+
+
 async def list_items(
     db: AsyncSession, user_id: str, filters: CollectionFilters
 ) -> Sequence[CollectionItem]:
-    statement = _apply_filters(_owned(user_id), filters)
     statement = (
-        statement.options(
+        _apply_filters(_owned(user_id), filters)
+        .options(
             joinedload(CollectionItem.card).joinedload(Card.species),
             joinedload(CollectionItem.card).joinedload(Card.card_set),
         )
-        # `now()` is the transaction timestamp, so rows written in one
-        # transaction tie; the id keeps the ordering deterministic.
-        .order_by(CollectionItem.created_at.desc(), CollectionItem.id.desc())
+        .order_by(*_ordering(filters.sort))
         .limit(filters.limit)
         .offset(filters.offset)
     )

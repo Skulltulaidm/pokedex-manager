@@ -16,6 +16,7 @@ export const listCollectionQueryParamsSchema = z.object({
     return z.union([cardConditionSchema, z.null()]).optional()
   },
   search: z.optional(z.union([z.string(), z.null()])),
+  sort: z.enum(["recent", "name", "number", "price"]).default("recent"),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 })

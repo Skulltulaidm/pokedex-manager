@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
@@ -230,3 +231,63 @@ async def test_count_items_respects_filters(
         await collection.count_items(seeded, user_id, CollectionFilters(type="fire")) == 1
     )
     assert await collection.total_quantity(seeded, user_id) == 4
+
+
+
+@pytest.fixture
+async def sortable(db: AsyncSession, user_id: str) -> AsyncSession:
+    """Three cards whose orderings all differ, so each sort proves something."""
+    await catalog.upsert_species(db, [CHARIZARD, SQUIRTLE])
+    await catalog.upsert_sets(db, [BASE_SET])
+    await catalog.upsert_cards(
+        db,
+        [
+            CHARIZARD_CARD.model_copy(
+                update={"id": "base1-9", "number": "9", "number_prefix": "9",
+                        "name": "Zapdos", "name_normalized": "zapdos",
+                        "price_eur": Decimal("12.00")}
+            ),
+            CHARIZARD_CARD.model_copy(
+                update={"id": "base1-10", "number": "10", "number_prefix": "10",
+                        "name": "Abra", "name_normalized": "abra",
+                        "price_eur": Decimal("40.00")}
+            ),
+            CHARIZARD_CARD.model_copy(
+                update={"id": "base1-11", "number": "11", "number_prefix": "11",
+                        "name": "Machop", "name_normalized": "machop",
+                        "price_eur": None}
+            ),
+        ],
+    )
+    for card_id in ("base1-9", "base1-10", "base1-11"):
+        await collection.add_card(db, user_id, AddCardRequest(card_id=card_id))
+    return db
+
+
+async def test_sorting_by_name_is_alphabetical(
+    sortable: AsyncSession, user_id: str
+) -> None:
+    items = await collection.list_items(sortable, user_id, CollectionFilters(sort="name"))
+
+    assert [item.card.name for item in items] == ["Abra", "Machop", "Zapdos"]
+
+
+async def test_sorting_by_number_is_numeric_not_lexical(
+    sortable: AsyncSession, user_id: str
+) -> None:
+    """Collector numbers are text, so "10" would sort before "9" without help."""
+    items = await collection.list_items(sortable, user_id, CollectionFilters(sort="number"))
+
+    assert [item.card.number_prefix for item in items] == ["9", "10", "11"]
+
+
+async def test_sorting_by_price_puts_unpriced_cards_last(
+    sortable: AsyncSession, user_id: str
+) -> None:
+    items = await collection.list_items(sortable, user_id, CollectionFilters(sort="price"))
+
+    assert [item.card.price_eur for item in items] == [
+        Decimal("40.00"),
+        Decimal("12.00"),
+        None,
+    ]
