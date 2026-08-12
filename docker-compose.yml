@@ -8,7 +8,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pokedex}
       POSTGRES_DB: ${POSTGRES_DB:-pokedex}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      # Loopback only: the default credentials are weak and publishing on 0.0.0.0
+      # would expose the database to anything on the same network.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       # postgres:18 declares its VOLUME at /var/lib/postgresql, not the
       # /var/lib/postgresql/data path used by 17 and earlier.
