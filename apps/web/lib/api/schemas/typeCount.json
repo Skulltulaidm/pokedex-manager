@@ -1,0 +1,10 @@
+{
+  "properties": {
+    "type": { "type": "string", "title": "Type" },
+    "count": { "type": "integer", "title": "Count" }
+  },
+  "type": "object",
+  "required": ["type", "count"],
+  "title": "TypeCount",
+  "x-readme-ref-name": "TypeCount"
+}

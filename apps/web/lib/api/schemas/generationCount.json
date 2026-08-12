@@ -1,0 +1,10 @@
+{
+  "properties": {
+    "generation": { "type": "integer", "title": "Generation" },
+    "count": { "type": "integer", "title": "Count" }
+  },
+  "type": "object",
+  "required": ["generation", "count"],
+  "title": "GenerationCount",
+  "x-readme-ref-name": "GenerationCount"
+}

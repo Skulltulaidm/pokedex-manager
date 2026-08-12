@@ -1,0 +1,13 @@
+{
+  "type": "string",
+  "enum": [
+    "mint",
+    "near_mint",
+    "lightly_played",
+    "moderately_played",
+    "heavily_played",
+    "damaged"
+  ],
+  "title": "CardCondition",
+  "x-readme-ref-name": "CardCondition"
+}

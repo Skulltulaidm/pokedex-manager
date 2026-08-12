@@ -1,0 +1,14 @@
+{
+  "properties": {
+    "number": { "type": "string", "title": "Number" },
+    "type": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Type"
+    }
+  },
+  "type": "object",
+  "required": ["number", "type"],
+  "title": "OwnedSlot",
+  "description": "One collector number the user holds, and what that card is.\n\nThe type travels with the number because the client draws coverage as a strip\nof type-coloured slots; without it every owned card renders the same.",
+  "x-readme-ref-name": "OwnedSlot"
+}

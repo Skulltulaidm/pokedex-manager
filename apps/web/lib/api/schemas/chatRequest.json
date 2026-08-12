@@ -1,0 +1,18 @@
+{
+  "properties": {
+    "message": {
+      "type": "string",
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Message"
+    },
+    "conversation_id": {
+      "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }],
+      "title": "Conversation Id"
+    }
+  },
+  "type": "object",
+  "required": ["message"],
+  "title": "ChatRequest",
+  "x-readme-ref-name": "ChatRequest"
+}

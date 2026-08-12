@@ -1,0 +1,13 @@
+{
+  "properties": {
+    "id": { "type": "string", "title": "Id" },
+    "email": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Email"
+    }
+  },
+  "type": "object",
+  "required": ["id", "email"],
+  "title": "MeResponse",
+  "x-readme-ref-name": "MeResponse"
+}

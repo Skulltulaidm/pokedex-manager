@@ -1,0 +1,78 @@
+{
+  "properties": {
+    "total_groups": { "type": "integer", "title": "Total Groups" },
+    "total_cards": { "type": "integer", "title": "Total Cards" },
+    "types": {
+      "items": {
+        "properties": {
+          "type": { "type": "string", "title": "Type" },
+          "count": { "type": "integer", "title": "Count" }
+        },
+        "type": "object",
+        "required": ["type", "count"],
+        "title": "TypeCount",
+        "x-readme-ref-name": "TypeCount"
+      },
+      "type": "array",
+      "title": "Types"
+    },
+    "generations": {
+      "items": {
+        "properties": {
+          "generation": { "type": "integer", "title": "Generation" },
+          "count": { "type": "integer", "title": "Count" }
+        },
+        "type": "object",
+        "required": ["generation", "count"],
+        "title": "GenerationCount",
+        "x-readme-ref-name": "GenerationCount"
+      },
+      "type": "array",
+      "title": "Generations"
+    },
+    "sets": {
+      "items": {
+        "properties": {
+          "set_id": { "type": "string", "title": "Set Id" },
+          "set_name": { "type": "string", "title": "Set Name" },
+          "printed_total": { "type": "integer", "title": "Printed Total" },
+          "owned": { "type": "integer", "title": "Owned" },
+          "owned_slots": {
+            "items": {
+              "properties": {
+                "number": { "type": "string", "title": "Number" },
+                "type": {
+                  "anyOf": [{ "type": "string" }, { "type": "null" }],
+                  "title": "Type"
+                }
+              },
+              "type": "object",
+              "required": ["number", "type"],
+              "title": "OwnedSlot",
+              "description": "One collector number the user holds, and what that card is.\n\nThe type travels with the number because the client draws coverage as a strip\nof type-coloured slots; without it every owned card renders the same.",
+              "x-readme-ref-name": "OwnedSlot"
+            },
+            "type": "array",
+            "title": "Owned Slots"
+          }
+        },
+        "type": "object",
+        "required": [
+          "set_id",
+          "set_name",
+          "printed_total",
+          "owned",
+          "owned_slots"
+        ],
+        "title": "SetCoverage",
+        "x-readme-ref-name": "SetCoverage"
+      },
+      "type": "array",
+      "title": "Sets"
+    }
+  },
+  "type": "object",
+  "required": ["total_groups", "total_cards", "types", "generations", "sets"],
+  "title": "CollectionStats",
+  "x-readme-ref-name": "CollectionStats"
+}

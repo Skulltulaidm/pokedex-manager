@@ -1,0 +1,33 @@
+{
+  "properties": {
+    "quantity": {
+      "anyOf": [{ "type": "integer", "minimum": 1 }, { "type": "null" }],
+      "title": "Quantity"
+    },
+    "condition": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "mint",
+            "near_mint",
+            "lightly_played",
+            "moderately_played",
+            "heavily_played",
+            "damaged"
+          ],
+          "title": "CardCondition",
+          "x-readme-ref-name": "CardCondition"
+        },
+        { "type": "null" }
+      ]
+    },
+    "notes": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Notes"
+    }
+  },
+  "type": "object",
+  "title": "UpdateItemRequest",
+  "x-readme-ref-name": "UpdateItemRequest"
+}

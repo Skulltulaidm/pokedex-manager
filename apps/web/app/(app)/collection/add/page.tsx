@@ -1,0 +1,232 @@
+"use client";
+
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+import { TypeDots } from "@/components/type-dot";
+import { apiClient } from "@/lib/api-client";
+import { useAddCard } from "@/lib/api/hooks/useAddCard";
+import { useSearchCards } from "@/lib/api/hooks/useSearchCards";
+import type { CardView } from "@/lib/api/types/CardView";
+import { CONDITION_ORDER, conditionLabel } from "@/lib/labels";
+import { Button } from "@workspace/ui/components/button";
+import { Input } from "@workspace/ui/components/input";
+import { Label } from "@workspace/ui/components/label";
+import { Spinner } from "@workspace/ui/components/spinner";
+import { cn } from "@workspace/ui/lib/utils";
+
+export default function AddCardPage() {
+  const [query, setQuery] = useState("");
+  const [picked, setPicked] = useState<CardView | null>(null);
+
+  return (
+    <>
+      <h1 className="font-display mb-1 text-2xl font-extrabold tracking-tight">
+        Agregar una carta
+      </h1>
+      <p className="text-muted-foreground mb-5 text-sm">
+        Busca por nombre. Si no reconoces el set, la imagen te lo dice.
+      </p>
+
+      {picked ? (
+        <ConfirmForm card={picked} onBack={() => setPicked(null)} />
+      ) : (
+        <SearchStep query={query} onQuery={setQuery} onPick={setPicked} />
+      )}
+    </>
+  );
+}
+
+function SearchStep({
+  query,
+  onQuery,
+  onPick,
+}: {
+  query: string;
+  onQuery: (value: string) => void;
+  onPick: (card: CardView) => void;
+}) {
+  const trimmed = query.trim();
+  const { data, isFetching } = useSearchCards(
+    { q: trimmed || undefined, limit: 24 },
+    { client: { client: apiClient } },
+  );
+
+  return (
+    <>
+      <div className="relative">
+        <Input
+          value={query}
+          onChange={(event) => onQuery(event.target.value)}
+          placeholder="Charizard, Blastoise…"
+          autoFocus
+          aria-label="Buscar carta por nombre"
+        />
+        {isFetching && (
+          <Spinner className="text-muted-foreground absolute top-1/2 right-3 size-4 -translate-y-1/2" />
+        )}
+      </div>
+
+      {data && data.length === 0 && (
+        <p className="text-muted-foreground mt-8 text-center text-sm">
+          Ninguna carta coincide con «{trimmed}». Prueba con el nombre del Pokémon.
+        </p>
+      )}
+
+      <ul className="mt-4 divide-y divide-seam">
+        {data?.map((card) => (
+          <li key={card.id}>
+            <button
+              onClick={() => onPick(card)}
+              className="hover:bg-accent/60 flex w-full items-center gap-3 rounded-md px-1 py-2.5 text-left transition-colors"
+            >
+              <div className="bg-surface ring-edge relative h-16 w-[46px] shrink-0 overflow-hidden rounded-sm ring-1 ring-inset">
+                {card.image_small_url && (
+                  <Image
+                    src={card.image_small_url}
+                    alt=""
+                    fill
+                    sizes="46px"
+                    className="object-contain"
+                  />
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium">{card.name}</p>
+                <p className="text-muted-foreground truncate text-xs">
+                  {card.card_set.name}
+                </p>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2">
+                <TypeDots types={card.species?.types ?? []} />
+                <span className="text-muted-foreground font-mono text-xs">
+                  {card.number}/{card.card_set.printed_total}
+                </span>
+              </div>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+function ConfirmForm({ card, onBack }: { card: CardView; onBack: () => void }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [condition, setCondition] = useState("near_mint");
+  const [quantity, setQuantity] = useState(1);
+  const [notes, setNotes] = useState("");
+
+  const { mutate, isPending } = useAddCard({
+    client: { client: apiClient },
+    mutation: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries();
+        toast.success(`${card.name} agregada a tu colección`);
+        router.push("/collection");
+      },
+      onError: () =>
+        toast.error("No se pudo guardar. Intenta de nuevo."),
+    },
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="ring-edge bg-surface flex gap-4 rounded-lg p-3 ring-1">
+        <div className="bg-surface ring-edge relative h-32 w-[92px] shrink-0 overflow-hidden rounded-md ring-1 ring-inset">
+          {card.image_large_url && (
+            <Image
+              src={card.image_large_url}
+              alt={card.name}
+              fill
+              sizes="92px"
+              className="object-contain"
+            />
+          )}
+        </div>
+
+        <div className="min-w-0 space-y-1">
+          <p className="font-display text-lg leading-tight font-bold">{card.name}</p>
+          <p className="text-muted-foreground text-sm">{card.card_set.name}</p>
+          <p className="text-muted-foreground font-mono text-sm">
+            {card.number}/{card.card_set.printed_total}
+            {card.rarity && ` · ${card.rarity}`}
+          </p>
+          <TypeDots types={card.species?.types ?? []} />
+        </div>
+      </div>
+
+      <fieldset>
+        <legend className="mb-2 text-sm font-medium">Estado</legend>
+        <div className="flex flex-wrap gap-2">
+          {CONDITION_ORDER.map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setCondition(value)}
+              aria-pressed={condition === value}
+              className={cn(
+                "ring-edge rounded-full px-3 py-1.5 text-sm ring-1 transition-colors",
+                condition === value
+                  ? "bg-foreground text-background ring-transparent"
+                  : "bg-card hover:bg-accent",
+              )}
+            >
+              {conditionLabel(value)}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="quantity">Cuántas tienes</Label>
+        <Input
+          id="quantity"
+          type="number"
+          min={1}
+          value={quantity}
+          onChange={(event) => setQuantity(Math.max(1, Number(event.target.value)))}
+          className="w-28 font-mono"
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="notes">Nota (opcional)</Label>
+        <Input
+          id="notes"
+          value={notes}
+          onChange={(event) => setNotes(event.target.value)}
+          placeholder="De la caja del abuelo"
+        />
+      </div>
+
+      <div className="flex gap-2">
+        <Button variant="outline" onClick={onBack} disabled={isPending}>
+          Cambiar carta
+        </Button>
+        <Button
+          className="flex-1"
+          disabled={isPending}
+          onClick={() =>
+            mutate({
+              data: {
+                card_id: card.id,
+                condition: condition as never,
+                quantity,
+                notes: notes.trim() || null,
+              },
+            })
+          }
+        >
+          {isPending ? "Guardando…" : "Guardar en mi colección"}
+        </Button>
+      </div>
+    </div>
+  );
+}

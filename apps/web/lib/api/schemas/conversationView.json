@@ -1,0 +1,20 @@
+{
+  "properties": {
+    "id": { "type": "string", "format": "uuid", "title": "Id" },
+    "title": { "type": "string", "title": "Title" },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Updated At"
+    }
+  },
+  "type": "object",
+  "required": ["id", "title", "created_at", "updated_at"],
+  "title": "ConversationView",
+  "x-readme-ref-name": "ConversationView"
+}

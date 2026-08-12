@@ -1,0 +1,6 @@
+{
+  "type": "string",
+  "enum": ["user", "assistant"],
+  "title": "MessageRole",
+  "x-readme-ref-name": "MessageRole"
+}

@@ -1,0 +1,30 @@
+{
+  "properties": {
+    "id": { "type": "string", "title": "Id" },
+    "name": { "type": "string", "title": "Name" },
+    "series": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Series"
+    },
+    "printed_total": { "type": "integer", "title": "Printed Total" },
+    "release_date": {
+      "anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+      "title": "Release Date"
+    },
+    "logo_url": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Logo Url"
+    }
+  },
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "series",
+    "printed_total",
+    "release_date",
+    "logo_url"
+  ],
+  "title": "CardSetView",
+  "x-readme-ref-name": "CardSetView"
+}

@@ -1,0 +1,21 @@
+{
+  "properties": {
+    "id": { "type": "string", "format": "uuid", "title": "Id" },
+    "role": {
+      "type": "string",
+      "enum": ["user", "assistant"],
+      "title": "MessageRole",
+      "x-readme-ref-name": "MessageRole"
+    },
+    "text": { "type": "string", "title": "Text" },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+    }
+  },
+  "type": "object",
+  "required": ["id", "role", "text", "created_at"],
+  "title": "MessageView",
+  "x-readme-ref-name": "MessageView"
+}

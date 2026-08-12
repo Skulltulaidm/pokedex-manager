@@ -1,0 +1,30 @@
+{
+  "properties": {
+    "set_id": { "type": "string", "title": "Set Id" },
+    "set_name": { "type": "string", "title": "Set Name" },
+    "printed_total": { "type": "integer", "title": "Printed Total" },
+    "owned": { "type": "integer", "title": "Owned" },
+    "owned_slots": {
+      "items": {
+        "properties": {
+          "number": { "type": "string", "title": "Number" },
+          "type": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": ["number", "type"],
+        "title": "OwnedSlot",
+        "description": "One collector number the user holds, and what that card is.\n\nThe type travels with the number because the client draws coverage as a strip\nof type-coloured slots; without it every owned card renders the same.",
+        "x-readme-ref-name": "OwnedSlot"
+      },
+      "type": "array",
+      "title": "Owned Slots"
+    }
+  },
+  "type": "object",
+  "required": ["set_id", "set_name", "printed_total", "owned", "owned_slots"],
+  "title": "SetCoverage",
+  "x-readme-ref-name": "SetCoverage"
+}

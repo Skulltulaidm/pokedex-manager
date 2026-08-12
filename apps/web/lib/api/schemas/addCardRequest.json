@@ -1,0 +1,47 @@
+{
+  "properties": {
+    "card_id": { "type": "string", "title": "Card Id" },
+    "condition": {
+      "default": "near_mint",
+      "type": "string",
+      "enum": [
+        "mint",
+        "near_mint",
+        "lightly_played",
+        "moderately_played",
+        "heavily_played",
+        "damaged"
+      ],
+      "title": "CardCondition",
+      "x-readme-ref-name": "CardCondition"
+    },
+    "quantity": {
+      "type": "integer",
+      "minimum": 1,
+      "title": "Quantity",
+      "default": 1
+    },
+    "language": {
+      "type": "string",
+      "maxLength": 8,
+      "title": "Language",
+      "default": "en"
+    },
+    "is_graded": { "type": "boolean", "title": "Is Graded", "default": false },
+    "grade": {
+      "anyOf": [
+        { "type": "number", "maximum": 10, "minimum": 1 },
+        { "type": "null" }
+      ],
+      "title": "Grade"
+    },
+    "notes": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Notes"
+    }
+  },
+  "type": "object",
+  "required": ["card_id"],
+  "title": "AddCardRequest",
+  "x-readme-ref-name": "AddCardRequest"
+}

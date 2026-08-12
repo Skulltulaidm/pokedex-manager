@@ -1,0 +1,45 @@
+{
+  "properties": {
+    "id": { "type": "string", "format": "uuid", "title": "Id" },
+    "title": { "type": "string", "title": "Title" },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Updated At"
+    },
+    "messages": {
+      "items": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "role": {
+            "type": "string",
+            "enum": ["user", "assistant"],
+            "title": "MessageRole",
+            "x-readme-ref-name": "MessageRole"
+          },
+          "text": { "type": "string", "title": "Text" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "role", "text", "created_at"],
+        "title": "MessageView",
+        "x-readme-ref-name": "MessageView"
+      },
+      "type": "array",
+      "title": "Messages"
+    }
+  },
+  "type": "object",
+  "required": ["id", "title", "created_at", "updated_at", "messages"],
+  "title": "ConversationDetail",
+  "x-readme-ref-name": "ConversationDetail"
+}

@@ -1,0 +1,37 @@
+{
+  "properties": {
+    "id": { "type": "integer", "title": "Id" },
+    "name": { "type": "string", "title": "Name" },
+    "generation": { "type": "integer", "title": "Generation" },
+    "types": {
+      "items": { "type": "string" },
+      "type": "array",
+      "title": "Types"
+    },
+    "stats": {
+      "additionalProperties": { "type": "integer" },
+      "type": "object",
+      "title": "Stats"
+    },
+    "evolution_chain_id": {
+      "anyOf": [{ "type": "integer" }, { "type": "null" }],
+      "title": "Evolution Chain Id"
+    },
+    "sprite_url": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Sprite Url"
+    }
+  },
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "generation",
+    "types",
+    "stats",
+    "evolution_chain_id",
+    "sprite_url"
+  ],
+  "title": "SpeciesView",
+  "x-readme-ref-name": "SpeciesView"
+}
