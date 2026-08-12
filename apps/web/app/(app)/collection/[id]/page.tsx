@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -9,6 +8,7 @@ import { CalendarDays, Heart, Layers, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { CardImage } from "@/components/card-image";
 import { InfoTile } from "@/components/info-tile";
 import { SpeciesStrip } from "@/components/species-strip";
 import { SpeciesTrivia } from "@/components/species-trivia";
@@ -23,7 +23,6 @@ import {
   CONDITION_ORDER,
   VARIANT_LABEL,
   conditionLabel,
-  formatReleaseDate,
 } from "@/lib/labels";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
@@ -106,23 +105,14 @@ export default function ItemDetailPage() {
 
       <div className="lg:grid lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] lg:items-start lg:gap-10">
       <div className="relative mx-auto w-60 lg:sticky lg:top-0 lg:w-full">
-        <div
-          aria-hidden
-          className="aura absolute -inset-10 opacity-60 blur-2xl"
-          style={{ "--glow": typeColor(card.species?.types[0] ?? "normal") } as React.CSSProperties}
+        <CardImage
+          src={card.image_large_url ?? null}
+          alt={card.name}
+          sizes="240px"
+          glowType={card.species?.types[0]}
+          priority
+          className="shadow-[0_20px_50px_-15px_oklch(0_0_0/0.9)]"
         />
-        <div className="ring-edge relative aspect-[63/88] overflow-hidden rounded-xl shadow-[0_20px_50px_-15px_oklch(0_0_0/0.9)] ring-1">
-          {card.image_large_url && (
-            <Image
-              src={card.image_large_url}
-              alt={card.name}
-              fill
-              sizes="240px"
-              priority
-              className="object-cover"
-            />
-          )}
-        </div>
       </div>
 
       <div className="mt-7 space-y-6 lg:mt-0">
@@ -280,15 +270,6 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       </h2>
       {children}
     </section>
-  );
-}
-
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-4 py-2 text-sm">
-      <span className="text-muted-foreground shrink-0">{label}</span>
-      <span className="min-w-0 text-right">{children}</span>
-    </div>
   );
 }
 

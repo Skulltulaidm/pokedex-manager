@@ -1,14 +1,13 @@
 "use client";
 
 import { Lock } from "lucide-react";
-import Image from "next/image";
 
 import { apiClient } from "@/lib/api-client";
 import { useOwnedCardIds } from "@/lib/api/hooks/useOwnedCardIds";
 import { useSearchCards } from "@/lib/api/hooks/useSearchCards";
+import { CardImage } from "@/components/card-image";
 import { ScrollRow } from "@/components/scroll-row";
 import { Skeleton } from "@workspace/ui/components/skeleton";
-import { cn } from "@workspace/ui/lib/utils";
 
 /**
  * Every printing of the same species, owned ones in colour and the rest greyed
@@ -60,28 +59,21 @@ export function SpeciesStrip({
           const isOwned = held.has(card.id);
           return (
             <div key={card.id} className="shrink-0">
-              <div
-                className={cn(
-                  "ring-edge relative aspect-[63/88] w-16 overflow-hidden rounded-lg ring-1 transition-transform hover:-translate-y-0.5",
-                  card.id === currentCardId && "ring-primary ring-2 ring-inset",
-                  !isOwned && "grayscale",
-                )}
-                title={`${card.card_set.name} · ${card.number}/${card.card_set.printed_total}`}
-              >
-                {card.image_small_url && (
-                  <Image
-                    src={card.image_small_url}
-                    alt={card.card_set.name}
-                    fill
-                    sizes="64px"
-                    className={cn("object-cover", !isOwned && "opacity-40")}
-                  />
-                )}
-                {!isOwned && (
-                  <span className="absolute inset-0 grid place-items-center">
-                    <Lock className="text-foreground/50 size-4" />
-                  </span>
-                )}
+              <div title={`${card.card_set.name} · ${card.number}/${card.card_set.printed_total}`}>
+                <CardImage
+                  src={card.image_small_url ?? null}
+                  alt={card.card_set.name}
+                  sizes="64px"
+                  locked={!isOwned}
+                  selected={card.id === currentCardId}
+                  className="w-16 transition-transform hover:-translate-y-0.5"
+                >
+                  {!isOwned && (
+                    <span className="absolute inset-0 grid place-items-center">
+                      <Lock className="text-foreground/50 size-4" />
+                    </span>
+                  )}
+                </CardImage>
               </div>
               <p className="text-muted-foreground mt-1.5 w-16 truncate text-[11px]">
                 {card.card_set.name}

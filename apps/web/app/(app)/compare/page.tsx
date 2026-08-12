@@ -1,12 +1,12 @@
 "use client";
 
 import { ArrowLeftRight, TrendingUp } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { CardImage } from "@/components/card-image";
 import { TypeChip } from "@/components/type-dot";
 import { apiClient } from "@/lib/api-client";
 import { useGetCard } from "@/lib/api/hooks/useGetCard";
@@ -126,22 +126,13 @@ function Portrait({ side }: { side: Side }) {
 
   return (
     <div>
-      <div
-        className={cn(
-          "ring-edge relative mx-auto aspect-[63/88] w-full max-w-[190px] overflow-hidden rounded-xl ring-1",
-          !side.owned && "opacity-60 grayscale",
-        )}
-      >
-        {card.image_large_url && (
-          <Image
-            src={card.image_large_url}
-            alt={card.name}
-            fill
-            sizes="190px"
-            className="object-cover"
-          />
-        )}
-      </div>
+      <CardImage
+        src={card.image_large_url ?? null}
+        alt={card.name}
+        sizes="190px"
+        locked={!side.owned}
+        className="mx-auto w-full max-w-[190px]"
+      />
 
       <p className="mt-3 truncate text-center text-[15px] font-semibold">{card.name}</p>
       <p className="font-display text-center text-xl font-semibold tabular-nums">

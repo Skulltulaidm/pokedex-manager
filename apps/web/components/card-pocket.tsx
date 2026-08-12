@@ -1,11 +1,7 @@
-import Image from "next/image";
-
-import { TYPE_VAR, TypeDots } from "@/components/type-dot";
+import { CARD_RATIO, CardImage } from "@/components/card-image";
+import { TypeDots } from "@/components/type-dot";
 import { formatUsd } from "@/lib/format";
 import { cn } from "@workspace/ui/lib/utils";
-
-// Pokemon cards are 63x88mm. Everything that stands in for one keeps that ratio.
-const CARD_RATIO = "aspect-[63/88]";
 
 export function EmptyPocket({ label }: { label?: string }) {
   return (
@@ -45,52 +41,27 @@ export function CardPocket({
   price?: number | null;
   rarity?: string | null;
 }) {
-  const glow = TYPE_VAR[types[0] ?? ""] ?? null;
-
   return (
     <div className="group flex flex-col gap-2.5">
-      <div className={cn(CARD_RATIO, "relative")}>
-        {glow && (
-          <div
-            aria-hidden
-            className="aura absolute -inset-4 opacity-45 blur-xl transition-opacity duration-500 group-hover:opacity-75"
-            style={{ "--glow": `var(${glow})` } as React.CSSProperties}
-          />
+      <CardImage
+        src={imageUrl}
+        alt={name}
+        sizes="(min-width: 1536px) 13vw, (min-width: 1024px) 17vw, (min-width: 640px) 28vw, 46vw"
+        glowType={types[0]}
+        foil
+        className="transition-transform duration-300 group-hover:-translate-y-1"
+      >
+        {quantity > 1 && (
+          <span className="glass text-foreground absolute top-2 right-2 rounded-full px-2 py-0.5 font-mono text-[11px] leading-none">
+            ×{quantity}
+          </span>
         )}
-
-        <div className="ring-edge relative h-full w-full overflow-hidden rounded-lg shadow-[0_6px_20px_-8px_oklch(0_0_0/0.8)] ring-1 transition-transform duration-300 group-hover:-translate-y-1">
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={name}
-              fill
-              sizes="(min-width: 1536px) 13vw, (min-width: 1024px) 17vw, (min-width: 640px) 28vw, 46vw"
-              className="object-cover"
-            />
-          ) : (
-            <div className="bg-surface text-muted-foreground flex h-full items-center justify-center px-2 text-center text-xs">
-              {name}
-            </div>
-          )}
-
-          <div
-            aria-hidden
-            className="foil pointer-events-none absolute inset-0 bg-[position:180%_0] opacity-0 mix-blend-overlay transition-all duration-700 group-hover:bg-[position:-60%_0] group-hover:opacity-100 motion-reduce:transition-none"
-          />
-
-          {quantity > 1 && (
-            <span className="glass text-foreground absolute top-2 right-2 rounded-full px-2 py-0.5 font-mono text-[11px] leading-none">
-              ×{quantity}
-            </span>
-          )}
-
-          {rarity && (
-            <span className="glass text-muted-foreground absolute top-2 left-2 rounded-full px-2 py-0.5 text-[10px] leading-none tracking-wide uppercase">
-              {rarity}
-            </span>
-          )}
-        </div>
-      </div>
+        {rarity && (
+          <span className="glass text-muted-foreground absolute top-2 left-2 rounded-full px-2 py-0.5 text-[10px] leading-none tracking-wide uppercase">
+            {rarity}
+          </span>
+        )}
+      </CardImage>
 
       <div className="min-w-0">
         <div className="flex items-baseline justify-between gap-2">
