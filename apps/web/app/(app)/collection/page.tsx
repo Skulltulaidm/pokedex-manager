@@ -164,6 +164,7 @@ function CollectionGrid() {
           )}
         </InputGroup>
 
+        <span className="lg:hidden">
         <FilterSheet
           setId={setId}
           generation={generation}
@@ -174,6 +175,7 @@ function CollectionGrid() {
           generations={stats?.generations ?? []}
           onApply={(next) => setParam({ ...next, p: undefined })}
         />
+        </span>
       </div>
 
       {comparing && (
@@ -221,6 +223,20 @@ function CollectionGrid() {
         </ScrollRow>
       )}
 
+      <div className="lg:grid lg:grid-cols-[11.5rem_minmax(0,1fr)] lg:items-start lg:gap-7">
+        <aside className="border-edge hidden lg:sticky lg:top-0 lg:block lg:border-r lg:pr-5">
+          <FilterControls
+            setId={setId}
+            generation={generation}
+            condition={condition}
+            sort={sort}
+            sets={stats?.sets ?? []}
+            generations={stats?.generations ?? []}
+            onApply={(next) => setParam({ ...next, p: undefined })}
+          />
+        </aside>
+
+        <div>
       {isPending && <PocketSkeleton />}
 
       {error && (
@@ -270,7 +286,59 @@ function CollectionGrid() {
 
         </>
       )}
+        </div>
+      </div>
     </>
+  );
+}
+
+function FilterControls({
+  setId,
+  generation,
+  condition,
+  sort,
+  sets,
+  generations,
+  onApply,
+}: {
+  setId?: string;
+  generation?: string;
+  condition?: string;
+  sort: string;
+  sets: { set_id: string; set_name: string }[];
+  generations: { generation: number }[];
+  onApply: (next: Record<string, string | undefined>) => void;
+}) {
+  return (
+    <div className="grid gap-6">
+      <Picker
+        label="Ordenar por"
+        value={sort === "recent" ? undefined : sort}
+        options={SORTS}
+        onChange={(value) => onApply({ orden: value })}
+      />
+      <Picker
+        label="Estado"
+        value={condition}
+        options={CONDITION_ORDER.map((value) => ({ value, label: conditionLabel(value) }))}
+        onChange={(value) => onApply({ estado: value })}
+      />
+      <Picker
+        label="Generación"
+        value={generation}
+        options={generations.map((entry) => ({
+          value: String(entry.generation),
+          label: `Generación ${entry.generation}`,
+        }))}
+        onChange={(value) => onApply({ gen: value })}
+      />
+      <Picker
+        label="Set"
+        value={setId}
+        options={sets.map((entry) => ({ value: entry.set_id, label: entry.set_name }))}
+        onChange={(value) => onApply({ set: value })}
+      />
+    </div>
   );
 }
 
@@ -313,36 +381,15 @@ function FilterSheet({
           <SheetTitle>Filtros</SheetTitle>
         </SheetHeader>
 
-        <div className="grid gap-6 px-4 py-2">
-          <Picker
-            label="Set"
-            value={setId}
-            options={sets.map((entry) => ({ value: entry.set_id, label: entry.set_name }))}
-            onChange={(value) => onApply({ set: value })}
-          />
-          <Picker
-            label="Generación"
-            value={generation}
-            options={generations.map((entry) => ({
-              value: String(entry.generation),
-              label: `Generación ${entry.generation}`,
-            }))}
-            onChange={(value) => onApply({ gen: value })}
-          />
-          <Picker
-            label="Ordenar por"
-            value={sort === "recent" ? undefined : sort}
-            options={SORTS}
-            onChange={(value) => onApply({ orden: value })}
-          />
-          <Picker
-            label="Estado"
-            value={condition}
-            options={CONDITION_ORDER.map((value) => ({
-              value,
-              label: conditionLabel(value),
-            }))}
-            onChange={(value) => onApply({ estado: value })}
+        <div className="px-4 py-2">
+          <FilterControls
+            setId={setId}
+            generation={generation}
+            condition={condition}
+            sort={sort}
+            sets={sets}
+            generations={generations}
+            onApply={onApply}
           />
         </div>
 
