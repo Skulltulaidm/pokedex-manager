@@ -1,0 +1,42 @@
+from fastapi import APIRouter, HTTPException, Query, status
+
+from pokedex.api.deps import CurrentUser, DbSession
+from pokedex.schemas.catalog import CardView, SpeciesView
+from pokedex.services import catalog
+
+router = APIRouter(prefix="/catalog", tags=["catalog"])
+
+
+@router.get("/cards", response_model=list[CardView])
+async def search_cards(
+    user: CurrentUser,
+    db: DbSession,
+    q: str | None = None,
+    set_id: str | None = None,
+    limit: int = Query(default=30, ge=1, le=100),
+) -> list[CardView]:
+    found = await catalog.search_cards(db, query=q, set_id=set_id, limit=limit)
+    return [CardView.model_validate(card) for card in found]
+
+
+@router.get("/cards/{card_id}", response_model=CardView)
+async def get_card(card_id: str, user: CurrentUser, db: DbSession) -> CardView:
+    card = await catalog.get_card(db, card_id)
+    if card is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Card not found")
+    return CardView.model_validate(card)
+
+
+@router.get("/species", response_model=list[SpeciesView])
+async def search_species(
+    user: CurrentUser,
+    db: DbSession,
+    name: str | None = None,
+    type: str | None = None,
+    generation: int | None = None,
+    limit: int = Query(default=50, ge=1, le=200),
+) -> list[SpeciesView]:
+    found = await catalog.search_species(
+        db, name=name, type_=type, generation=generation, limit=limit
+    )
+    return [SpeciesView.model_validate(species) for species in found]
