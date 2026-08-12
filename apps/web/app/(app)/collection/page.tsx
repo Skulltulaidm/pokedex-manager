@@ -203,7 +203,7 @@ function CollectionGrid() {
 
       {data && data.items.length > 0 && (
         <>
-          <ul className="grid grid-cols-2 gap-x-3.5 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
+          <ul className="grid grid-cols-2 gap-x-3.5 gap-y-6 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
             {data.items.map((item, index) => (
               <li
                 key={item.id}
@@ -414,7 +414,7 @@ function Chip({
 
 function PocketSkeleton() {
   return (
-    <ul className="grid grid-cols-2 gap-x-3.5 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
+    <ul className="grid grid-cols-2 gap-x-3.5 gap-y-6 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
       {Array.from({ length: 8 }).map((_, index) => (
         <li key={index} className="space-y-2">
           <Skeleton className="aspect-[63/88] rounded-lg" />

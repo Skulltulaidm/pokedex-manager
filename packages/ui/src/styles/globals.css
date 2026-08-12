@@ -7,9 +7,10 @@
 /* The card art is the only saturated thing on screen, so the surface it sits on
    stays quiet: a hairline, a lift, and nothing else competing. */
 @utility slab {
-    background: var(--surface);
+    background: linear-gradient(var(--surface-lit), var(--surface));
     box-shadow:
         inset 0 0 0 1px var(--edge),
+        inset 0 1px 0 var(--sheen),
         var(--lift);
 }
 
@@ -158,10 +159,11 @@
    violet cast rather than neutral grey, which keeps it from going flat next to
    the warm hues most card art leans on. */
 :root {
-    --background: oklch(0.985 0.002 285);
+    --background: oklch(0.979 0.006 90);
     --foreground: oklch(0.19 0.012 285);
     --surface: oklch(1 0 0);
-    --raised: oklch(0.975 0.003 285);
+    --surface-lit: oklch(1 0 0);
+    --raised: oklch(0.968 0.007 90);
     --edge: oklch(0.19 0.012 285 / 0.1);
     --lift: 0 1px 2px oklch(0.19 0.012 285 / 0.06), 0 8px 24px -14px oklch(0.19 0.012 285 / 0.14);
     --float: 0 2px 6px oklch(0.19 0.012 285 / 0.08), 0 16px 40px -12px oklch(0.19 0.012 285 / 0.22);
@@ -175,11 +177,11 @@
     --popover-foreground: var(--foreground);
     --primary: oklch(0.21 0.014 285);
     --primary-foreground: oklch(0.99 0.002 285);
-    --secondary: oklch(0.965 0.003 285);
+    --secondary: oklch(0.958 0.008 90);
     --secondary-foreground: var(--foreground);
-    --muted: oklch(0.955 0.004 285);
+    --muted: oklch(0.949 0.009 90);
     --muted-foreground: oklch(0.5 0.014 285);
-    --accent: oklch(0.955 0.004 285);
+    --accent: oklch(0.949 0.009 90);
     --accent-foreground: var(--foreground);
     --destructive: oklch(0.55 0.21 25);
     --border: var(--edge);
@@ -224,10 +226,11 @@
 }
 
 .dark {
-    --background: oklch(0.135 0.017 285);
-    --foreground: oklch(0.97 0.005 285);
-    --surface: oklch(0.185 0.019 285);
-    --raised: oklch(0.23 0.021 285);
+    --background: oklch(0.128 0.028 276);
+    --foreground: oklch(0.975 0.008 276);
+    --surface: oklch(0.178 0.03 276);
+    --surface-lit: oklch(0.212 0.033 276);
+    --raised: oklch(0.235 0.032 276);
     --edge: oklch(1 0 0 / 0.09);
     --lift: 0 1px 2px oklch(0 0 0 / 0.3), 0 12px 32px -14px oklch(0 0 0 / 0.7);
     --float: 0 2px 8px oklch(0 0 0 / 0.4), 0 18px 44px -12px oklch(0 0 0 / 0.75);
@@ -236,15 +239,15 @@
 
     --card: var(--surface);
     --card-foreground: var(--foreground);
-    --popover: oklch(0.21 0.02 285);
+    --popover: oklch(0.205 0.031 276);
     --popover-foreground: var(--foreground);
     --primary: oklch(0.97 0.005 285);
     --primary-foreground: oklch(0.16 0.02 285);
-    --secondary: oklch(0.26 0.022 285);
+    --secondary: oklch(0.252 0.033 276);
     --secondary-foreground: var(--foreground);
-    --muted: oklch(0.24 0.02 285);
-    --muted-foreground: oklch(0.68 0.022 285);
-    --accent: oklch(0.28 0.025 285);
+    --muted: oklch(0.232 0.03 276);
+    --muted-foreground: oklch(0.7 0.03 276);
+    --accent: oklch(0.278 0.036 276);
     --accent-foreground: var(--foreground);
     --destructive: oklch(0.68 0.2 22);
     --border: var(--edge);
@@ -298,11 +301,18 @@
         text-rendering: optimizeLegibility;
     }
 
+    body {
+        background-image:
+            radial-gradient(70% 45% at 12% -8%, oklch(0.72 0.1 276 / 0.09), transparent 62%),
+            radial-gradient(60% 40% at 96% 4%, oklch(0.75 0.09 40 / 0.07), transparent 66%);
+        background-attachment: fixed;
+    }
+
     .dark body {
         /* Large dark areas read as a void without something behind them. */
         background-image:
-            radial-gradient(80% 50% at 15% -5%, oklch(0.45 0.13 285 / 0.22), transparent 60%),
-            radial-gradient(70% 45% at 95% 8%, oklch(0.5 0.12 200 / 0.14), transparent 65%);
+            radial-gradient(80% 50% at 12% -8%, oklch(0.5 0.16 276 / 0.3), transparent 60%),
+            radial-gradient(70% 45% at 96% 4%, oklch(0.55 0.14 200 / 0.16), transparent 65%);
         background-attachment: fixed;
     }
 

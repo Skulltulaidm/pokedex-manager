@@ -261,7 +261,7 @@ export default function ItemDetailPage() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="ring-edge bg-surface rounded-xl p-4 ring-1">
+    <section className="slab rounded-xl p-4">
       <h2 className="font-display mb-2 text-sm font-bold tracking-wide uppercase">
         {title}
       </h2>

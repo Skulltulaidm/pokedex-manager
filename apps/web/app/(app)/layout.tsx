@@ -7,6 +7,19 @@ import { useEffect } from "react";
 
 import { AccountMenu } from "@/components/account-menu";
 import { authClient } from "@/lib/auth-client";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from "@workspace/ui/components/sidebar";
 import { Spinner } from "@workspace/ui/components/spinner";
 import { cn } from "@workspace/ui/lib/utils";
 
@@ -35,56 +48,55 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="lg:flex lg:h-svh lg:overflow-hidden">
-      {/* A rail rather than a top bar: the horizontal space was going unused, and
-          a fixed rail keeps the page itself from scrolling on a desktop. */}
-      <aside className="border-edge bg-surface/50 hidden w-60 shrink-0 flex-col border-r px-3 py-5 lg:flex">
-        <Link
-          href="/collection"
-          className="font-display mb-7 px-3 text-[19px] font-semibold tracking-[-0.03em]"
-        >
-          Poké<span className="text-muted-foreground">Dex</span>
-        </Link>
+    <SidebarProvider>
+      <Sidebar collapsible="icon" className="hidden lg:flex">
+        <SidebarHeader className="px-4 py-4">
+          <Link
+            href="/collection"
+            className="font-display truncate text-[19px] font-semibold tracking-[-0.03em]"
+          >
+            Poké<span className="text-muted-foreground">Dex</span>
+          </Link>
+        </SidebarHeader>
 
-        <nav className="flex-1">
-          <ul className="space-y-1">
-            {NAV.map(({ href, label, icon: Icon }) => {
-              const active = pathname === href;
-              return (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-                      active
-                        ? "bg-accent text-foreground"
-                        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                    )}
-                  >
-                    <Icon className="size-[18px] shrink-0" />
-                    {label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {NAV.map(({ href, label, icon: Icon }) => (
+                  <SidebarMenuItem key={href}>
+                    <SidebarMenuButton
+                      isActive={pathname === href}
+                      tooltip={label}
+                      render={
+                        <Link href={href}>
+                          <Icon />
+                          <span>{label}</span>
+                        </Link>
+                      }
+                    />
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
 
-        <div className="border-edge flex items-center gap-3 border-t px-3 pt-4">
+        <SidebarFooter className="flex-row items-center gap-2.5 px-3 py-3">
           <AccountMenu email={session.user.email} />
-          <p className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
+          <p className="text-muted-foreground min-w-0 flex-1 truncate text-xs group-data-[collapsible=icon]:hidden">
             {session.user.email}
           </p>
-        </div>
-      </aside>
+        </SidebarFooter>
+      </Sidebar>
 
-      <main
-        key={pathname}
-        className="rise mx-auto w-full max-w-6xl px-4 pt-5 pb-32 lg:h-svh lg:overflow-y-auto lg:px-8 lg:py-7"
-      >
-        {children}
-      </main>
+      {/* The scroll container is the inset, not the page, so the rail never
+          travels with the content. */}
+      <SidebarInset className="lg:h-svh lg:overflow-y-auto">
+        <main key={pathname} className="rise w-full px-4 pt-5 pb-32 lg:px-8 lg:py-7">
+          {children}
+        </main>
+      </SidebarInset>
 
       <nav
         className="fixed inset-x-0 z-20 flex justify-center px-4 lg:hidden"
@@ -114,6 +126,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           })}
         </ul>
       </nav>
-    </div>
+    </SidebarProvider>
   );
 }

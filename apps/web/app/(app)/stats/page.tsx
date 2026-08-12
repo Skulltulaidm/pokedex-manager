@@ -58,7 +58,8 @@ export default function StatsPage() {
           <TabsTrigger value="deseos">Deseos</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="resumen" className="space-y-9">
+        <TabsContent value="resumen" className="space-y-8">
+          <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
           <section>
             <p className="font-display text-[2.75rem] leading-none font-semibold tabular-nums">
               {data.total_cards}
@@ -97,6 +98,9 @@ export default function StatsPage() {
             )}
           </section>
 
+          <TopHoldings total={Number(data.value.total_usd)} />
+          </div>
+
           <section>
             <h2 className="font-display text-lg font-semibold tracking-tight">
               Cobertura por set
@@ -106,7 +110,7 @@ export default function StatsPage() {
               color es el tipo de la carta.
             </p>
 
-            <div className="space-y-7">
+            <div className="grid gap-7 lg:grid-cols-2 lg:gap-x-10">
               {data.sets.map((set) => (
                 <div key={set.set_id}>
                   <div className="mb-2.5 flex items-baseline justify-between gap-3">
@@ -152,7 +156,6 @@ export default function StatsPage() {
               </ul>
             </section>
           )}
-          <TopHoldings total={Number(data.value.total_usd)} />
         </TabsContent>
 
         <TabsContent value="falta">
@@ -296,7 +299,7 @@ function Gaps() {
               {gap.missing.length} por conseguir
             </p>
           </div>
-          <ul className="space-y-2.5">
+          <ul className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
             {gap.missing.map((card) => (
               <li key={card.id}>
                 <CardRow
@@ -343,7 +346,7 @@ function Wishlist() {
   }
 
   return (
-    <ul className="space-y-2.5">
+    <ul className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
       {data.map((item) => (
         <li key={item.id}>
           <CardRow

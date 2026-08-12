@@ -20,7 +20,7 @@ export function InfoTile({
   className?: string;
 }) {
   return (
-    <div className={cn("ring-edge bg-surface rounded-xl p-3 ring-1", className)}>
+    <div className={cn("slab rounded-xl p-3", className)}>
       <div className="text-muted-foreground flex items-center gap-1.5">
         <Icon className="size-3.5" style={tone ? { color: tone } : undefined} />
         <span className="truncate text-[11px] tracking-wide uppercase">{label}</span>

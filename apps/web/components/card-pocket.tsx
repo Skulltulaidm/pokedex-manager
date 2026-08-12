@@ -59,7 +59,7 @@ export function CardPocket({
               src={imageUrl}
               alt={name}
               fill
-              sizes="(min-width: 1024px) 18vw, (min-width: 640px) 28vw, 46vw"
+              sizes="(min-width: 1536px) 13vw, (min-width: 1024px) 17vw, (min-width: 640px) 28vw, 46vw"
               className="object-cover"
             />
           ) : (

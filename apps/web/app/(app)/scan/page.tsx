@@ -292,7 +292,7 @@ function Candidate({
   const signals = candidate.matched_on.map((key) => SIGNAL_LABELS[key] ?? key);
 
   return (
-    <div className="ring-edge bg-surface flex items-center gap-3.5 rounded-2xl p-3 ring-1">
+    <div className="slab flex items-center gap-3.5 rounded-2xl p-3">
       <div className="ring-edge relative aspect-[63/88] w-14 shrink-0 overflow-hidden rounded-lg ring-1">
         {card.image_small_url && (
           <Image src={card.image_small_url} alt={card.name} fill sizes="56px" className="object-cover" />

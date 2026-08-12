@@ -124,7 +124,7 @@ export default function ChatPage() {
   const empty = turns.length === 0;
 
   return (
-    <div className="flex min-h-[calc(100svh-9rem)] flex-col md:min-h-[calc(100svh-8rem)]">
+    <div className="mx-auto flex min-h-[calc(100svh-9rem)] max-w-3xl flex-col lg:min-h-[calc(100svh-6rem)]">
       <header className="mb-6 flex items-center gap-2">
         <Sheet>
           <SheetTrigger

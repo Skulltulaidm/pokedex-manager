@@ -22,7 +22,7 @@ export function CardRow({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="ring-edge bg-surface flex items-center gap-3.5 rounded-2xl p-3 ring-1">
+    <div className="slab flex items-center gap-3.5 rounded-2xl p-3">
       <div className="ring-edge relative aspect-[63/88] w-12 shrink-0 overflow-hidden rounded-lg ring-1">
         {imageUrl && (
           <Image src={imageUrl} alt={name} fill sizes="48px" className="object-cover" />
