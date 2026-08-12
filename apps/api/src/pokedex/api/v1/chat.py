@@ -84,7 +84,7 @@ async def run_turn(caller: Caller, payload: ChatRequest) -> AsyncIterator[str]:
         yield sse("conversation", {"id": str(conversation.id), "title": conversation.title})
 
         try:
-            async with mcp_session(settings.mcp_resource_url, caller.token) as session:
+            async with mcp_session(settings.mcp_agent_url, caller.token) as session:
                 agent = build_agent(session, settings.agent_model)
                 async for event in agent.run_stream_events(
                     payload.message, message_history=history, usage_limits=TURN_LIMITS

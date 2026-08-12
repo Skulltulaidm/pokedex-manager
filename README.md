@@ -38,7 +38,7 @@ Open http://localhost:3000 and create an account.
 The two schemas are migrated by different tools on purpose: Better Auth owns
 `auth` and Alembic owns `pokedex`, and neither is allowed to touch the other.
 
-The chat and the scanner need a model. Put a Gemini key in `apps/api/.env`:
+The chat and the scanner need a model. Put a Gemini key in `.env`:
 
 ```
 GOOGLE_API_KEY=...
@@ -51,8 +51,11 @@ To run vision locally instead, install [Ollama](https://ollama.com), then:
 
 ```bash
 ollama pull qwen2.5vl:7b
-echo 'VISION_MODEL=ollama:qwen2.5vl:7b' >> apps/api/.env
+echo 'VISION_MODEL=ollama:qwen2.5vl:7b' >> .env
 ```
+
+The api container reaches a host Ollama through `host.docker.internal`, which is
+already wired up.
 
 ---
 
@@ -134,6 +137,7 @@ always rolled back.
 ## Known limits
 
 - One catalogue set is seeded by default; `pokedex-sync <set-id>` adds more.
+- Images and files are served over plain HTTP on localhost; there is no TLS.
 - Prices are not wired up, so no collection value is reported.
 - Scan images are stored on a local volume; there is no cleanup job.
 - The app is built to run locally and has never been deployed.

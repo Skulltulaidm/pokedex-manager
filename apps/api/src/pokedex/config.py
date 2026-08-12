@@ -13,9 +13,17 @@ class Settings(BaseSettings):
     auth_issuer: str
     auth_audience: str
 
-    # Doubles as the URL the in-app agent connects to: the chat is a client of the
-    # same server external clients use, not a private side entrance.
+    # Advertised in OAuth discovery, so it must be the URL an external client
+    # dials from outside the network the server runs in.
     mcp_resource_url: str = "http://localhost:8010/mcp"
+
+    # Where the in-app agent connects. Same server, but reached from inside: in a
+    # container the published port does not exist.
+    mcp_internal_url: str = ""
+
+    @property
+    def mcp_agent_url(self) -> str:
+        return self.mcp_internal_url or self.mcp_resource_url
 
     # An alias, not a pinned version: gemini-2.5-flash was retired for new API keys
     # mid-project.
