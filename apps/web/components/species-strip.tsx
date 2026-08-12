@@ -63,7 +63,7 @@ export function SpeciesStrip({
               <div
                 className={cn(
                   "ring-edge relative aspect-[63/88] w-16 overflow-hidden rounded-lg ring-1 transition-transform hover:-translate-y-0.5",
-                  card.id === currentCardId && "ring-primary ring-2",
+                  card.id === currentCardId && "ring-primary ring-2 ring-inset",
                   !isOwned && "grayscale",
                 )}
                 title={`${card.card_set.name} · ${card.number}/${card.card_set.printed_total}`}

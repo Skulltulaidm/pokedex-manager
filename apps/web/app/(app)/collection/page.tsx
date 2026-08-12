@@ -12,6 +12,7 @@ import { ScreenHeader } from "@/components/screen-header";
 import { ScrollRow } from "@/components/scroll-row";
 import { ShareMenu } from "@/components/share-menu";
 import { TYPE_ICON, typeColor, typeLabel } from "@/components/type-dot";
+import { useGridColumns } from "@/hooks/use-grid-columns";
 import { apiClient } from "@/lib/api-client";
 import { useCollectionStats } from "@/lib/api/hooks/useCollectionStats";
 import { useListCollection } from "@/lib/api/hooks/useListCollection";
@@ -34,7 +35,10 @@ import {
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
 
-const PAGE_SIZE = 48;
+// Rows per page. The page size itself is the column count times this, so a
+// page always fills its rows whatever the viewport resolves to.
+const ROWS_PER_PAGE = 6;
+const FALLBACK_COLUMNS = 6;
 
 const SORTS = [
   { value: "name", label: "Nombre" },
@@ -55,6 +59,10 @@ function CollectionGrid() {
   const page = Number(params.get("p") ?? 1);
 
   const [draft, setDraft] = useState(query);
+  const [gridRef, measured] = useGridColumns();
+  const columns = measured || FALLBACK_COLUMNS;
+  const pageSize = columns * ROWS_PER_PAGE;
+
   const [comparing, setComparing] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
 
@@ -88,8 +96,8 @@ function CollectionGrid() {
       condition: condition as never,
       search: query || undefined,
       sort: sort as never,
-      limit: PAGE_SIZE,
-      offset: (page - 1) * PAGE_SIZE,
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
     },
     { client: { client: apiClient } },
   );
@@ -104,7 +112,7 @@ function CollectionGrid() {
   }
 
   const total = data?.total ?? 0;
-  const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const lastPage = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <>
@@ -204,7 +212,10 @@ function CollectionGrid() {
 
       {data && data.items.length > 0 && (
         <>
-          <ul className="grid grid-cols-2 gap-x-3.5 gap-y-6 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
+          <ul
+            ref={gridRef}
+            className="grid grid-cols-2 gap-x-3.5 gap-y-6 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7"
+          >
             {data.items.map((item, index) => (
               <li
                 key={item.id}
