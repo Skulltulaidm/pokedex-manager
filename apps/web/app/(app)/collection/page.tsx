@@ -8,6 +8,7 @@ import { Suspense, useEffect, useState } from "react";
 import { BinderMark } from "@/components/binder-mark";
 import { CardPocket } from "@/components/card-pocket";
 import { Pager } from "@/components/pager";
+import { PortfolioBar } from "@/components/portfolio-bar";
 import { ScreenHeader } from "@/components/screen-header";
 import { ScrollRow } from "@/components/scroll-row";
 import { ShareMenu } from "@/components/share-menu";
@@ -141,6 +142,8 @@ function CollectionGrid() {
         <ShareMenu />
       </ScreenHeader>
 
+      <PortfolioBar />
+
       <div className="mb-3 flex gap-2">
         <InputGroup className="bg-secondary h-11 flex-1 rounded-full border-transparent">
           <InputGroupAddon>
@@ -198,6 +201,26 @@ function CollectionGrid() {
         </ScrollRow>
       )}
 
+      {stats && stats.sets.length > 1 && (
+        <ScrollRow className="mb-5">
+          <Chip active={!setId} onClick={() => setParam({ set: undefined, p: undefined })}>
+            Todos los sets
+          </Chip>
+          {stats.sets.map((entry) => (
+            <Chip
+              key={entry.set_id}
+              active={setId === entry.set_id}
+              onClick={() => setParam({ set: entry.set_id, p: undefined })}
+            >
+              {entry.set_name}
+              <span className="ml-1.5 font-mono text-[11px] opacity-60">
+                {entry.owned}/{entry.printed_total}
+              </span>
+            </Chip>
+          ))}
+        </ScrollRow>
+      )}
+
       {isPending && <PocketSkeleton />}
 
       {error && (
@@ -237,6 +260,8 @@ function CollectionGrid() {
                     types={item.card.species?.types ?? []}
                     quantity={item.quantity}
                     condition={conditionLabel(item.condition)}
+                    price={item.card.price_usd == null ? null : Number(item.card.price_usd)}
+                    rarity={item.card.rarity}
                   />
                 </ItemLink>
               </li>

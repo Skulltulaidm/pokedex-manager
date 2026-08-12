@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { TYPE_VAR, TypeDots } from "@/components/type-dot";
+import { formatUsd } from "@/lib/format";
 import { cn } from "@workspace/ui/lib/utils";
 
 // Pokemon cards are 63x88mm. Everything that stands in for one keeps that ratio.
@@ -30,6 +31,8 @@ export function CardPocket({
   types,
   quantity,
   condition,
+  price,
+  rarity,
 }: {
   name: string;
   setName: string;
@@ -39,6 +42,8 @@ export function CardPocket({
   types: string[];
   quantity: number;
   condition?: string;
+  price?: number | null;
+  rarity?: string | null;
 }) {
   const glow = TYPE_VAR[types[0] ?? ""] ?? null;
 
@@ -78,21 +83,42 @@ export function CardPocket({
               ×{quantity}
             </span>
           )}
+
+          {rarity && (
+            <span className="glass text-muted-foreground absolute top-2 left-2 rounded-full px-2 py-0.5 text-[10px] leading-none tracking-wide uppercase">
+              {rarity}
+            </span>
+          )}
         </div>
       </div>
 
       <div className="min-w-0">
-        <p className="truncate text-sm leading-tight font-semibold">{name}</p>
-        <p className="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs">
-          <span className="shrink-0 font-mono tabular-nums">
+        <div className="flex items-baseline justify-between gap-2">
+          <p className="truncate text-sm leading-tight font-semibold">{name}</p>
+          <TypeDots types={types} className="shrink-0" />
+        </div>
+
+        {/* Price leads the second line: this is a screen about what a collection
+            is worth, so the number belongs beside the name. */}
+        <p className="mt-1 flex items-baseline justify-between gap-2 text-xs">
+          <span className="text-muted-foreground truncate font-mono tabular-nums">
             {number}
             <span className="text-muted-foreground/45">/{printedTotal}</span>
+            <span className="mx-1.5">·</span>
+            {setName}
           </span>
-          <span className="truncate">{setName}</span>
-          <TypeDots types={types} className="ml-auto shrink-0" />
+          <span className="shrink-0 font-semibold tabular-nums">
+            {price == null ? <span className="text-muted-foreground/40">—</span> : formatUsd(price)}
+          </span>
         </p>
-        {condition && (
-          <p className="text-muted-foreground/70 mt-1 text-[11px]">{condition}</p>
+
+        {(condition || (quantity > 1 && price != null)) && (
+          <p className="text-muted-foreground/70 mt-1 flex items-baseline justify-between gap-2 text-[11px]">
+            <span className="truncate">{condition}</span>
+            {quantity > 1 && price != null && (
+              <span className="shrink-0 tabular-nums">{formatUsd(price * quantity)} total</span>
+            )}
+          </p>
         )}
       </div>
     </div>
