@@ -6,6 +6,14 @@ export type {
   AddCardMutationResponse,
 } from "./AddCard"
 export type { AddCardRequest } from "./AddCardRequest"
+export type {
+  AddToWishlist201,
+  AddToWishlist422,
+  AddToWishlistMutation,
+  AddToWishlistMutationRequest,
+  AddToWishlistMutationResponse,
+} from "./AddToWishlist"
+export type { AddWishlistRequest } from "./AddWishlistRequest"
 export type { BodyCreateScan } from "./BodyCreateScan"
 export type { CardCandidate } from "./CardCandidate"
 export type { CardCondition, CardConditionEnumKey } from "./CardCondition"
@@ -84,12 +92,31 @@ export type {
   ListConversationsQuery,
   ListConversationsQueryResponse,
 } from "./ListConversations"
+export type {
+  ListGaps200,
+  ListGaps422,
+  ListGapsQuery,
+  ListGapsQueryParams,
+  ListGapsQueryResponse,
+} from "./ListGaps"
+export type {
+  ListWishlist200,
+  ListWishlistQuery,
+  ListWishlistQueryResponse,
+} from "./ListWishlist"
 export type { Me200, MeQuery, MeQueryResponse } from "./Me"
 export type { MeResponse } from "./MeResponse"
 export type { MessageRole, MessageRoleEnumKey } from "./MessageRole"
 export type { MessageView } from "./MessageView"
 export type { OwnedSlot } from "./OwnedSlot"
 export type { PageCollectionItemView } from "./PageCollectionItemView"
+export type {
+  RemoveFromWishlist204,
+  RemoveFromWishlist422,
+  RemoveFromWishlistMutation,
+  RemoveFromWishlistMutationResponse,
+  RemoveFromWishlistPathParams,
+} from "./RemoveFromWishlist"
 export type {
   RemoveItem204,
   RemoveItem422,
@@ -120,6 +147,7 @@ export type {
   SendMessageMutationResponse,
 } from "./SendMessage"
 export type { SetCoverage } from "./SetCoverage"
+export type { SetGap } from "./SetGap"
 export type { SpeciesView } from "./SpeciesView"
 export type { TypeCount } from "./TypeCount"
 export type {
@@ -132,8 +160,11 @@ export type {
 } from "./UpdateItem"
 export type { UpdateItemRequest } from "./UpdateItemRequest"
 export type { ValidationError } from "./ValidationError"
+export type { WishlistItemView } from "./WishlistItemView"
+export type { WishlistSource, WishlistSourceEnumKey } from "./WishlistSource"
 export { cardConditionEnum } from "./CardCondition"
 export { cardReadingConfidenceEnum } from "./CardReading"
 export { cardReadingRaritySymbolEnum } from "./CardReading"
 export { messageRoleEnum } from "./MessageRole"
 export { scanResultStatusEnum } from "./ScanResult"
+export { wishlistSourceEnum } from "./WishlistSource"

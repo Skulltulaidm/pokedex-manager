@@ -1,0 +1,6 @@
+{
+  "type": "string",
+  "enum": ["user", "agent"],
+  "title": "WishlistSource",
+  "x-readme-ref-name": "WishlistSource"
+}

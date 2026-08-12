@@ -1,4 +1,5 @@
 export type { AddCardMutationKey } from "./hooks/useAddCard"
+export type { AddToWishlistMutationKey } from "./hooks/useAddToWishlist"
 export type { CollectionStatsQueryKey } from "./hooks/useCollectionStats"
 export type { CollectionStatsSuspenseQueryKey } from "./hooks/useCollectionStatsSuspense"
 export type { ConfirmScanMutationKey } from "./hooks/useConfirmScan"
@@ -17,8 +18,13 @@ export type { ListCollectionQueryKey } from "./hooks/useListCollection"
 export type { ListCollectionSuspenseQueryKey } from "./hooks/useListCollectionSuspense"
 export type { ListConversationsQueryKey } from "./hooks/useListConversations"
 export type { ListConversationsSuspenseQueryKey } from "./hooks/useListConversationsSuspense"
+export type { ListGapsQueryKey } from "./hooks/useListGaps"
+export type { ListGapsSuspenseQueryKey } from "./hooks/useListGapsSuspense"
+export type { ListWishlistQueryKey } from "./hooks/useListWishlist"
+export type { ListWishlistSuspenseQueryKey } from "./hooks/useListWishlistSuspense"
 export type { MeQueryKey } from "./hooks/useMe"
 export type { MeSuspenseQueryKey } from "./hooks/useMeSuspense"
+export type { RemoveFromWishlistMutationKey } from "./hooks/useRemoveFromWishlist"
 export type { RemoveItemMutationKey } from "./hooks/useRemoveItem"
 export type { SearchCardsQueryKey } from "./hooks/useSearchCards"
 export type { SearchCardsSuspenseQueryKey } from "./hooks/useSearchCardsSuspense"
@@ -34,6 +40,14 @@ export type {
   AddCardMutationResponse,
 } from "./types/AddCard"
 export type { AddCardRequest } from "./types/AddCardRequest"
+export type {
+  AddToWishlist201,
+  AddToWishlist422,
+  AddToWishlistMutation,
+  AddToWishlistMutationRequest,
+  AddToWishlistMutationResponse,
+} from "./types/AddToWishlist"
+export type { AddWishlistRequest } from "./types/AddWishlistRequest"
 export type { BodyCreateScan } from "./types/BodyCreateScan"
 export type { CardCandidate } from "./types/CardCandidate"
 export type { CardCondition, CardConditionEnumKey } from "./types/CardCondition"
@@ -116,12 +130,31 @@ export type {
   ListConversationsQuery,
   ListConversationsQueryResponse,
 } from "./types/ListConversations"
+export type {
+  ListGaps200,
+  ListGaps422,
+  ListGapsQuery,
+  ListGapsQueryParams,
+  ListGapsQueryResponse,
+} from "./types/ListGaps"
+export type {
+  ListWishlist200,
+  ListWishlistQuery,
+  ListWishlistQueryResponse,
+} from "./types/ListWishlist"
 export type { Me200, MeQuery, MeQueryResponse } from "./types/Me"
 export type { MeResponse } from "./types/MeResponse"
 export type { MessageRole, MessageRoleEnumKey } from "./types/MessageRole"
 export type { MessageView } from "./types/MessageView"
 export type { OwnedSlot } from "./types/OwnedSlot"
 export type { PageCollectionItemView } from "./types/PageCollectionItemView"
+export type {
+  RemoveFromWishlist204,
+  RemoveFromWishlist422,
+  RemoveFromWishlistMutation,
+  RemoveFromWishlistMutationResponse,
+  RemoveFromWishlistPathParams,
+} from "./types/RemoveFromWishlist"
 export type {
   RemoveItem204,
   RemoveItem422,
@@ -152,6 +185,7 @@ export type {
   SendMessageMutationResponse,
 } from "./types/SendMessage"
 export type { SetCoverage } from "./types/SetCoverage"
+export type { SetGap } from "./types/SetGap"
 export type { SpeciesView } from "./types/SpeciesView"
 export type { TypeCount } from "./types/TypeCount"
 export type {
@@ -164,7 +198,13 @@ export type {
 } from "./types/UpdateItem"
 export type { UpdateItemRequest } from "./types/UpdateItemRequest"
 export type { ValidationError } from "./types/ValidationError"
+export type { WishlistItemView } from "./types/WishlistItemView"
+export type {
+  WishlistSource,
+  WishlistSourceEnumKey,
+} from "./types/WishlistSource"
 export { addCard } from "./clients/addCard"
+export { addToWishlist } from "./clients/addToWishlist"
 export { collectionStats } from "./clients/collectionStats"
 export { confirmScan } from "./clients/confirmScan"
 export { createScan } from "./clients/createScan"
@@ -175,7 +215,10 @@ export { getScanImage } from "./clients/getScanImage"
 export { health } from "./clients/health"
 export { listCollection } from "./clients/listCollection"
 export { listConversations } from "./clients/listConversations"
+export { listGaps } from "./clients/listGaps"
+export { listWishlist } from "./clients/listWishlist"
 export { me } from "./clients/me"
+export { removeFromWishlist } from "./clients/removeFromWishlist"
 export { removeItem } from "./clients/removeItem"
 export { searchCards } from "./clients/searchCards"
 export { searchSpecies } from "./clients/searchSpecies"
@@ -184,6 +227,9 @@ export { updateItem } from "./clients/updateItem"
 export { addCardMutationKey } from "./hooks/useAddCard"
 export { addCardMutationOptions } from "./hooks/useAddCard"
 export { useAddCard } from "./hooks/useAddCard"
+export { addToWishlistMutationKey } from "./hooks/useAddToWishlist"
+export { addToWishlistMutationOptions } from "./hooks/useAddToWishlist"
+export { useAddToWishlist } from "./hooks/useAddToWishlist"
 export { collectionStatsQueryKey } from "./hooks/useCollectionStats"
 export { collectionStatsQueryOptions } from "./hooks/useCollectionStats"
 export { useCollectionStats } from "./hooks/useCollectionStats"
@@ -238,12 +284,27 @@ export { useListConversations } from "./hooks/useListConversations"
 export { listConversationsSuspenseQueryKey } from "./hooks/useListConversationsSuspense"
 export { listConversationsSuspenseQueryOptions } from "./hooks/useListConversationsSuspense"
 export { useListConversationsSuspense } from "./hooks/useListConversationsSuspense"
+export { listGapsQueryKey } from "./hooks/useListGaps"
+export { listGapsQueryOptions } from "./hooks/useListGaps"
+export { useListGaps } from "./hooks/useListGaps"
+export { listGapsSuspenseQueryKey } from "./hooks/useListGapsSuspense"
+export { listGapsSuspenseQueryOptions } from "./hooks/useListGapsSuspense"
+export { useListGapsSuspense } from "./hooks/useListGapsSuspense"
+export { listWishlistQueryKey } from "./hooks/useListWishlist"
+export { listWishlistQueryOptions } from "./hooks/useListWishlist"
+export { useListWishlist } from "./hooks/useListWishlist"
+export { listWishlistSuspenseQueryKey } from "./hooks/useListWishlistSuspense"
+export { listWishlistSuspenseQueryOptions } from "./hooks/useListWishlistSuspense"
+export { useListWishlistSuspense } from "./hooks/useListWishlistSuspense"
 export { meQueryKey } from "./hooks/useMe"
 export { meQueryOptions } from "./hooks/useMe"
 export { useMe } from "./hooks/useMe"
 export { meSuspenseQueryKey } from "./hooks/useMeSuspense"
 export { meSuspenseQueryOptions } from "./hooks/useMeSuspense"
 export { useMeSuspense } from "./hooks/useMeSuspense"
+export { removeFromWishlistMutationKey } from "./hooks/useRemoveFromWishlist"
+export { removeFromWishlistMutationOptions } from "./hooks/useRemoveFromWishlist"
+export { useRemoveFromWishlist } from "./hooks/useRemoveFromWishlist"
 export { removeItemMutationKey } from "./hooks/useRemoveItem"
 export { removeItemMutationOptions } from "./hooks/useRemoveItem"
 export { useRemoveItem } from "./hooks/useRemoveItem"
@@ -270,6 +331,7 @@ export { cardReadingConfidenceEnum } from "./types/CardReading"
 export { cardReadingRaritySymbolEnum } from "./types/CardReading"
 export { messageRoleEnum } from "./types/MessageRole"
 export { scanResultStatusEnum } from "./types/ScanResult"
+export { wishlistSourceEnum } from "./types/WishlistSource"
 export { HTTPValidationErrorSchema } from "./zod/HTTPValidationErrorSchema"
 export { addCardRequestSchema } from "./zod/addCardRequestSchema"
 export {
@@ -278,6 +340,13 @@ export {
   addCardMutationRequestSchema,
   addCardMutationResponseSchema,
 } from "./zod/addCardSchema"
+export {
+  addToWishlist201Schema,
+  addToWishlist422Schema,
+  addToWishlistMutationRequestSchema,
+  addToWishlistMutationResponseSchema,
+} from "./zod/addToWishlistSchema"
+export { addWishlistRequestSchema } from "./zod/addWishlistRequestSchema"
 export { bodyCreateScanSchema } from "./zod/bodyCreateScanSchema"
 export { cardCandidateSchema } from "./zod/cardCandidateSchema"
 export { cardConditionSchema } from "./zod/cardConditionSchema"
@@ -342,12 +411,28 @@ export {
   listConversations200Schema,
   listConversationsQueryResponseSchema,
 } from "./zod/listConversationsSchema"
+export {
+  listGaps200Schema,
+  listGaps422Schema,
+  listGapsQueryParamsSchema,
+  listGapsQueryResponseSchema,
+} from "./zod/listGapsSchema"
+export {
+  listWishlist200Schema,
+  listWishlistQueryResponseSchema,
+} from "./zod/listWishlistSchema"
 export { meResponseSchema } from "./zod/meResponseSchema"
 export { me200Schema, meQueryResponseSchema } from "./zod/meSchema"
 export { messageRoleSchema } from "./zod/messageRoleSchema"
 export { messageViewSchema } from "./zod/messageViewSchema"
 export { ownedSlotSchema } from "./zod/ownedSlotSchema"
 export { pageCollectionItemViewSchema } from "./zod/pageCollectionItemViewSchema"
+export {
+  removeFromWishlist204Schema,
+  removeFromWishlist422Schema,
+  removeFromWishlistMutationResponseSchema,
+  removeFromWishlistPathParamsSchema,
+} from "./zod/removeFromWishlistSchema"
 export {
   removeItem204Schema,
   removeItem422Schema,
@@ -374,6 +459,7 @@ export {
   sendMessageMutationResponseSchema,
 } from "./zod/sendMessageSchema"
 export { setCoverageSchema } from "./zod/setCoverageSchema"
+export { setGapSchema } from "./zod/setGapSchema"
 export { speciesViewSchema } from "./zod/speciesViewSchema"
 export { typeCountSchema } from "./zod/typeCountSchema"
 export { updateItemRequestSchema } from "./zod/updateItemRequestSchema"
@@ -385,3 +471,5 @@ export {
   updateItemPathParamsSchema,
 } from "./zod/updateItemSchema"
 export { validationErrorSchema } from "./zod/validationErrorSchema"
+export { wishlistItemViewSchema } from "./zod/wishlistItemViewSchema"
+export { wishlistSourceSchema } from "./zod/wishlistSourceSchema"

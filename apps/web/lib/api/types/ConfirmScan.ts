@@ -4,6 +4,7 @@
  */
 
 import type { AddCardRequest } from "./AddCardRequest"
+import type { CollectionItemView } from "./CollectionItemView"
 import type { HTTPValidationError } from "./HTTPValidationError"
 
 export type ConfirmScanPathParams = {
@@ -14,10 +15,10 @@ export type ConfirmScanPathParams = {
 }
 
 /**
- * Response Confirm Scan
+ * CollectionItemView
  * @description Successful Response
  */
-export type ConfirmScan201 = any
+export type ConfirmScan201 = CollectionItemView
 
 /**
  * HTTPValidationError

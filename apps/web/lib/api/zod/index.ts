@@ -6,6 +6,13 @@ export {
   addCardMutationRequestSchema,
   addCardMutationResponseSchema,
 } from "./addCardSchema"
+export {
+  addToWishlist201Schema,
+  addToWishlist422Schema,
+  addToWishlistMutationRequestSchema,
+  addToWishlistMutationResponseSchema,
+} from "./addToWishlistSchema"
+export { addWishlistRequestSchema } from "./addWishlistRequestSchema"
 export { bodyCreateScanSchema } from "./bodyCreateScanSchema"
 export { cardCandidateSchema } from "./cardCandidateSchema"
 export { cardConditionSchema } from "./cardConditionSchema"
@@ -70,12 +77,28 @@ export {
   listConversations200Schema,
   listConversationsQueryResponseSchema,
 } from "./listConversationsSchema"
+export {
+  listGaps200Schema,
+  listGaps422Schema,
+  listGapsQueryParamsSchema,
+  listGapsQueryResponseSchema,
+} from "./listGapsSchema"
+export {
+  listWishlist200Schema,
+  listWishlistQueryResponseSchema,
+} from "./listWishlistSchema"
 export { meResponseSchema } from "./meResponseSchema"
 export { me200Schema, meQueryResponseSchema } from "./meSchema"
 export { messageRoleSchema } from "./messageRoleSchema"
 export { messageViewSchema } from "./messageViewSchema"
 export { ownedSlotSchema } from "./ownedSlotSchema"
 export { pageCollectionItemViewSchema } from "./pageCollectionItemViewSchema"
+export {
+  removeFromWishlist204Schema,
+  removeFromWishlist422Schema,
+  removeFromWishlistMutationResponseSchema,
+  removeFromWishlistPathParamsSchema,
+} from "./removeFromWishlistSchema"
 export {
   removeItem204Schema,
   removeItem422Schema,
@@ -102,6 +125,7 @@ export {
   sendMessageMutationResponseSchema,
 } from "./sendMessageSchema"
 export { setCoverageSchema } from "./setCoverageSchema"
+export { setGapSchema } from "./setGapSchema"
 export { speciesViewSchema } from "./speciesViewSchema"
 export { typeCountSchema } from "./typeCountSchema"
 export { updateItemRequestSchema } from "./updateItemRequestSchema"
@@ -113,3 +137,5 @@ export {
   updateItemPathParamsSchema,
 } from "./updateItemSchema"
 export { validationErrorSchema } from "./validationErrorSchema"
+export { wishlistItemViewSchema } from "./wishlistItemViewSchema"
+export { wishlistSourceSchema } from "./wishlistSourceSchema"

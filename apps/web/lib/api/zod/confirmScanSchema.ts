@@ -5,6 +5,7 @@
 
 import { HTTPValidationErrorSchema } from "./HTTPValidationErrorSchema"
 import { addCardRequestSchema } from "./addCardRequestSchema"
+import { collectionItemViewSchema } from "./collectionItemViewSchema"
 import { z } from "zod/v4"
 
 export const confirmScanPathParamsSchema = z.object({
@@ -14,7 +15,7 @@ export const confirmScanPathParamsSchema = z.object({
 /**
  * @description Successful Response
  */
-export const confirmScan201Schema = z.any()
+export const confirmScan201Schema = z.lazy(() => collectionItemViewSchema)
 
 /**
  * @description Validation Error
