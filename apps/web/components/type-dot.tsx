@@ -1,4 +1,49 @@
+import {
+  Bird,
+  Bug,
+  CircleDot,
+  Droplet,
+  Flame,
+  Gem,
+  Ghost,
+  Hand,
+  Leaf,
+  Moon,
+  Mountain,
+  Skull,
+  Snowflake,
+  Sparkles,
+  Sprout,
+  Swords,
+  Wrench,
+  Zap,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
 import { cn } from "@workspace/ui/lib/utils";
+
+// A glyph is recognised before a word is read, and these eighteen are the
+// vocabulary the whole collection is filtered and coloured by.
+export const TYPE_ICON: Record<string, LucideIcon> = {
+  normal: CircleDot,
+  fire: Flame,
+  water: Droplet,
+  electric: Zap,
+  grass: Leaf,
+  ice: Snowflake,
+  fighting: Hand,
+  poison: Skull,
+  ground: Mountain,
+  flying: Bird,
+  psychic: Sparkles,
+  bug: Bug,
+  rock: Gem,
+  ghost: Ghost,
+  dragon: Swords,
+  dark: Moon,
+  steel: Wrench,
+  fairy: Sprout,
+};
 
 /**
  * The CSS variable behind each type, not a utility class.
@@ -87,17 +132,18 @@ export function TypeDots({
 
 export function TypeChip({ type }: { type: string }) {
   const color = typeColor(type);
+  const Icon = TYPE_ICON[type] ?? CircleDot;
 
   return (
     <span
-      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+      className="inline-flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1.5 text-xs font-medium"
       style={{
         color,
         background: `color-mix(in oklch, ${color} 14%, transparent)`,
         boxShadow: `inset 0 0 0 1px color-mix(in oklch, ${color} 28%, transparent)`,
       }}
     >
-      <span className="size-1.5 rounded-full" style={{ background: color }} />
+      <Icon className="size-3.5" />
       {typeLabel(type)}
     </span>
   );

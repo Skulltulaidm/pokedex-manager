@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { InfoTile } from "@/components/info-tile";
+import { StatRadar } from "@/components/stat-radar";
 import { TypeChip, typeColor } from "@/components/type-dot";
 import { formatUsd } from "@/lib/format";
 import { apiClient } from "@/lib/api-client";
@@ -18,9 +19,6 @@ import { useRemoveItem } from "@/lib/api/hooks/useRemoveItem";
 import { useUpdateItem } from "@/lib/api/hooks/useUpdateItem";
 import {
   CONDITION_ORDER,
-  STAT_LABEL,
-  STAT_MAX,
-  STAT_ORDER,
   VARIANT_LABEL,
   conditionLabel,
   formatReleaseDate,
@@ -95,7 +93,7 @@ export default function ItemDetailPage() {
   const price = card.price_usd == null ? null : Number(card.price_usd);
 
   return (
-    <div className="space-y-7">
+    <div>
       <Breadcrumbs
         trail={[
           { label: "Colección", href: "/collection" },
@@ -104,7 +102,8 @@ export default function ItemDetailPage() {
         ]}
       />
 
-      <div className="relative mx-auto w-60">
+      <div className="lg:grid lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] lg:items-start lg:gap-10">
+      <div className="relative mx-auto w-60 lg:sticky lg:top-0 lg:w-full">
         <div
           aria-hidden
           className="aura absolute -inset-10 opacity-60 blur-2xl"
@@ -124,6 +123,7 @@ export default function ItemDetailPage() {
         </div>
       </div>
 
+      <div className="mt-7 space-y-6 lg:mt-0">
       <header className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="font-display truncate text-[28px] leading-none font-semibold tracking-[-0.03em]">
@@ -175,31 +175,11 @@ export default function ItemDetailPage() {
 
       {card.species ? (
         <Section title={`Especie · Generación ${card.species.generation}`}>
-          <div>
-            <ul className="space-y-1.5">
-              {STAT_ORDER.filter((key) => key in card.species!.stats).map((key) => {
-                const value = card.species!.stats[key] ?? 0;
-                return (
-                  <li key={key} className="flex items-center gap-3">
-                    <span className="text-muted-foreground w-28 shrink-0 text-sm">
-                      {STAT_LABEL[key]}
-                    </span>
-                    <span className="bg-muted h-2 flex-1 overflow-hidden rounded-full">
-                      <span
-                        className="block h-full rounded-full"
-                        style={{
-                          width: `${(value / STAT_MAX) * 100}%`,
-                          background: typeColor(card.species!.types[0] ?? "normal"),
-                        }}
-                      />
-                    </span>
-                    <span className="w-8 shrink-0 text-right font-mono text-sm">
-                      {value}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
+          <div className="pt-1">
+            <StatRadar
+              stats={card.species.stats}
+              color={typeColor(card.species.types[0] ?? "normal")}
+            />
           </div>
         </Section>
       ) : (
@@ -223,7 +203,7 @@ export default function ItemDetailPage() {
           />
         ) : (
           <>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="mt-1 mb-5 flex flex-wrap items-center gap-2">
               <span className="bg-foreground text-background rounded-full px-3 py-1.5 text-[13px] font-medium tabular-nums">
                 ×{item.quantity}
               </span>
@@ -238,12 +218,12 @@ export default function ItemDetailPage() {
             </div>
 
             {item.notes && (
-              <p className="text-muted-foreground mt-3.5 text-sm leading-relaxed">
+              <p className="text-muted-foreground mb-5 text-sm leading-relaxed">
                 {item.notes}
               </p>
             )}
 
-            <div className="flex gap-2 pt-4">
+            <div className="border-edge flex gap-2 border-t pt-4">
               <Button variant="outline" onClick={() => setEditing(true)}>
                 Editar
               </Button>
@@ -273,6 +253,8 @@ export default function ItemDetailPage() {
           </>
         )}
       </Section>
+      </div>
+      </div>
     </div>
   );
 }
