@@ -1,12 +1,13 @@
 "use client";
 
-import { ArrowLeftRight, Search, SlidersHorizontal, X } from "lucide-react";
+import { ArrowLeftRight, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 import { BinderMark } from "@/components/binder-mark";
 import { CardPocket } from "@/components/card-pocket";
+import { FilterBar } from "@/components/filter-bar";
 import { Pager } from "@/components/pager";
 import { PortfolioBar } from "@/components/portfolio-bar";
 import { ScreenHeader } from "@/components/screen-header";
@@ -17,22 +18,13 @@ import { useGridColumns } from "@/hooks/use-grid-columns";
 import { apiClient } from "@/lib/api-client";
 import { useCollectionStats } from "@/lib/api/hooks/useCollectionStats";
 import { useListCollection } from "@/lib/api/hooks/useListCollection";
-import { CONDITION_ORDER, conditionLabel } from "@/lib/labels";
+import { conditionLabel } from "@/lib/labels";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from "@workspace/ui/components/input-group";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@workspace/ui/components/sheet";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
 
@@ -41,11 +33,6 @@ import { cn } from "@workspace/ui/lib/utils";
 const ROWS_PER_PAGE = 6;
 const FALLBACK_COLUMNS = 6;
 
-const SORTS = [
-  { value: "name", label: "Nombre" },
-  { value: "number", label: "Número" },
-  { value: "price", label: "Precio" },
-];
 
 function CollectionGrid() {
   const params = useSearchParams();
@@ -164,18 +151,6 @@ function CollectionGrid() {
           )}
         </InputGroup>
 
-        <span className="lg:hidden">
-        <FilterSheet
-          setId={setId}
-          generation={generation}
-          condition={condition}
-          sort={sort}
-          count={activeFilters}
-          sets={stats?.sets ?? []}
-          generations={stats?.generations ?? []}
-          onApply={(next) => setParam({ ...next, p: undefined })}
-        />
-        </span>
       </div>
 
       {comparing && (
@@ -185,6 +160,10 @@ function CollectionGrid() {
             : "Toca una segunda carta."}
         </p>
       )}
+
+      <div className="mb-4">
+        <FilterBar />
+      </div>
 
       {stats && stats.types.length > 0 && (
         <ScrollRow className="mb-5">
@@ -199,26 +178,6 @@ function CollectionGrid() {
               active={type === entry.type}
               onClick={() => setParam({ type: entry.type, p: undefined })}
             />
-          ))}
-        </ScrollRow>
-      )}
-
-      {stats && stats.sets.length > 1 && (
-        <ScrollRow className="mb-5 lg:hidden">
-          <Chip active={!setId} onClick={() => setParam({ set: undefined, p: undefined })}>
-            Todos los sets
-          </Chip>
-          {stats.sets.map((entry) => (
-            <Chip
-              key={entry.set_id}
-              active={setId === entry.set_id}
-              onClick={() => setParam({ set: entry.set_id, p: undefined })}
-            >
-              {entry.set_name}
-              <span className="ml-1.5 font-mono text-[11px] opacity-60">
-                {entry.owned}/{entry.printed_total}
-              </span>
-            </Chip>
           ))}
         </ScrollRow>
       )}
@@ -276,166 +235,6 @@ function CollectionGrid() {
   );
 }
 
-function FilterControls({
-  setId,
-  generation,
-  condition,
-  sort,
-  sets,
-  generations,
-  onApply,
-}: {
-  setId?: string;
-  generation?: string;
-  condition?: string;
-  sort: string;
-  sets: { set_id: string; set_name: string }[];
-  generations: { generation: number }[];
-  onApply: (next: Record<string, string | undefined>) => void;
-}) {
-  return (
-    <div className="grid gap-6">
-      <Picker
-        label="Ordenar por"
-        value={sort === "recent" ? undefined : sort}
-        options={SORTS}
-        onChange={(value) => onApply({ orden: value })}
-      />
-      <Picker
-        label="Estado"
-        value={condition}
-        options={CONDITION_ORDER.map((value) => ({ value, label: conditionLabel(value) }))}
-        onChange={(value) => onApply({ estado: value })}
-      />
-      <Picker
-        label="Generación"
-        value={generation}
-        options={generations.map((entry) => ({
-          value: String(entry.generation),
-          label: `Generación ${entry.generation}`,
-        }))}
-        onChange={(value) => onApply({ gen: value })}
-      />
-      <Picker
-        label="Set"
-        value={setId}
-        options={sets.map((entry) => ({ value: entry.set_id, label: entry.set_name }))}
-        onChange={(value) => onApply({ set: value })}
-      />
-    </div>
-  );
-}
-
-function FilterSheet({
-  setId,
-  generation,
-  condition,
-  sort,
-  count,
-  sets,
-  generations,
-  onApply,
-}: {
-  setId?: string;
-  generation?: string;
-  condition?: string;
-  sort: string;
-  count: number;
-  sets: { set_id: string; set_name: string }[];
-  generations: { generation: number }[];
-  onApply: (next: Record<string, string | undefined>) => void;
-}) {
-  return (
-    <Sheet>
-      <SheetTrigger
-        render={
-          <Button variant="outline" className="size-11 shrink-0 rounded-full sm:w-auto sm:px-4">
-            <SlidersHorizontal />
-            <span className="hidden sm:inline">Filtros</span>
-            {count > 0 && (
-              <span className="bg-foreground text-background grid size-5 place-items-center rounded-full text-[11px] tabular-nums">
-                {count}
-              </span>
-            )}
-          </Button>
-        }
-      />
-      <SheetContent side="bottom" className="rounded-t-2xl">
-        <SheetHeader>
-          <SheetTitle>Filtros</SheetTitle>
-        </SheetHeader>
-
-        <div className="px-4 py-2">
-          <FilterControls
-            setId={setId}
-            generation={generation}
-            condition={condition}
-            sort={sort}
-            sets={sets}
-            generations={generations}
-            onApply={onApply}
-          />
-        </div>
-
-        <SheetFooter className="flex-row gap-2">
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() =>
-              onApply({ set: undefined, gen: undefined, estado: undefined, orden: undefined })
-            }
-          >
-            Limpiar
-          </Button>
-          <SheetClose render={<Button className="flex-1">Ver resultados</Button>} />
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-/**
- * Options as chips rather than a select: every value is visible without opening a
- * popup, and one tap applies it instead of two.
- */
-function Picker({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string | undefined;
-  options: { value: string; label: string }[];
-  onChange: (value: string | undefined) => void;
-}) {
-  if (options.length === 0) return null;
-
-  return (
-    <fieldset>
-      <legend className="text-muted-foreground mb-2.5 text-sm">{label}</legend>
-      <div className="flex flex-wrap gap-2">
-        <Chip active={!value} onClick={() => onChange(undefined)}>
-          Cualquiera
-        </Chip>
-        {options.map((option) => (
-          <Chip
-            key={option.value}
-            active={value === option.value}
-            onClick={() => onChange(option.value)}
-          >
-            {option.label}
-          </Chip>
-        ))}
-      </div>
-    </fieldset>
-  );
-}
-
-/**
- * A filter chip wearing its own type colour and glyph. A row of neutral pills
- * makes the reader parse eighteen words; this row is read as a legend.
- */
 function TypeFilterChip({
   type,
   count,
