@@ -1,34 +1,15 @@
 "use client";
 
-import { LayoutGrid, MessageCircle, PieChart, ScanLine } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-import { AccountMenu } from "@/components/account-menu";
+import { AppSidebar, NAV } from "@/components/app-sidebar";
+import { SiteHeader } from "@/components/site-header";
 import { authClient } from "@/lib/auth-client";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-} from "@workspace/ui/components/sidebar";
+import { SidebarInset, SidebarProvider } from "@workspace/ui/components/sidebar";
 import { Spinner } from "@workspace/ui/components/spinner";
 import { cn } from "@workspace/ui/lib/utils";
-
-const NAV = [
-  { href: "/collection", label: "Colección", icon: LayoutGrid },
-  { href: "/scan", label: "Escanear", icon: ScanLine },
-  { href: "/stats", label: "Resumen", icon: PieChart },
-  { href: "/chat", label: "Preguntar", icon: MessageCircle },
-];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { data: session, isPending } = authClient.useSession();
@@ -48,54 +29,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <SidebarProvider>
-      <Sidebar collapsible="icon" className="hidden lg:flex">
-        <SidebarHeader className="px-4 py-4">
-          <Link
-            href="/collection"
-            className="font-display truncate text-[19px] font-semibold tracking-[-0.03em]"
-          >
-            Poké<span className="text-muted-foreground">Dex</span>
-          </Link>
-        </SidebarHeader>
+    <SidebarProvider
+      style={
+        {
+          "--sidebar-width": "calc(var(--spacing) * 66)",
+          "--header-height": "calc(var(--spacing) * 13)",
+        } as React.CSSProperties
+      }
+    >
+      <AppSidebar />
 
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {NAV.map(({ href, label, icon: Icon }) => (
-                  <SidebarMenuItem key={href}>
-                    <SidebarMenuButton
-                      isActive={pathname === href}
-                      tooltip={label}
-                      render={
-                        <Link href={href}>
-                          <Icon />
-                          <span>{label}</span>
-                        </Link>
-                      }
-                    />
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-
-        <SidebarFooter className="flex-row items-center gap-2.5 px-3 py-3">
-          <AccountMenu email={session.user.email} />
-          <p className="text-muted-foreground min-w-0 flex-1 truncate text-xs group-data-[collapsible=icon]:hidden">
-            {session.user.email}
-          </p>
-        </SidebarFooter>
-      </Sidebar>
-
-      {/* The scroll container is the inset, not the page, so the rail never
-          travels with the content. */}
-      <SidebarInset className="lg:h-svh lg:overflow-y-auto">
-        <main key={pathname} className="rise w-full px-4 pt-5 pb-32 lg:px-8 lg:py-7">
+      {/* The inset owns the scroll, so the rail and the header stay put. */}
+      <SidebarInset className="lg:h-[calc(100svh-1rem)] lg:overflow-hidden">
+        <SiteHeader />
+        <div key={pathname} className="rise flex-1 px-4 pt-5 pb-32 lg:overflow-y-auto lg:px-6 lg:py-6">
           {children}
-        </main>
+        </div>
       </SidebarInset>
 
       <nav
