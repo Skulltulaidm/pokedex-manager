@@ -80,7 +80,7 @@
                 "anyOf": [{ "type": "string" }, { "type": "null" }],
                 "title": "Image Large Url"
               },
-              "price_eur": {
+              "price_usd": {
                 "anyOf": [
                   {
                     "type": "string",
@@ -88,7 +88,7 @@
                   },
                   { "type": "null" }
                 ],
-                "title": "Price Eur"
+                "title": "Price Usd"
               },
               "card_set": {
                 "properties": {

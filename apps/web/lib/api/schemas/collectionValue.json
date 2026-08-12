@@ -1,15 +1,15 @@
 {
   "properties": {
-    "total_eur": {
+    "total_usd": {
       "type": "string",
       "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-      "title": "Total Eur"
+      "title": "Total Usd"
     },
     "priced_cards": { "type": "integer", "title": "Priced Cards" },
     "unpriced_cards": { "type": "integer", "title": "Unpriced Cards" }
   },
   "type": "object",
-  "required": ["total_eur", "priced_cards", "unpriced_cards"],
+  "required": ["total_usd", "priced_cards", "unpriced_cards"],
   "title": "CollectionValue",
   "description": "What the collection is worth, and how much of it could be priced.\n\nThe coverage travels with the total because most cards have no market price;\na figure without it would read as complete when it is not.",
   "x-readme-ref-name": "CollectionValue"

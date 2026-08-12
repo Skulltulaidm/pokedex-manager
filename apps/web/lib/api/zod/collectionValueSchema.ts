@@ -10,7 +10,7 @@ import { z } from "zod/v4"
  */
 export const collectionValueSchema = z
   .object({
-    total_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    total_usd: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
     priced_cards: z.int(),
     unpriced_cards: z.int(),
   })

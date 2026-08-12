@@ -97,10 +97,10 @@ async def _sets(db: AsyncSession, user_id: str) -> list[SetCoverage]:
 
 
 async def _value(db: AsyncSession, user_id: str) -> CollectionValue:
-    priced = func.sum(CollectionItem.quantity).filter(Card.price_eur.isnot(None))
+    priced = func.sum(CollectionItem.quantity).filter(Card.price_usd.isnot(None))
     result = await db.execute(
         select(
-            func.coalesce(func.sum(Card.price_eur * CollectionItem.quantity), 0),
+            func.coalesce(func.sum(Card.price_usd * CollectionItem.quantity), 0),
             func.coalesce(priced, 0),
             func.coalesce(func.sum(CollectionItem.quantity), 0),
         )
@@ -111,7 +111,7 @@ async def _value(db: AsyncSession, user_id: str) -> CollectionValue:
     total, priced_count, all_count = result.one()
 
     return CollectionValue(
-        total_eur=total,
+        total_usd=total,
         priced_cards=priced_count,
         unpriced_cards=all_count - priced_count,
     )

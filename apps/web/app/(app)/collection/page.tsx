@@ -174,8 +174,12 @@ function CollectionGrid() {
       {data && data.items.length > 0 && (
         <>
           <ul className="grid grid-cols-2 gap-x-3.5 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
-            {data.items.map((item) => (
-              <li key={item.id}>
+            {data.items.map((item, index) => (
+              <li
+                key={item.id}
+                className="settle"
+                style={{ "--index": Math.min(index, 11) } as React.CSSProperties}
+              >
                 <Link
                   href={`/collection/${item.id}`}
                   className="focus-visible:ring-ring block rounded-lg focus-visible:ring-2 focus-visible:outline-none"

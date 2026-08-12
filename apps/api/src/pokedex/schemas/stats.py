@@ -41,7 +41,7 @@ class CollectionValue(BaseModel):
     a figure without it would read as complete when it is not.
     """
 
-    total_eur: Decimal
+    total_usd: Decimal
     priced_cards: int
     unpriced_cards: int
 

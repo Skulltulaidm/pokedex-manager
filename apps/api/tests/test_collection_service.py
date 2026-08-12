@@ -245,17 +245,17 @@ async def sortable(db: AsyncSession, user_id: str) -> AsyncSession:
             CHARIZARD_CARD.model_copy(
                 update={"id": "base1-9", "number": "9", "number_prefix": "9",
                         "name": "Zapdos", "name_normalized": "zapdos",
-                        "price_eur": Decimal("12.00")}
+                        "price_usd": Decimal("12.00")}
             ),
             CHARIZARD_CARD.model_copy(
                 update={"id": "base1-10", "number": "10", "number_prefix": "10",
                         "name": "Abra", "name_normalized": "abra",
-                        "price_eur": Decimal("40.00")}
+                        "price_usd": Decimal("40.00")}
             ),
             CHARIZARD_CARD.model_copy(
                 update={"id": "base1-11", "number": "11", "number_prefix": "11",
                         "name": "Machop", "name_normalized": "machop",
-                        "price_eur": None}
+                        "price_usd": None}
             ),
         ],
     )
@@ -286,7 +286,7 @@ async def test_sorting_by_price_puts_unpriced_cards_last(
 ) -> None:
     items = await collection.list_items(sortable, user_id, CollectionFilters(sort="price"))
 
-    assert [item.card.price_eur for item in items] == [
+    assert [item.card.price_usd for item in items] == [
         Decimal("40.00"),
         Decimal("12.00"),
         None,

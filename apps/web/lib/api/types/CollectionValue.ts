@@ -12,7 +12,7 @@ export type CollectionValue = {
    * @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
    * @type string
    */
-  total_eur: string
+  total_usd: string
   /**
    * @type integer
    */

@@ -19,7 +19,7 @@ COLUMNS = [
     "quantity",
     "is_graded",
     "grade",
-    "price_eur",
+    "price_usd",
     "acquired_at",
     "notes",
 ]
@@ -40,7 +40,7 @@ def _row(item: CollectionItem) -> dict[str, object]:
         "quantity": item.quantity,
         "is_graded": item.is_graded,
         "grade": item.grade if item.grade is not None else "",
-        "price_eur": card.price_eur if card.price_eur is not None else "",
+        "price_usd": card.price_usd if card.price_usd is not None else "",
         "acquired_at": item.acquired_at.isoformat() if item.acquired_at else "",
         "notes": item.notes or "",
     }

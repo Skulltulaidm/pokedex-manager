@@ -44,7 +44,7 @@ class CardView(BaseModel):
     hp: int | None
     image_small_url: str | None
     image_large_url: str | None
-    price_eur: Decimal | None = None
+    price_usd: Decimal | None = None
     card_set: CardSetView
     species: SpeciesView | None
 

@@ -78,9 +78,9 @@ class Card(Base):
     hp: Mapped[int | None] = mapped_column(SmallInteger)
     image_small_url: Mapped[str | None] = mapped_column(Text)
     image_large_url: Mapped[str | None] = mapped_column(Text)
-    # Cardmarket trend, in EUR. Null for most cards, which is why anything that
-    # totals it has to report the coverage alongside.
-    price_eur: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
+    # TCGplayer market price, in USD. Null for some cards, which is why anything
+    # that totals it has to report the coverage alongside.
+    price_usd: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
     price_updated_at: Mapped[datetime | None]
     fetched_at: Mapped[datetime] = mapped_column(server_default=func.now())
 

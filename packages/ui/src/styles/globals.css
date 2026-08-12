@@ -61,6 +61,13 @@
 
 /* The cards deal themselves out, the way a hand is spread on a table. Each one
    sets --deal to its own resting rotation. */
+/* Grid items settle in sequence. Capped low so a page of sixty cards does not
+   end up waiting on the animation. */
+@utility settle {
+    animation: rise 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--index, 0) * 22ms);
+}
+
 @utility deal {
     animation: deal 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
     animation-delay: var(--deal-delay, 0s);

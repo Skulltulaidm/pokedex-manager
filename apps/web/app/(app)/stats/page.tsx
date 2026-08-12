@@ -10,8 +10,10 @@ import { CoverageStrip, TypeSpectrum } from "@/components/coverage-strip";
 import { ScreenHeader } from "@/components/screen-header";
 import { typeColor, typeLabel } from "@/components/type-dot";
 import { apiClient } from "@/lib/api-client";
+import { formatShare, formatUsd } from "@/lib/format";
 import { useCollectionStats } from "@/lib/api/hooks/useCollectionStats";
 import type { CollectionStats } from "@/lib/api/types";
+import { useListCollection } from "@/lib/api/hooks/useListCollection";
 import { useListGaps } from "@/lib/api/hooks/useListGaps";
 import {
   listWishlistQueryKey,
@@ -150,6 +152,7 @@ export default function StatsPage() {
               </ul>
             </section>
           )}
+          <TopHoldings total={Number(data.value.total_usd)} />
         </TabsContent>
 
         <TabsContent value="falta">
@@ -169,27 +172,103 @@ export default function StatsPage() {
  * price, and the figure alone would read as complete.
  */
 function Value({ value }: { value: CollectionStats["value"] }) {
-  const total = Number(value.total_eur);
   if (value.priced_cards === 0) return null;
 
+  const total = Number(value.total_usd);
+  const covered = value.priced_cards + value.unpriced_cards;
+  const coverage = covered === 0 ? 0 : (value.priced_cards / covered) * 100;
+
   return (
-    <div className="ring-edge bg-surface mt-6 rounded-2xl p-4 ring-1">
-      <p className="text-muted-foreground text-xs tracking-wide uppercase">
-        Valor estimado
+    <section className="ring-edge bg-surface mt-6 rounded-2xl p-5 ring-1">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-muted-foreground text-[11px] tracking-wide uppercase">
+            Valor estimado
+          </p>
+          <p className="font-display mt-1.5 text-[2.25rem] leading-none font-semibold tabular-nums">
+            {formatUsd(total, true)}
+          </p>
+        </div>
+        <span className="ring-edge text-muted-foreground rounded-full px-2.5 py-1 text-[11px] ring-1">
+          USD
+        </span>
+      </div>
+
+      <div className="mt-5">
+        <div className="mb-2 flex items-baseline justify-between text-xs">
+          <span className="text-muted-foreground">Cartas con precio</span>
+          <span className="font-mono tabular-nums">
+            {value.priced_cards}
+            <span className="text-muted-foreground/50">/{covered}</span>
+          </span>
+        </div>
+        <div className="bg-muted h-1.5 overflow-hidden rounded-full">
+          <div
+            className="bg-foreground h-full rounded-full transition-[width] duration-700"
+            style={{ width: `${coverage}%` }}
+          />
+        </div>
+      </div>
+
+      <p className="text-muted-foreground/70 mt-4 text-xs leading-relaxed">
+        Orientativo. Es el precio de mercado de TCGplayer para cada carta, no una
+        tasación: el estado real y la edición cambian lo que vale.
       </p>
-      <p className="font-display mt-1 text-2xl font-semibold tabular-nums">
-        {total.toLocaleString("es", { style: "currency", currency: "EUR", maximumFractionDigits: 0 })}
-      </p>
-      <p className="text-muted-foreground mt-1.5 text-sm">
-        {value.unpriced_cards > 0
-          ? `De ${value.priced_cards} ${value.priced_cards === 1 ? "carta" : "cartas"} con precio. ${value.unpriced_cards} sin precio.`
-          : "Todas tus cartas tienen precio."}
-      </p>
-      <p className="text-muted-foreground/70 mt-3 text-xs leading-relaxed">
-        Orientativo. Es la tendencia de Cardmarket para cada carta, no una
-        tasación: el estado real y la edición cambian el precio.
-      </p>
-    </div>
+    </section>
+  );
+}
+
+/**
+ * The cards carrying the value, largest first. A portfolio is read by its
+ * positions, not only by its total.
+ */
+function TopHoldings({ total }: { total: number }) {
+  const { data, isPending } = useListCollection(
+    { sort: "price" as never, limit: 5 },
+    { client: { client: apiClient } },
+  );
+
+  if (isPending) return <RowsSkeleton />;
+
+  const priced = data?.items.filter((item) => item.card.price_usd != null) ?? [];
+  if (priced.length === 0) return null;
+
+  return (
+    <section>
+      <h2 className="font-display mb-4 text-lg font-semibold tracking-tight">
+        Tus cartas más valiosas
+      </h2>
+      <ul className="space-y-2.5">
+        {priced.map((item) => {
+          const unit = Number(item.card.price_usd);
+          const line = unit * item.quantity;
+          return (
+            <li key={item.id}>
+              <Link href={`/collection/${item.id}`} className="block">
+                <CardRow
+                  name={item.card.name}
+                  number={item.card.number}
+                  printedTotal={item.card.card_set.printed_total}
+                  setName={item.card.card_set.name}
+                  imageUrl={item.card.image_small_url ?? null}
+                  types={item.card.species?.types ?? []}
+                >
+                  <div className="shrink-0 text-right">
+                    <p className="text-[15px] font-semibold tabular-nums">
+                      {formatUsd(line)}
+                    </p>
+                    <p className="text-muted-foreground font-mono text-[11px] tabular-nums">
+                      {formatShare(line, total)}
+                      {item.quantity > 1 && ` · ${item.quantity} × ${formatUsd(unit)}`}
+                    </p>
+                  </div>
+                </CardRow>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 

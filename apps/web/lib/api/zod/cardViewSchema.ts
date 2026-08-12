@@ -21,7 +21,7 @@ export const cardViewSchema = z
     hp: z.union([z.int(), z.null()]),
     image_small_url: z.union([z.string(), z.null()]),
     image_large_url: z.union([z.string(), z.null()]),
-    price_eur: z.optional(
+    price_usd: z.optional(
       z.union([z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/), z.null()])
     ),
     get card_set() {

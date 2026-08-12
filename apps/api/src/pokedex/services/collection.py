@@ -99,7 +99,7 @@ def _ordering(sort: SortKey) -> tuple[Any, ...]:
             CollectionItem.id.desc(),
         )
     if sort == "price":
-        return (Card.price_eur.desc().nullslast(), CollectionItem.id.desc())
+        return (Card.price_usd.desc().nullslast(), CollectionItem.id.desc())
     return (CollectionItem.created_at.desc(), CollectionItem.id.desc())
 
 

@@ -5,10 +5,13 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { CalendarDays, Heart, Layers, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { InfoTile } from "@/components/info-tile";
 import { TypeChip, typeColor } from "@/components/type-dot";
+import { formatUsd } from "@/lib/format";
 import { apiClient } from "@/lib/api-client";
 import { useGetItem } from "@/lib/api/hooks/useGetItem";
 import { useRemoveItem } from "@/lib/api/hooks/useRemoveItem";
@@ -89,15 +92,17 @@ export default function ItemDetailPage() {
   const { card } = item;
   const availableVariants = Object.entries(card.variants).filter(([, exists]) => exists);
 
+  const price = card.price_usd == null ? null : Number(card.price_usd);
+
   return (
     <div className="space-y-7">
-      <Link
-        href="/collection"
-        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm"
-      >
-        <ArrowLeft className="size-4" />
-        Colección
-      </Link>
+      <Breadcrumbs
+        trail={[
+          { label: "Colección", href: "/collection" },
+          { label: card.card_set.name, href: `/collection?set=${card.card_set.id}` },
+          { label: card.name },
+        ]}
+      />
 
       <div className="relative mx-auto w-60">
         <div
@@ -119,69 +124,58 @@ export default function ItemDetailPage() {
         </div>
       </div>
 
-      <div className="text-center">
-        <h1 className="font-display text-3xl leading-none font-extrabold tracking-tight">
-          {card.name}
-        </h1>
-        <p className="text-muted-foreground mt-2 font-mono text-sm">
-          {card.number}
-          <span className="text-muted-foreground/50">/{card.card_set.printed_total}</span>
-          <span className="mx-2">·</span>
-          {card.card_set.name}
-        </p>
-      </div>
-
-      <Section title="La carta">
-        <Row label="Número">
-          <span className="font-mono">
+      <header className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="font-display truncate text-[28px] leading-none font-semibold tracking-[-0.03em]">
+            {card.name}
+          </h1>
+          <p className="text-muted-foreground mt-2 font-mono text-sm tabular-nums">
             {card.number}
-            <span className="text-muted-foreground/55">/{card.card_set.printed_total}</span>
-          </span>
-        </Row>
-        {card.rarity && <Row label="Rareza">{card.rarity}</Row>}
-        {card.price_eur !== null && card.price_eur !== undefined && (
-          <Row label="Precio orientativo">
-            <span className="font-mono tabular-nums">
-              {Number(card.price_eur).toLocaleString("es", {
-                style: "currency",
-                currency: "EUR",
-              })}
-            </span>
-          </Row>
-        )}
-        {card.hp !== null && (
-          <Row label="PS impresos">
-            <span className="font-mono">{card.hp}</span>
-          </Row>
-        )}
-        {card.card_set.release_date && (
-          <Row label="Salió">
-            {formatReleaseDate(card.card_set.release_date)}
-          </Row>
-        )}
-        {availableVariants.length > 0 && (
-          <Row label="Impresiones">
-            {availableVariants
-              .map(([name]) => VARIANT_LABEL[name] ?? name)
-              .join(" · ")}
-          </Row>
-        )}
-      </Section>
-
-      {card.species ? (
-        <Section title="La especie">
-          <Row label="Tipos">
-            <span className="flex flex-wrap justify-end gap-1.5">
+            <span className="text-muted-foreground/50">/{card.card_set.printed_total}</span>
+            <span className="mx-2">·</span>
+            {card.card_set.name}
+          </p>
+          {card.species && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
               {card.species.types.map((type) => (
                 <TypeChip key={type} type={type} />
               ))}
-            </span>
-          </Row>
-          <Row label="Generación">
-            <span className="font-mono">{card.species.generation}</span>
-          </Row>
+            </div>
+          )}
+        </div>
 
-          <div className="pt-1">
+        {price !== null && (
+          <div className="shrink-0 text-right">
+            <p className="font-display text-2xl leading-none font-semibold tabular-nums">
+              {formatUsd(price)}
+            </p>
+            <p className="text-muted-foreground mt-1.5 text-xs">orientativo</p>
+          </div>
+        )}
+      </header>
+
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        {card.rarity && <InfoTile icon={Sparkles} label="Rareza" value={card.rarity} />}
+        {card.hp !== null && <InfoTile icon={Heart} label="PS" value={card.hp} />}
+        {card.card_set.release_date && (
+          <InfoTile
+            icon={CalendarDays}
+            label="Salió"
+            value={new Date(card.card_set.release_date).getFullYear()}
+          />
+        )}
+        {availableVariants.length > 0 && (
+          <InfoTile
+            icon={Layers}
+            label="Impresión"
+            value={availableVariants.map(([name]) => VARIANT_LABEL[name] ?? name).join(" · ")}
+          />
+        )}
+      </div>
+
+      {card.species ? (
+        <Section title={`Especie · Generación ${card.species.generation}`}>
+          <div>
             <ul className="space-y-1.5">
               {STAT_ORDER.filter((key) => key in card.species!.stats).map((key) => {
                 const value = card.species!.stats[key] ?? 0;
@@ -229,13 +223,27 @@ export default function ItemDetailPage() {
           />
         ) : (
           <>
-            <Row label="Cantidad">
-              <span className="font-mono">{item.quantity}</span>
-            </Row>
-            <Row label="Estado">{conditionLabel(item.condition)}</Row>
-            {item.notes && <Row label="Nota">{item.notes}</Row>}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="bg-foreground text-background rounded-full px-3 py-1.5 text-[13px] font-medium tabular-nums">
+                ×{item.quantity}
+              </span>
+              <span className="bg-secondary rounded-full px-3 py-1.5 text-[13px] font-medium">
+                {conditionLabel(item.condition)}
+              </span>
+              {price !== null && item.quantity > 1 && (
+                <span className="text-muted-foreground ml-auto text-sm tabular-nums">
+                  {formatUsd(price * item.quantity)} en total
+                </span>
+              )}
+            </div>
 
-            <div className="flex gap-2 pt-3">
+            {item.notes && (
+              <p className="text-muted-foreground mt-3.5 text-sm leading-relaxed">
+                {item.notes}
+              </p>
+            )}
+
+            <div className="flex gap-2 pt-4">
               <Button variant="outline" onClick={() => setEditing(true)}>
                 Editar
               </Button>

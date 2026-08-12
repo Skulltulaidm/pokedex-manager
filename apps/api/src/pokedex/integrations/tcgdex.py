@@ -62,7 +62,7 @@ class CardPayload(BaseModel):
     hp: int | None
     image_small_url: str | None
     image_large_url: str | None
-    price_eur: Decimal | None = None
+    price_usd: Decimal | None = None
     price_updated_at: datetime | None = None
 
 
@@ -84,15 +84,29 @@ def build_set(data: dict[str, Any]) -> SetPayload:
     )
 
 
-def market_price(pricing: dict[str, Any] | None) -> tuple[Decimal | None, datetime | None]:
-    """Cardmarket's trend price, which smooths the spikes a single sale causes.
+# Ordered by how a collector reads a card: the foil printing is the one being
+# priced when it exists, and the plain one otherwise.
+PRICE_VARIANTS = ("1stEditionHolofoil", "holofoil", "reverseHolofoil", "1stEdition", "normal")
 
-    Only one source is read: mixing marketplaces in one column would produce a
-    total nobody could interpret.
+
+def market_price(pricing: dict[str, Any] | None) -> tuple[Decimal | None, datetime | None]:
+    """TCGplayer's market price, in USD, for the most collectible printing.
+
+    Only one marketplace is read: mixing them in a single column produces a total
+    nobody can interpret. TCGplayer quotes USD natively, so no rate is applied.
     """
-    market = (pricing or {}).get("cardmarket") or {}
-    trend = market.get("trend")
-    if trend is None:
+    market = (pricing or {}).get("tcgplayer") or {}
+
+    price = next(
+        (
+            (market[variant] or {}).get("marketPrice")
+            for variant in PRICE_VARIANTS
+            if isinstance(market.get(variant), dict)
+            and (market[variant] or {}).get("marketPrice") is not None
+        ),
+        None,
+    )
+    if price is None:
         return None, None
 
     updated = market.get("updated")
@@ -103,7 +117,7 @@ def market_price(pricing: dict[str, Any] | None) -> tuple[Decimal | None, dateti
         aware = datetime.fromisoformat(updated.replace("Z", "+00:00"))
         stamp = aware.astimezone(UTC).replace(tzinfo=None)
 
-    return Decimal(str(trend)), stamp
+    return Decimal(str(price)), stamp
 
 
 def build_card(data: dict[str, Any]) -> CardPayload:
@@ -128,7 +142,7 @@ def build_card(data: dict[str, Any]) -> CardPayload:
         hp=data.get("hp"),
         image_small_url=small,
         image_large_url=large,
-        price_eur=price,
+        price_usd=price,
         price_updated_at=price_updated,
     )
 

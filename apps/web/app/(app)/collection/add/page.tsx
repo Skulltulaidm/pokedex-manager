@@ -1,5 +1,6 @@
 "use client";
 
+import { Search } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -14,7 +15,13 @@ import type { CardView } from "@/lib/api/types/CardView";
 import { CONDITION_ORDER, conditionLabel } from "@/lib/labels";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@workspace/ui/components/input-group";
 import { Label } from "@workspace/ui/components/label";
+import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Spinner } from "@workspace/ui/components/spinner";
 import { cn } from "@workspace/ui/lib/utils";
 
@@ -57,8 +64,11 @@ function SearchStep({
 
   return (
     <>
-      <div className="relative">
-        <Input
+      <InputGroup className="bg-secondary h-11 rounded-full border-transparent">
+        <InputGroupAddon>
+          <Search className="size-4" />
+        </InputGroupAddon>
+        <InputGroupInput
           value={query}
           onChange={(event) => onQuery(event.target.value)}
           placeholder="Charizard, Blastoise…"
@@ -66,9 +76,11 @@ function SearchStep({
           aria-label="Buscar carta por nombre"
         />
         {isFetching && (
-          <Spinner className="text-muted-foreground absolute top-1/2 right-3 size-4 -translate-y-1/2" />
+          <InputGroupAddon align="inline-end">
+            <Spinner className="text-muted-foreground size-4" />
+          </InputGroupAddon>
         )}
-      </div>
+      </InputGroup>
 
       {data && data.length === 0 && (
         <p className="text-muted-foreground mt-8 text-center text-sm">
@@ -76,14 +88,16 @@ function SearchStep({
         </p>
       )}
 
-      <ul className="mt-4 divide-y divide-seam">
+      {!data && <ResultsSkeleton />}
+
+      <ul className="divide-edge mt-4 divide-y">
         {data?.map((card) => (
           <li key={card.id}>
             <button
               onClick={() => onPick(card)}
-              className="hover:bg-accent/60 flex w-full items-center gap-3 rounded-md px-1 py-2.5 text-left transition-colors"
+              className="hover:bg-accent/60 flex w-full items-center gap-3 rounded-lg px-1.5 py-2.5 text-left transition-colors active:scale-[0.99]"
             >
-              <div className="bg-surface ring-edge relative h-16 w-[46px] shrink-0 overflow-hidden rounded-sm ring-1 ring-inset">
+              <div className="bg-surface ring-edge relative h-16 w-[46px] shrink-0 overflow-hidden rounded-md ring-1 ring-inset">
                 {card.image_small_url && (
                   <Image
                     src={card.image_small_url}
@@ -228,5 +242,23 @@ function ConfirmForm({ card, onBack }: { card: CardView; onBack: () => void }) {
         </Button>
       </div>
     </div>
+  );
+}
+
+
+function ResultsSkeleton() {
+  return (
+    <ul className="divide-edge mt-4 divide-y">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <li key={index} className="flex items-center gap-3 px-1.5 py-2.5">
+          <Skeleton className="h-16 w-[46px] shrink-0 rounded-md" />
+          <div className="flex-1 space-y-1.5">
+            <Skeleton className="h-4 w-2/5" />
+            <Skeleton className="h-3 w-1/4" />
+          </div>
+          <Skeleton className="h-3 w-12 shrink-0" />
+        </li>
+      ))}
+    </ul>
   );
 }
