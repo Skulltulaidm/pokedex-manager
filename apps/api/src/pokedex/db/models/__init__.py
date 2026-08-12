@@ -14,6 +14,7 @@ from pokedex.db.models.conversation import (
     UserPreference,
 )
 from pokedex.db.models.external import auth_user
+from pokedex.db.models.share import ShareLink
 
 __all__ = [
     "Card",
@@ -25,6 +26,7 @@ __all__ = [
     "MessageRole",
     "Scan",
     "ScanStatus",
+    "ShareLink",
     "Species",
     "UserPreference",
     "WishlistItem",

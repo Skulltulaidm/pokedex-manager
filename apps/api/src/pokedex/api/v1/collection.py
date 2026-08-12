@@ -1,7 +1,10 @@
-from typing import Annotated
+from datetime import date
+from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from pokedex.api.deps import CurrentUser, DbSession
 from pokedex.schemas.catalog import CollectionItemView
@@ -11,9 +14,13 @@ from pokedex.schemas.collection import (
     UpdateItemRequest,
 )
 from pokedex.schemas.common import Page
-from pokedex.services import collection
+from pokedex.services import collection, export
 
 router = APIRouter(prefix="/collection", tags=["collection"])
+
+
+def _attachment(filename: str) -> dict[str, str]:
+    return {"Content-Disposition": f'attachment; filename="{filename}"'}
 
 # Requesting another user's item answers 404 rather than 403: a 403 would
 # confirm the row exists.
@@ -34,6 +41,28 @@ async def list_collection(
         total=total,
         limit=filters.limit,
         offset=filters.offset,
+    )
+
+
+@router.get("/export")
+async def export_collection(
+    user: CurrentUser, db: DbSession, format: Literal["csv", "json"] = "csv"
+) -> Response:
+    """The whole collection as a file, unpaginated: an export that stops at 200
+    rows is not an export."""
+    items = await collection.all_items(db, user.id)
+    stamp = date.today().isoformat()
+
+    if format == "json":
+        return JSONResponse(
+            jsonable_encoder(export.to_rows(items)),
+            headers=_attachment(f"pokedex-{stamp}.json"),
+        )
+
+    return StreamingResponse(
+        export.to_csv(items),
+        media_type="text/csv; charset=utf-8",
+        headers=_attachment(f"pokedex-{stamp}.csv"),
     )
 
 

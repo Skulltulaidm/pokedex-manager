@@ -8,6 +8,7 @@ import { Suspense, useEffect, useState } from "react";
 import { BinderMark } from "@/components/binder-mark";
 import { CardPocket } from "@/components/card-pocket";
 import { ScreenHeader } from "@/components/screen-header";
+import { ShareMenu } from "@/components/share-menu";
 import { typeLabel } from "@/components/type-dot";
 import { apiClient } from "@/lib/api-client";
 import { useCollectionStats } from "@/lib/api/hooks/useCollectionStats";
@@ -93,7 +94,9 @@ function CollectionGrid() {
             </span>
           )
         }
-      />
+      >
+        <ShareMenu />
+      </ScreenHeader>
 
       <div className="mb-3 flex gap-2">
         <InputGroup className="bg-secondary h-11 flex-1 rounded-full border-transparent">

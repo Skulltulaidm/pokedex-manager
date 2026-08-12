@@ -4,6 +4,9 @@ export type { CollectionStatsQueryKey } from "./hooks/useCollectionStats"
 export type { CollectionStatsSuspenseQueryKey } from "./hooks/useCollectionStatsSuspense"
 export type { ConfirmScanMutationKey } from "./hooks/useConfirmScan"
 export type { CreateScanMutationKey } from "./hooks/useCreateScan"
+export type { CreateShareLinkMutationKey } from "./hooks/useCreateShareLink"
+export type { ExportCollectionQueryKey } from "./hooks/useExportCollection"
+export type { ExportCollectionSuspenseQueryKey } from "./hooks/useExportCollectionSuspense"
 export type { GetCardQueryKey } from "./hooks/useGetCard"
 export type { GetCardSuspenseQueryKey } from "./hooks/useGetCardSuspense"
 export type { GetConversationQueryKey } from "./hooks/useGetConversation"
@@ -12,6 +15,8 @@ export type { GetItemQueryKey } from "./hooks/useGetItem"
 export type { GetItemSuspenseQueryKey } from "./hooks/useGetItemSuspense"
 export type { GetScanImageQueryKey } from "./hooks/useGetScanImage"
 export type { GetScanImageSuspenseQueryKey } from "./hooks/useGetScanImageSuspense"
+export type { GetShareLinkQueryKey } from "./hooks/useGetShareLink"
+export type { GetShareLinkSuspenseQueryKey } from "./hooks/useGetShareLinkSuspense"
 export type { HealthQueryKey } from "./hooks/useHealth"
 export type { HealthSuspenseQueryKey } from "./hooks/useHealthSuspense"
 export type { ListCollectionQueryKey } from "./hooks/useListCollection"
@@ -24,8 +29,11 @@ export type { ListWishlistQueryKey } from "./hooks/useListWishlist"
 export type { ListWishlistSuspenseQueryKey } from "./hooks/useListWishlistSuspense"
 export type { MeQueryKey } from "./hooks/useMe"
 export type { MeSuspenseQueryKey } from "./hooks/useMeSuspense"
+export type { ReadSharedCollectionQueryKey } from "./hooks/useReadSharedCollection"
+export type { ReadSharedCollectionSuspenseQueryKey } from "./hooks/useReadSharedCollectionSuspense"
 export type { RemoveFromWishlistMutationKey } from "./hooks/useRemoveFromWishlist"
 export type { RemoveItemMutationKey } from "./hooks/useRemoveItem"
+export type { RevokeShareLinkMutationKey } from "./hooks/useRevokeShareLink"
 export type { SearchCardsQueryKey } from "./hooks/useSearchCards"
 export type { SearchCardsSuspenseQueryKey } from "./hooks/useSearchCardsSuspense"
 export type { SearchSpeciesQueryKey } from "./hooks/useSearchSpecies"
@@ -84,6 +92,19 @@ export type {
   CreateScanMutationRequest,
   CreateScanMutationResponse,
 } from "./types/CreateScan"
+export type {
+  CreateShareLink201,
+  CreateShareLinkMutation,
+  CreateShareLinkMutationResponse,
+} from "./types/CreateShareLink"
+export type {
+  ExportCollection200,
+  ExportCollection422,
+  ExportCollectionQuery,
+  ExportCollectionQueryParams,
+  ExportCollectionQueryParamsFormatEnumKey,
+  ExportCollectionQueryResponse,
+} from "./types/ExportCollection"
 export type { GenerationCount } from "./types/GenerationCount"
 export type {
   GetCard200,
@@ -113,6 +134,11 @@ export type {
   GetScanImageQuery,
   GetScanImageQueryResponse,
 } from "./types/GetScanImage"
+export type {
+  GetShareLink200,
+  GetShareLinkQuery,
+  GetShareLinkQueryResponse,
+} from "./types/GetShareLink"
 export type { HTTPValidationError } from "./types/HTTPValidationError"
 export type {
   Health200,
@@ -149,6 +175,15 @@ export type { MessageRole, MessageRoleEnumKey } from "./types/MessageRole"
 export type { MessageView } from "./types/MessageView"
 export type { OwnedSlot } from "./types/OwnedSlot"
 export type { PageCollectionItemView } from "./types/PageCollectionItemView"
+export type { PublicCollection } from "./types/PublicCollection"
+export type { PublicItemView } from "./types/PublicItemView"
+export type {
+  ReadSharedCollection200,
+  ReadSharedCollection422,
+  ReadSharedCollectionPathParams,
+  ReadSharedCollectionQuery,
+  ReadSharedCollectionQueryResponse,
+} from "./types/ReadSharedCollection"
 export type {
   RemoveFromWishlist204,
   RemoveFromWishlist422,
@@ -163,6 +198,11 @@ export type {
   RemoveItemMutationResponse,
   RemoveItemPathParams,
 } from "./types/RemoveItem"
+export type {
+  RevokeShareLink204,
+  RevokeShareLinkMutation,
+  RevokeShareLinkMutationResponse,
+} from "./types/RevokeShareLink"
 export type { ScanResult, ScanResultStatusEnumKey } from "./types/ScanResult"
 export type {
   SearchCards200,
@@ -187,6 +227,7 @@ export type {
 } from "./types/SendMessage"
 export type { SetCoverage } from "./types/SetCoverage"
 export type { SetGap } from "./types/SetGap"
+export type { ShareLinkView } from "./types/ShareLinkView"
 export type { SpeciesView } from "./types/SpeciesView"
 export type { TypeCount } from "./types/TypeCount"
 export type {
@@ -209,18 +250,23 @@ export { addToWishlist } from "./clients/addToWishlist"
 export { collectionStats } from "./clients/collectionStats"
 export { confirmScan } from "./clients/confirmScan"
 export { createScan } from "./clients/createScan"
+export { createShareLink } from "./clients/createShareLink"
+export { exportCollection } from "./clients/exportCollection"
 export { getCard } from "./clients/getCard"
 export { getConversation } from "./clients/getConversation"
 export { getItem } from "./clients/getItem"
 export { getScanImage } from "./clients/getScanImage"
+export { getShareLink } from "./clients/getShareLink"
 export { health } from "./clients/health"
 export { listCollection } from "./clients/listCollection"
 export { listConversations } from "./clients/listConversations"
 export { listGaps } from "./clients/listGaps"
 export { listWishlist } from "./clients/listWishlist"
 export { me } from "./clients/me"
+export { readSharedCollection } from "./clients/readSharedCollection"
 export { removeFromWishlist } from "./clients/removeFromWishlist"
 export { removeItem } from "./clients/removeItem"
+export { revokeShareLink } from "./clients/revokeShareLink"
 export { searchCards } from "./clients/searchCards"
 export { searchSpecies } from "./clients/searchSpecies"
 export { sendMessage } from "./clients/sendMessage"
@@ -243,6 +289,15 @@ export { useConfirmScan } from "./hooks/useConfirmScan"
 export { createScanMutationKey } from "./hooks/useCreateScan"
 export { createScanMutationOptions } from "./hooks/useCreateScan"
 export { useCreateScan } from "./hooks/useCreateScan"
+export { createShareLinkMutationKey } from "./hooks/useCreateShareLink"
+export { createShareLinkMutationOptions } from "./hooks/useCreateShareLink"
+export { useCreateShareLink } from "./hooks/useCreateShareLink"
+export { exportCollectionQueryKey } from "./hooks/useExportCollection"
+export { exportCollectionQueryOptions } from "./hooks/useExportCollection"
+export { useExportCollection } from "./hooks/useExportCollection"
+export { exportCollectionSuspenseQueryKey } from "./hooks/useExportCollectionSuspense"
+export { exportCollectionSuspenseQueryOptions } from "./hooks/useExportCollectionSuspense"
+export { useExportCollectionSuspense } from "./hooks/useExportCollectionSuspense"
 export { getCardQueryKey } from "./hooks/useGetCard"
 export { getCardQueryOptions } from "./hooks/useGetCard"
 export { useGetCard } from "./hooks/useGetCard"
@@ -267,6 +322,12 @@ export { useGetScanImage } from "./hooks/useGetScanImage"
 export { getScanImageSuspenseQueryKey } from "./hooks/useGetScanImageSuspense"
 export { getScanImageSuspenseQueryOptions } from "./hooks/useGetScanImageSuspense"
 export { useGetScanImageSuspense } from "./hooks/useGetScanImageSuspense"
+export { getShareLinkQueryKey } from "./hooks/useGetShareLink"
+export { getShareLinkQueryOptions } from "./hooks/useGetShareLink"
+export { useGetShareLink } from "./hooks/useGetShareLink"
+export { getShareLinkSuspenseQueryKey } from "./hooks/useGetShareLinkSuspense"
+export { getShareLinkSuspenseQueryOptions } from "./hooks/useGetShareLinkSuspense"
+export { useGetShareLinkSuspense } from "./hooks/useGetShareLinkSuspense"
 export { healthQueryKey } from "./hooks/useHealth"
 export { healthQueryOptions } from "./hooks/useHealth"
 export { useHealth } from "./hooks/useHealth"
@@ -303,12 +364,21 @@ export { useMe } from "./hooks/useMe"
 export { meSuspenseQueryKey } from "./hooks/useMeSuspense"
 export { meSuspenseQueryOptions } from "./hooks/useMeSuspense"
 export { useMeSuspense } from "./hooks/useMeSuspense"
+export { readSharedCollectionQueryKey } from "./hooks/useReadSharedCollection"
+export { readSharedCollectionQueryOptions } from "./hooks/useReadSharedCollection"
+export { useReadSharedCollection } from "./hooks/useReadSharedCollection"
+export { readSharedCollectionSuspenseQueryKey } from "./hooks/useReadSharedCollectionSuspense"
+export { readSharedCollectionSuspenseQueryOptions } from "./hooks/useReadSharedCollectionSuspense"
+export { useReadSharedCollectionSuspense } from "./hooks/useReadSharedCollectionSuspense"
 export { removeFromWishlistMutationKey } from "./hooks/useRemoveFromWishlist"
 export { removeFromWishlistMutationOptions } from "./hooks/useRemoveFromWishlist"
 export { useRemoveFromWishlist } from "./hooks/useRemoveFromWishlist"
 export { removeItemMutationKey } from "./hooks/useRemoveItem"
 export { removeItemMutationOptions } from "./hooks/useRemoveItem"
 export { useRemoveItem } from "./hooks/useRemoveItem"
+export { revokeShareLinkMutationKey } from "./hooks/useRevokeShareLink"
+export { revokeShareLinkMutationOptions } from "./hooks/useRevokeShareLink"
+export { useRevokeShareLink } from "./hooks/useRevokeShareLink"
 export { searchCardsQueryKey } from "./hooks/useSearchCards"
 export { searchCardsQueryOptions } from "./hooks/useSearchCards"
 export { useSearchCards } from "./hooks/useSearchCards"
@@ -330,6 +400,7 @@ export { useUpdateItem } from "./hooks/useUpdateItem"
 export { cardConditionEnum } from "./types/CardCondition"
 export { cardReadingConfidenceEnum } from "./types/CardReading"
 export { cardReadingRaritySymbolEnum } from "./types/CardReading"
+export { exportCollectionQueryParamsFormatEnum } from "./types/ExportCollection"
 export { messageRoleEnum } from "./types/MessageRole"
 export { scanResultStatusEnum } from "./types/ScanResult"
 export { wishlistSourceEnum } from "./types/WishlistSource"
@@ -377,6 +448,16 @@ export {
   createScanMutationRequestSchema,
   createScanMutationResponseSchema,
 } from "./zod/createScanSchema"
+export {
+  createShareLink201Schema,
+  createShareLinkMutationResponseSchema,
+} from "./zod/createShareLinkSchema"
+export {
+  exportCollection200Schema,
+  exportCollection422Schema,
+  exportCollectionQueryParamsSchema,
+  exportCollectionQueryResponseSchema,
+} from "./zod/exportCollectionSchema"
 export { generationCountSchema } from "./zod/generationCountSchema"
 export {
   getCard200Schema,
@@ -402,6 +483,10 @@ export {
   getScanImagePathParamsSchema,
   getScanImageQueryResponseSchema,
 } from "./zod/getScanImageSchema"
+export {
+  getShareLink200Schema,
+  getShareLinkQueryResponseSchema,
+} from "./zod/getShareLinkSchema"
 export { health200Schema, healthQueryResponseSchema } from "./zod/healthSchema"
 export {
   listCollection200Schema,
@@ -429,6 +514,14 @@ export { messageRoleSchema } from "./zod/messageRoleSchema"
 export { messageViewSchema } from "./zod/messageViewSchema"
 export { ownedSlotSchema } from "./zod/ownedSlotSchema"
 export { pageCollectionItemViewSchema } from "./zod/pageCollectionItemViewSchema"
+export { publicCollectionSchema } from "./zod/publicCollectionSchema"
+export { publicItemViewSchema } from "./zod/publicItemViewSchema"
+export {
+  readSharedCollection200Schema,
+  readSharedCollection422Schema,
+  readSharedCollectionPathParamsSchema,
+  readSharedCollectionQueryResponseSchema,
+} from "./zod/readSharedCollectionSchema"
 export {
   removeFromWishlist204Schema,
   removeFromWishlist422Schema,
@@ -441,6 +534,10 @@ export {
   removeItemMutationResponseSchema,
   removeItemPathParamsSchema,
 } from "./zod/removeItemSchema"
+export {
+  revokeShareLink204Schema,
+  revokeShareLinkMutationResponseSchema,
+} from "./zod/revokeShareLinkSchema"
 export { scanResultSchema } from "./zod/scanResultSchema"
 export {
   searchCards200Schema,
@@ -462,6 +559,7 @@ export {
 } from "./zod/sendMessageSchema"
 export { setCoverageSchema } from "./zod/setCoverageSchema"
 export { setGapSchema } from "./zod/setGapSchema"
+export { shareLinkViewSchema } from "./zod/shareLinkViewSchema"
 export { speciesViewSchema } from "./zod/speciesViewSchema"
 export { typeCountSchema } from "./zod/typeCountSchema"
 export { updateItemRequestSchema } from "./zod/updateItemRequestSchema"

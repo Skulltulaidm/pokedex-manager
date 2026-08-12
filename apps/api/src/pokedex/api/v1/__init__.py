@@ -1,6 +1,15 @@
 from fastapi import APIRouter
 
-from pokedex.api.v1 import catalog, chat, collection, probe, scan, stats, wishlist
+from pokedex.api.v1 import (
+    catalog,
+    chat,
+    collection,
+    probe,
+    scan,
+    share,
+    stats,
+    wishlist,
+)
 
 router = APIRouter(prefix="/api/v1")
 router.include_router(probe.router)
@@ -10,5 +19,6 @@ router.include_router(collection.router)
 router.include_router(scan.router)
 router.include_router(stats.router)
 router.include_router(wishlist.router)
+router.include_router(share.router)
 
 __all__ = ["router"]

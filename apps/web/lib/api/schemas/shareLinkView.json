@@ -1,0 +1,15 @@
+{
+  "properties": {
+    "id": { "type": "string", "format": "uuid", "title": "Id" },
+    "token": { "type": "string", "title": "Token" },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+    }
+  },
+  "type": "object",
+  "required": ["id", "token", "created_at"],
+  "title": "ShareLinkView",
+  "x-readme-ref-name": "ShareLinkView"
+}

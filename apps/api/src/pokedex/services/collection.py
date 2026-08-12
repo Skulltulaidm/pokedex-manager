@@ -92,6 +92,20 @@ async def list_items(
     return result.unique().scalars().all()
 
 
+async def all_items(db: AsyncSession, user_id: str) -> Sequence[CollectionItem]:
+    """Every entry, unpaginated. The page limit is an API concern, not an export's."""
+    statement = (
+        _owned(user_id)
+        .options(
+            joinedload(CollectionItem.card).joinedload(Card.species),
+            joinedload(CollectionItem.card).joinedload(Card.card_set),
+        )
+        .order_by(CollectionItem.created_at.desc(), CollectionItem.id.desc())
+    )
+    result = await db.execute(statement)
+    return result.unique().scalars().all()
+
+
 async def count_items(db: AsyncSession, user_id: str, filters: CollectionFilters) -> int:
     statement = _apply_filters(_owned(user_id), filters).with_only_columns(
         func.count(CollectionItem.id)
