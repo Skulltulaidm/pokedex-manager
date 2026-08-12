@@ -223,20 +223,6 @@ function CollectionGrid() {
         </ScrollRow>
       )}
 
-      <div className="lg:grid lg:grid-cols-[11.5rem_minmax(0,1fr)] lg:items-start lg:gap-7">
-        <aside className="border-edge hidden lg:sticky lg:top-0 lg:block lg:border-r lg:pr-5">
-          <FilterControls
-            setId={setId}
-            generation={generation}
-            condition={condition}
-            sort={sort}
-            sets={stats?.sets ?? []}
-            generations={stats?.generations ?? []}
-            onApply={(next) => setParam({ ...next, p: undefined })}
-          />
-        </aside>
-
-        <div>
       {isPending && <PocketSkeleton />}
 
       {error && (
@@ -286,8 +272,6 @@ function CollectionGrid() {
 
         </>
       )}
-        </div>
-      </div>
     </>
   );
 }

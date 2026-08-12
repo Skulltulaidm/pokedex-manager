@@ -38,7 +38,7 @@ export function AppSidebar() {
               size="lg"
               render={
                 <Link href="/collection">
-                  <span className="bg-foreground text-background flex aspect-square size-8 items-center justify-center rounded-lg">
+                  <span className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                     <LayoutGrid className="size-4" />
                   </span>
                   <span className="font-display text-[15px] font-semibold tracking-[-0.02em]">
@@ -60,6 +60,7 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     isActive={pathname === href}
                     tooltip={label}
+                    className="data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
                     render={
                       <Link href={href}>
                         <Icon />

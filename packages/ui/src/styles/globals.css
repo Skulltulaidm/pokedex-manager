@@ -159,12 +159,12 @@
    violet cast rather than neutral grey, which keeps it from going flat next to
    the warm hues most card art leans on. */
 :root {
-    --background: oklch(0.972 0.009 274);
-    --foreground: oklch(0.185 0.028 274);
-    --surface: oklch(0.995 0.004 274);
+    --background: oklch(0.985 0.001 0);
+    --foreground: oklch(0.16 0.002 0);
+    --surface: oklch(1 0 0);
     --surface-lit: oklch(1 0 0);
-    --raised: oklch(0.958 0.011 274);
-    --edge: oklch(0.185 0.028 274 / 0.12);
+    --raised: oklch(0.968 0.001 0);
+    --edge: oklch(0.16 0.002 0 / 0.11);
     --lift: 0 1px 2px oklch(0.185 0.028 274 / 0.07), 0 8px 24px -14px oklch(0.185 0.028 274 / 0.16);
     --float: 0 2px 6px oklch(0.185 0.028 274 / 0.09), 0 16px 40px -12px oklch(0.185 0.028 274 / 0.24);
     --sheen: oklch(1 0 0 / 0.7);
@@ -177,15 +177,15 @@
     --popover-foreground: var(--foreground);
     --primary: oklch(0.56 0.23 27);
     --primary-foreground: oklch(0.99 0.01 27);
-    --secondary: oklch(0.945 0.014 274);
+    --secondary: oklch(0.955 0.001 0);
     --secondary-foreground: var(--foreground);
-    --muted: oklch(0.935 0.015 274);
-    --muted-foreground: oklch(0.492 0.028 274);
-    --accent: oklch(0.928 0.019 274);
-    --accent-foreground: var(--foreground);
+    --muted: oklch(0.945 0.001 0);
+    --muted-foreground: oklch(0.47 0.002 0);
+    --accent: oklch(0.56 0.23 27 / 0.1);
+    --accent-foreground: oklch(0.48 0.22 27);
     --destructive: oklch(0.55 0.21 25);
     --border: var(--edge);
-    --input: oklch(0.185 0.028 274 / 0.16);
+    --input: oklch(0.16 0.002 0 / 0.15);
     --ring: oklch(0.56 0.23 27);
     --radius: 0.875rem;
     --star: oklch(0.68 0.15 80);
@@ -226,11 +226,11 @@
 }
 
 .dark {
-    --background: oklch(0.128 0.028 276);
-    --foreground: oklch(0.975 0.008 276);
-    --surface: oklch(0.178 0.03 276);
-    --surface-lit: oklch(0.212 0.033 276);
-    --raised: oklch(0.235 0.032 276);
+    --background: oklch(0.135 0.002 0);
+    --foreground: oklch(0.975 0.001 0);
+    --surface: oklch(0.183 0.003 0);
+    --surface-lit: oklch(0.213 0.003 0);
+    --raised: oklch(0.235 0.003 0);
     --edge: oklch(1 0 0 / 0.09);
     --lift: 0 1px 2px oklch(0 0 0 / 0.3), 0 12px 32px -14px oklch(0 0 0 / 0.7);
     --float: 0 2px 8px oklch(0 0 0 / 0.4), 0 18px 44px -12px oklch(0 0 0 / 0.75);
@@ -239,16 +239,16 @@
 
     --card: var(--surface);
     --card-foreground: var(--foreground);
-    --popover: oklch(0.205 0.031 276);
+    --popover: oklch(0.205 0.003 0);
     --popover-foreground: var(--foreground);
     --primary: oklch(0.63 0.23 27);
     --primary-foreground: oklch(0.99 0.01 27);
-    --secondary: oklch(0.252 0.033 276);
+    --secondary: oklch(0.248 0.003 0);
     --secondary-foreground: var(--foreground);
-    --muted: oklch(0.232 0.03 276);
-    --muted-foreground: oklch(0.7 0.03 276);
-    --accent: oklch(0.278 0.036 276);
-    --accent-foreground: var(--foreground);
+    --muted: oklch(0.232 0.003 0);
+    --muted-foreground: oklch(0.71 0.002 0);
+    --accent: oklch(0.63 0.23 27 / 0.18);
+    --accent-foreground: oklch(0.78 0.19 27);
     --destructive: oklch(0.68 0.2 22);
     --border: var(--edge);
     --input: oklch(1 0 0 / 0.12);
@@ -303,16 +303,16 @@
 
     body {
         background-image:
-            radial-gradient(70% 45% at 12% -8%, oklch(0.72 0.1 276 / 0.09), transparent 62%),
-            radial-gradient(60% 40% at 96% 4%, oklch(0.75 0.09 40 / 0.07), transparent 66%);
+            radial-gradient(70% 45% at 12% -8%, oklch(0.62 0.2 27 / 0.07), transparent 62%),
+            radial-gradient(60% 40% at 96% 4%, oklch(0.6 0.02 0 / 0.05), transparent 66%);
         background-attachment: fixed;
     }
 
     .dark body {
         /* Large dark areas read as a void without something behind them. */
         background-image:
-            radial-gradient(80% 50% at 12% -8%, oklch(0.5 0.16 276 / 0.3), transparent 60%),
-            radial-gradient(70% 45% at 96% 4%, oklch(0.55 0.14 200 / 0.16), transparent 65%);
+            radial-gradient(80% 50% at 12% -8%, oklch(0.48 0.2 27 / 0.22), transparent 60%),
+            radial-gradient(70% 45% at 96% 4%, oklch(0.4 0.03 0 / 0.3), transparent 65%);
         background-attachment: fixed;
     }
 

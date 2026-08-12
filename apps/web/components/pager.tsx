@@ -28,7 +28,7 @@ export function Pager({
       >
         <ChevronLeft />
       </Button>
-      <p className="text-muted-foreground min-w-14 text-center text-sm tabular-nums">
+      <p className="text-muted-foreground hidden min-w-14 text-center text-sm tabular-nums sm:block">
         {page} / {lastPage}
       </p>
       <Button

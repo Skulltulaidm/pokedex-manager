@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { AppSidebar, NAV } from "@/components/app-sidebar";
+import { ContextPanel } from "@/components/context-panel";
 import { SiteHeader } from "@/components/site-header";
 import { authClient } from "@/lib/auth-client";
 import { SidebarInset, SidebarProvider } from "@workspace/ui/components/sidebar";
@@ -38,11 +39,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       }
     >
       <AppSidebar />
+      <ContextPanel />
 
       {/* The inset owns the scroll, so the rail and the header stay put. */}
       <SidebarInset className="lg:h-[calc(100svh-1rem)] lg:overflow-hidden">
         <SiteHeader />
-        <div key={pathname} className="rise scrollbar-none flex-1 px-4 pt-5 pb-32 lg:overflow-y-auto lg:px-6 lg:py-6">
+        <div key={pathname} className="rise scrollbar-none flex-1 overflow-x-hidden px-4 pt-5 pb-32 lg:overflow-y-auto lg:px-6 lg:py-6">
           {children}
         </div>
       </SidebarInset>
