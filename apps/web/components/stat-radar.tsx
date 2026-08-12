@@ -21,7 +21,7 @@ const BASELINE = 70;
 
 const SIZE = 220;
 const CENTRE = SIZE / 2;
-const RADIUS = 74;
+const RADIUS = 82;
 
 function point(index: number, value: number): [number, number] {
   const angle = (Math.PI * 2 * index) / STAT_ORDER.length - Math.PI / 2;
@@ -47,10 +47,10 @@ export function StatRadar({
   const values = STAT_ORDER.map((key) => stats[key] ?? 0);
 
   return (
-    <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
+    <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-8">
       <svg
         viewBox={`0 0 ${SIZE} ${SIZE}`}
-        className="w-full max-w-[220px] shrink-0"
+        className="w-full max-w-[240px] shrink-0"
         role="img"
         aria-label={STAT_ORDER.map((key, i) => `${STAT_LABEL[key]} ${values[i]}`).join(", ")}
       >
@@ -79,15 +79,25 @@ export function StatRadar({
         })}
       </svg>
 
-      <ul className="grid w-full grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-1 sm:gap-y-1.5">
+      <ul className="grid w-full grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-1 sm:gap-y-2.5">
         {STAT_ORDER.map((key, index) => {
           const Icon = STAT_ICON[key]!;
           const value = values[index]!;
           return (
-            <li key={key} className="flex items-center gap-2 text-sm">
-              <Icon className="text-muted-foreground size-4 shrink-0" />
-              <span className="text-muted-foreground flex-1 truncate">{STAT_LABEL[key]}</span>
-              <span className="font-mono font-medium tabular-nums">{value}</span>
+            <li key={key} className="flex items-center gap-2.5 text-sm">
+              <Icon className="size-4 shrink-0" style={{ color }} />
+              <span className="text-muted-foreground w-[5.5rem] shrink-0 truncate">
+                {STAT_LABEL[key]}
+              </span>
+              <span className="bg-muted hidden h-1.5 flex-1 overflow-hidden rounded-full sm:block">
+                <span
+                  className="block h-full rounded-full transition-[width] duration-500"
+                  style={{ width: `${Math.min(value / SCALE, 1) * 100}%`, background: color }}
+                />
+              </span>
+              <span className="w-8 shrink-0 text-right font-mono font-medium tabular-nums">
+                {value}
+              </span>
             </li>
           );
         })}

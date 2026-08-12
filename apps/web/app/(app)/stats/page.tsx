@@ -59,7 +59,7 @@ export default function StatsPage() {
         </TabsList>
 
         <TabsContent value="resumen" className="space-y-8">
-          <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+          <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] xl:items-start">
           <section>
             <p className="font-display text-[2.75rem] leading-none font-semibold tabular-nums">
               {data.total_cards}

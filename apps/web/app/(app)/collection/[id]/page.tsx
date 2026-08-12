@@ -192,6 +192,7 @@ export default function ItemDetailPage() {
         </Section>
       )}
 
+      <div className="grid gap-6 xl:grid-cols-2 xl:items-start">
       {card.species && (
         <SpeciesStrip
           speciesId={card.species.id}
@@ -262,6 +263,7 @@ export default function ItemDetailPage() {
           </>
         )}
       </Section>
+      </div>
       </div>
       </div>
     </div>
