@@ -5,17 +5,26 @@ from mcp.server.auth.settings import AuthSettings
 
 from pokedex.config import get_settings
 from pokedex.db import SessionFactory
+from pokedex.db.models import WishlistSource
 from pokedex.mcp.auth import JwksTokenVerifier, current_user_id
 from pokedex.schemas.catalog import CardView, CollectionItemView
 from pokedex.schemas.collection import CollectionFilters
-from pokedex.services import catalog, collection, stats
+from pokedex.schemas.gaps import AddWishlistRequest, WishlistItemView
+from pokedex.services import catalog, collection, gaps, stats, wishlist
+from pokedex.services.collection import CardNotFoundError
 
 INSTRUCTIONS = """\
 Tools over a personal Pokemon card collection.
 
 The collection is the user's own physical cards. The catalog is the published
 card database, which is far larger — a card being in the catalog says nothing
-about whether the user owns it. Answer in Spanish.
+about whether the user owns it.
+
+You cannot add cards to the collection: only the user handling a real card can
+do that. You can suggest a card for their wishlist with suggest_card, and you
+must say what you are suggesting and why before you call it.
+
+Answer in Spanish.
 """
 
 settings = get_settings()
@@ -86,3 +95,58 @@ async def collection_stats() -> dict[str, Any]:
     async with SessionFactory() as db:
         result = await stats.collection_stats(db, user_id)
         return result.model_dump(mode="json")
+
+
+@server.tool()
+async def find_gaps(set_id: str | None = None, limit: int = 20) -> dict[str, Any]:
+    """Cards the user is missing from sets they have already started.
+
+    Scoped to started sets: every card ever printed is missing from a collection,
+    which is true and useless.
+    """
+    user_id = current_user_id()
+    async with SessionFactory() as db:
+        found = await gaps.find_gaps(db, user_id, set_id=set_id, limit=limit)
+        remaining = await gaps.set_totals(db, user_id)
+
+    return {
+        "remaining_by_set": remaining,
+        "sets": [gap.model_dump(mode="json") for gap in found],
+    }
+
+
+@server.tool()
+async def get_wishlist() -> dict[str, Any]:
+    """Cards the user wants, including the ones this assistant suggested."""
+    user_id = current_user_id()
+    async with SessionFactory() as db:
+        items = await wishlist.list_items(db, user_id)
+        views = [WishlistItemView.model_validate(item).model_dump(mode="json") for item in items]
+    return {"count": len(views), "items": views}
+
+
+@server.tool()
+async def suggest_card(card_id: str, reason: str) -> dict[str, Any]:
+    """Add a card to the user's wishlist as a suggestion from this assistant.
+
+    This is the only write available here, and it deliberately cannot touch the
+    collection: that records which cards the user physically owns, and nothing
+    but the user handling a card should change it. A suggestion is a proposal the
+    user can act on or delete.
+    """
+    user_id = current_user_id()
+    async with SessionFactory() as db:
+        try:
+            item = await wishlist.add(
+                db,
+                user_id,
+                AddWishlistRequest(card_id=card_id, reason=reason),
+                added_by=WishlistSource.AGENT,
+            )
+        except CardNotFoundError:
+            return {"added": False, "error": f"No card with id {card_id}"}
+
+        view = WishlistItemView.model_validate(await wishlist.get_item(db, user_id, item.id))
+        await db.commit()
+
+    return {"added": True, "item": view.model_dump(mode="json")}
