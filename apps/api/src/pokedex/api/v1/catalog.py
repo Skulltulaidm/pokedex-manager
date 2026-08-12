@@ -3,9 +3,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, status
 
-from pokedex.agent import VisualComparison, compare_images
 from pokedex.api.deps import CurrentUser, DbSession
-from pokedex.config import get_settings
 from pokedex.schemas.catalog import CardView, SpeciesView, TriviaView
 from pokedex.services import catalog, collection, trivia
 
@@ -36,32 +34,6 @@ async def species_trivia(species_id: int, user: CurrentUser, db: DbSession) -> A
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Species not found")
 
     return await trivia.get_or_create(db, species)
-
-
-@router.get("/compare", response_model=VisualComparison)
-async def compare_cards(
-    a: str, b: str, user: CurrentUser, db: DbSession
-) -> Any:
-    """What a model sees when the two card images are put side by side."""
-    settings = get_settings()
-    if not settings.agent_enabled:
-        raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE,
-            "La comparación visual requiere una API key de modelo configurada.",
-        )
-
-    cards = [await catalog.get_card(db, card_id) for card_id in (a, b)]
-    images = [card.image_large_url if card else None for card in cards]
-    if not all(images):
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Card image not available")
-
-    try:
-        return await compare_images(images[0], images[1], settings.vision_model)  # type: ignore[arg-type]
-    except Exception as exc:
-        logger.exception("visual comparison failed")
-        raise HTTPException(
-            status.HTTP_502_BAD_GATEWAY, "No se pudo comparar las imágenes."
-        ) from exc
 
 
 @router.get("/owned-ids", response_model=list[str])
