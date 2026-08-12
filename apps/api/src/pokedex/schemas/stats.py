@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from pydantic import BaseModel
 
 
@@ -32,9 +34,22 @@ class SetCoverage(BaseModel):
     owned_slots: list[OwnedSlot]
 
 
+class CollectionValue(BaseModel):
+    """What the collection is worth, and how much of it could be priced.
+
+    The coverage travels with the total because most cards have no market price;
+    a figure without it would read as complete when it is not.
+    """
+
+    total_eur: Decimal
+    priced_cards: int
+    unpriced_cards: int
+
+
 class CollectionStats(BaseModel):
     total_groups: int
     total_cards: int
+    value: CollectionValue
     types: list[TypeCount]
     generations: list[GenerationCount]
     sets: list[SetCoverage]

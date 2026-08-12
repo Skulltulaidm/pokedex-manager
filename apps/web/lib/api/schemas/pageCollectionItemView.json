@@ -67,6 +67,16 @@
                 "anyOf": [{ "type": "string" }, { "type": "null" }],
                 "title": "Image Large Url"
               },
+              "price_eur": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+                  },
+                  { "type": "null" }
+                ],
+                "title": "Price Eur"
+              },
               "card_set": {
                 "properties": {
                   "id": { "type": "string", "title": "Id" },

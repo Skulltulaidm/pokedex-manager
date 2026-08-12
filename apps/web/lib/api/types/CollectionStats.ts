@@ -3,6 +3,7 @@
  * Do not edit manually.
  */
 
+import type { CollectionValue } from "./CollectionValue"
 import type { GenerationCount } from "./GenerationCount"
 import type { SetCoverage } from "./SetCoverage"
 import type { TypeCount } from "./TypeCount"
@@ -19,6 +20,11 @@ export type CollectionStats = {
    * @type integer
    */
   total_cards: number
+  /**
+   * @description What the collection is worth, and how much of it could be priced.\n\nThe coverage travels with the total because most cards have no market price;\na figure without it would read as complete when it is not.
+   * @type object
+   */
+  value: CollectionValue
   /**
    * @type array
    */

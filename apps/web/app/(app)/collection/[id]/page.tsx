@@ -139,6 +139,16 @@ export default function ItemDetailPage() {
           </span>
         </Row>
         {card.rarity && <Row label="Rareza">{card.rarity}</Row>}
+        {card.price_eur !== null && card.price_eur !== undefined && (
+          <Row label="Precio de mercado">
+            <span className="font-mono tabular-nums">
+              {Number(card.price_eur).toLocaleString("es", {
+                style: "currency",
+                currency: "EUR",
+              })}
+            </span>
+          </Row>
+        )}
         {card.hp !== null && (
           <Row label="PS impresos">
             <span className="font-mono">{card.hp}</span>

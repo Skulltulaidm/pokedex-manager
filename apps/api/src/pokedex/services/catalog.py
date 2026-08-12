@@ -80,6 +80,8 @@ async def upsert_cards(db: AsyncSession, payloads: Sequence[CardPayload]) -> int
                 "hp",
                 "image_small_url",
                 "image_large_url",
+                "price_eur",
+                "price_updated_at",
             )
         }
         | {"fetched_at": func.now()},

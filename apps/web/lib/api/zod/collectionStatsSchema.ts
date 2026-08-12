@@ -3,6 +3,7 @@
  * Do not edit manually.
  */
 
+import { collectionValueSchema } from "./collectionValueSchema"
 import { generationCountSchema } from "./generationCountSchema"
 import { setCoverageSchema } from "./setCoverageSchema"
 import { typeCountSchema } from "./typeCountSchema"
@@ -11,6 +12,11 @@ import { z } from "zod/v4"
 export const collectionStatsSchema = z.object({
   total_groups: z.int(),
   total_cards: z.int(),
+  get value() {
+    return collectionValueSchema.describe(
+      "What the collection is worth, and how much of it could be priced.\n\nThe coverage travels with the total because most cards have no market price;\na figure without it would read as complete when it is not."
+    )
+  },
   get types() {
     return z.array(typeCountSchema)
   },

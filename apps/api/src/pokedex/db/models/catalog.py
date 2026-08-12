@@ -1,7 +1,8 @@
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import ForeignKey, Index, SmallInteger, String, Text, func
+from sqlalchemy import ForeignKey, Index, Numeric, SmallInteger, String, Text, func
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -77,6 +78,10 @@ class Card(Base):
     hp: Mapped[int | None] = mapped_column(SmallInteger)
     image_small_url: Mapped[str | None] = mapped_column(Text)
     image_large_url: Mapped[str | None] = mapped_column(Text)
+    # Cardmarket trend, in EUR. Null for most cards, which is why anything that
+    # totals it has to report the coverage alongside.
+    price_eur: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
+    price_updated_at: Mapped[datetime | None]
     fetched_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     card_set: Mapped[CardSet] = relationship(back_populates="cards")

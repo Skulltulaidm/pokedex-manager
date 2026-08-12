@@ -11,6 +11,7 @@ import { ScreenHeader } from "@/components/screen-header";
 import { typeColor, typeLabel } from "@/components/type-dot";
 import { apiClient } from "@/lib/api-client";
 import { useCollectionStats } from "@/lib/api/hooks/useCollectionStats";
+import type { CollectionStats } from "@/lib/api/types";
 import { useListGaps } from "@/lib/api/hooks/useListGaps";
 import {
   listWishlistQueryKey,
@@ -67,6 +68,8 @@ export default function StatsPage() {
               {data.total_groups} {data.total_groups === 1 ? "entrada" : "entradas"} en{" "}
               {data.sets.length} {data.sets.length === 1 ? "set" : "sets"}
             </p>
+
+            <Value value={data.value} />
 
             {data.types.length > 0 && (
               <div className="mt-6">
@@ -157,6 +160,31 @@ export default function StatsPage() {
           <Wishlist />
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+/**
+ * The coverage sits next to the total on purpose: most cards carry no market
+ * price, and the figure alone would read as complete.
+ */
+function Value({ value }: { value: CollectionStats["value"] }) {
+  const total = Number(value.total_eur);
+  if (value.priced_cards === 0) return null;
+
+  return (
+    <div className="ring-edge bg-surface mt-6 rounded-2xl p-4 ring-1">
+      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+        Valor estimado
+      </p>
+      <p className="font-display mt-1 text-2xl font-semibold tabular-nums">
+        {total.toLocaleString("es", { style: "currency", currency: "EUR", maximumFractionDigits: 0 })}
+      </p>
+      <p className="text-muted-foreground mt-1.5 text-sm">
+        {value.unpriced_cards > 0
+          ? `De ${value.priced_cards} ${value.priced_cards === 1 ? "carta" : "cartas"} con precio de mercado. ${value.unpriced_cards} sin precio.`
+          : `Todas tus cartas tienen precio de mercado.`}
+      </p>
     </div>
   );
 }

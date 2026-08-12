@@ -2,6 +2,22 @@
   "properties": {
     "total_groups": { "type": "integer", "title": "Total Groups" },
     "total_cards": { "type": "integer", "title": "Total Cards" },
+    "value": {
+      "properties": {
+        "total_eur": {
+          "type": "string",
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "title": "Total Eur"
+        },
+        "priced_cards": { "type": "integer", "title": "Priced Cards" },
+        "unpriced_cards": { "type": "integer", "title": "Unpriced Cards" }
+      },
+      "type": "object",
+      "required": ["total_eur", "priced_cards", "unpriced_cards"],
+      "title": "CollectionValue",
+      "description": "What the collection is worth, and how much of it could be priced.\n\nThe coverage travels with the total because most cards have no market price;\na figure without it would read as complete when it is not.",
+      "x-readme-ref-name": "CollectionValue"
+    },
     "types": {
       "items": {
         "properties": {
@@ -72,7 +88,14 @@
     }
   },
   "type": "object",
-  "required": ["total_groups", "total_cards", "types", "generations", "sets"],
+  "required": [
+    "total_groups",
+    "total_cards",
+    "value",
+    "types",
+    "generations",
+    "sets"
+  ],
   "title": "CollectionStats",
   "x-readme-ref-name": "CollectionStats"
 }

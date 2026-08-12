@@ -26,6 +26,7 @@ export {
   collectionStatsQueryResponseSchema,
   collectionStatsSchema,
 } from "./collectionStatsSchema"
+export { collectionValueSchema } from "./collectionValueSchema"
 export {
   confirmScan201Schema,
   confirmScan422Schema,

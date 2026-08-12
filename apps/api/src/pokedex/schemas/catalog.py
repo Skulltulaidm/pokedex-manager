@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from decimal import Decimal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -43,6 +44,7 @@ class CardView(BaseModel):
     hp: int | None
     image_small_url: str | None
     image_large_url: str | None
+    price_eur: Decimal | None = None
     card_set: CardSetView
     species: SpeciesView | None
 

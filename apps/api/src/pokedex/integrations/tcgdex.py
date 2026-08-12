@@ -1,6 +1,7 @@
 import re
 import unicodedata
-from datetime import date
+from datetime import UTC, date, datetime
+from decimal import Decimal
 from typing import Any, Self
 
 import httpx
@@ -61,6 +62,8 @@ class CardPayload(BaseModel):
     hp: int | None
     image_small_url: str | None
     image_large_url: str | None
+    price_eur: Decimal | None = None
+    price_updated_at: datetime | None = None
 
 
 def build_set(data: dict[str, Any]) -> SetPayload:
@@ -81,10 +84,33 @@ def build_set(data: dict[str, Any]) -> SetPayload:
     )
 
 
+def market_price(pricing: dict[str, Any] | None) -> tuple[Decimal | None, datetime | None]:
+    """Cardmarket's trend price, which smooths the spikes a single sale causes.
+
+    Only one source is read: mixing marketplaces in one column would produce a
+    total nobody could interpret.
+    """
+    market = (pricing or {}).get("cardmarket") or {}
+    trend = market.get("trend")
+    if trend is None:
+        return None, None
+
+    updated = market.get("updated")
+    stamp = None
+    if updated:
+        # The column is naive like every other timestamp here, so the value is
+        # normalised to UTC before the offset is dropped.
+        aware = datetime.fromisoformat(updated.replace("Z", "+00:00"))
+        stamp = aware.astimezone(UTC).replace(tzinfo=None)
+
+    return Decimal(str(trend)), stamp
+
+
 def build_card(data: dict[str, Any]) -> CardPayload:
     local_id = str(data["localId"])
     dex_ids = data.get("dexId") or []
     small, large = image_urls(data.get("image"))
+    price, price_updated = market_price(data.get("pricing"))
 
     return CardPayload(
         id=data["id"],
@@ -102,6 +128,8 @@ def build_card(data: dict[str, Any]) -> CardPayload:
         hp=data.get("hp"),
         image_small_url=small,
         image_large_url=large,
+        price_eur=price,
+        price_updated_at=price_updated,
     )
 
 

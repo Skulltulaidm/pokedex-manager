@@ -37,6 +37,7 @@ export type CardView = {
   hp: number | null
   image_small_url: string | null
   image_large_url: string | null
+  price_eur?: string | null
   /**
    * @type object
    */

@@ -66,6 +66,7 @@ export type {
   CollectionStatsQuery,
   CollectionStatsQueryResponse,
 } from "./types/CollectionStats"
+export type { CollectionValue } from "./types/CollectionValue"
 export type {
   ConfirmScan201,
   ConfirmScan422,
@@ -360,6 +361,7 @@ export {
   collectionStatsQueryResponseSchema,
   collectionStatsSchema,
 } from "./zod/collectionStatsSchema"
+export { collectionValueSchema } from "./zod/collectionValueSchema"
 export {
   confirmScan201Schema,
   confirmScan422Schema,

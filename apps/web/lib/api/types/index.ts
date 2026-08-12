@@ -32,6 +32,7 @@ export type {
   CollectionStatsQuery,
   CollectionStatsQueryResponse,
 } from "./CollectionStats"
+export type { CollectionValue } from "./CollectionValue"
 export type {
   ConfirmScan201,
   ConfirmScan422,

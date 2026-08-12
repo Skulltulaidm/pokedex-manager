@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pokedex.db.models import Card, CardSet, CollectionItem, Species
 from pokedex.schemas.stats import (
     CollectionStats,
+    CollectionValue,
     GenerationCount,
     OwnedSlot,
     SetCoverage,
@@ -95,6 +96,27 @@ async def _sets(db: AsyncSession, user_id: str) -> list[SetCoverage]:
     return list(by_set.values())
 
 
+async def _value(db: AsyncSession, user_id: str) -> CollectionValue:
+    priced = func.sum(CollectionItem.quantity).filter(Card.price_eur.isnot(None))
+    result = await db.execute(
+        select(
+            func.coalesce(func.sum(Card.price_eur * CollectionItem.quantity), 0),
+            func.coalesce(priced, 0),
+            func.coalesce(func.sum(CollectionItem.quantity), 0),
+        )
+        .select_from(CollectionItem)
+        .join(Card, Card.id == CollectionItem.card_id)
+        .where(CollectionItem.user_id == user_id)
+    )
+    total, priced_count, all_count = result.one()
+
+    return CollectionValue(
+        total_eur=total,
+        priced_cards=priced_count,
+        unpriced_cards=all_count - priced_count,
+    )
+
+
 async def collection_stats(db: AsyncSession, user_id: str) -> CollectionStats:
     groups = await db.execute(
         select(
@@ -107,6 +129,7 @@ async def collection_stats(db: AsyncSession, user_id: str) -> CollectionStats:
     return CollectionStats(
         total_groups=total_groups,
         total_cards=total_cards,
+        value=await _value(db, user_id),
         types=await _types(db, user_id),
         generations=await _generations(db, user_id),
         sets=await _sets(db, user_id),
