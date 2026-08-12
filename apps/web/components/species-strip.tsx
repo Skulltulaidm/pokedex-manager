@@ -55,7 +55,7 @@ export function SpeciesStrip({
         </p>
       </div>
 
-      <ScrollRow bleed={false} className="py-1">
+      <ScrollRow bleed={false}>
         {cards.map((card) => {
           const isOwned = held.has(card.id);
           return (

@@ -34,7 +34,7 @@ import {
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 48;
 
 const SORTS = [
   { value: "name", label: "Nombre" },
