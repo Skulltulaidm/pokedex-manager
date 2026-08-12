@@ -84,9 +84,18 @@ def build_set(data: dict[str, Any]) -> SetPayload:
     )
 
 
-# Ordered by how a collector reads a card: the foil printing is the one being
-# priced when it exists, and the plain one otherwise.
-PRICE_VARIANTS = ("1stEditionHolofoil", "holofoil", "reverseHolofoil", "1stEdition", "normal")
+# Preference order, not an exhaustive list: the key space differs by set — Base
+# Set quotes `holofoil` where Jungle quotes `1st-edition-holofoil` — so anything
+# unlisted still counts through the fallback below.
+PRICE_VARIANTS = (
+    "1st-edition-holofoil",
+    "holofoil",
+    "1st-edition",
+    "unlimited-holofoil",
+    "reverse-holofoil",
+    "normal",
+    "unlimited",
+)
 
 
 def market_price(pricing: dict[str, Any] | None) -> tuple[Decimal | None, datetime | None]:
@@ -97,15 +106,12 @@ def market_price(pricing: dict[str, Any] | None) -> tuple[Decimal | None, dateti
     """
     market = (pricing or {}).get("tcgplayer") or {}
 
-    price = next(
-        (
-            (market[variant] or {}).get("marketPrice")
-            for variant in PRICE_VARIANTS
-            if isinstance(market.get(variant), dict)
-            and (market[variant] or {}).get("marketPrice") is not None
-        ),
-        None,
-    )
+    def quoted(variant: str) -> float | None:
+        entry = market.get(variant)
+        return entry.get("marketPrice") if isinstance(entry, dict) else None
+
+    ordered = [*PRICE_VARIANTS, *(k for k in market if k not in PRICE_VARIANTS)]
+    price = next((quoted(v) for v in ordered if quoted(v) is not None), None)
     if price is None:
         return None, None
 

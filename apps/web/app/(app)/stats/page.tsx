@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
+import { ActivityFeed } from "@/components/activity-feed";
 import { BinderMark } from "@/components/binder-mark";
 import { CardRow } from "@/components/card-row";
 import { CoverageStrip, TypeSpectrum } from "@/components/coverage-strip";
@@ -98,7 +99,15 @@ export default function StatsPage() {
             )}
           </section>
 
-          <TopHoldings total={Number(data.value.total_usd)} />
+          <div className="space-y-8">
+            <TopHoldings total={Number(data.value.total_usd)} />
+            <section>
+              <h2 className="font-display mb-3 text-lg font-semibold tracking-tight">
+                Actividad
+              </h2>
+              <ActivityFeed />
+            </section>
+          </div>
           </div>
 
           <section>

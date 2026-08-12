@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -7,6 +7,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from pokedex.api.deps import CurrentUser, DbSession
+from pokedex.schemas.activity import ActivityEntry
 from pokedex.schemas.catalog import CollectionItemView
 from pokedex.schemas.collection import (
     AddCardRequest,
@@ -14,7 +15,7 @@ from pokedex.schemas.collection import (
     UpdateItemRequest,
 )
 from pokedex.schemas.common import Page
-from pokedex.services import collection, export
+from pokedex.services import activity, collection, export
 
 router = APIRouter(prefix="/collection", tags=["collection"])
 
@@ -42,6 +43,12 @@ async def list_collection(
         limit=filters.limit,
         offset=filters.offset,
     )
+
+
+@router.get("/activity", response_model=list[ActivityEntry])
+async def collection_activity(user: CurrentUser, db: DbSession) -> Any:
+    """Recent additions, scans and suggestions, newest first."""
+    return await activity.recent(db, user.id)
 
 
 @router.get("/export")

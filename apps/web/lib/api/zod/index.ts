@@ -1,4 +1,5 @@
 export { HTTPValidationErrorSchema } from "./HTTPValidationErrorSchema"
+export { activityEntrySchema } from "./activityEntrySchema"
 export { addCardRequestSchema } from "./addCardRequestSchema"
 export {
   addCard201Schema,
@@ -20,6 +21,10 @@ export { cardReadingSchema } from "./cardReadingSchema"
 export { cardSetViewSchema } from "./cardSetViewSchema"
 export { cardViewSchema } from "./cardViewSchema"
 export { chatRequestSchema } from "./chatRequestSchema"
+export {
+  collectionActivity200Schema,
+  collectionActivityQueryResponseSchema,
+} from "./collectionActivitySchema"
 export { collectionItemViewSchema } from "./collectionItemViewSchema"
 export {
   collectionStats200Schema,

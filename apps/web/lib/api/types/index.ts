@@ -1,3 +1,4 @@
+export type { ActivityEntry, ActivityEntryKindEnumKey } from "./ActivityEntry"
 export type {
   AddCard201,
   AddCard422,
@@ -25,6 +26,11 @@ export type {
 export type { CardSetView } from "./CardSetView"
 export type { CardView } from "./CardView"
 export type { ChatRequest } from "./ChatRequest"
+export type {
+  CollectionActivity200,
+  CollectionActivityQuery,
+  CollectionActivityQueryResponse,
+} from "./CollectionActivity"
 export type { CollectionItemView } from "./CollectionItemView"
 export type {
   CollectionStats,
@@ -210,6 +216,7 @@ export type { UpdateItemRequest } from "./UpdateItemRequest"
 export type { ValidationError } from "./ValidationError"
 export type { WishlistItemView } from "./WishlistItemView"
 export type { WishlistSource, WishlistSourceEnumKey } from "./WishlistSource"
+export { activityEntryKindEnum } from "./ActivityEntry"
 export { cardConditionEnum } from "./CardCondition"
 export { cardReadingConfidenceEnum } from "./CardReading"
 export { cardReadingRaritySymbolEnum } from "./CardReading"

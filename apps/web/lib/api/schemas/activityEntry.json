@@ -1,0 +1,48 @@
+{
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": ["added", "scanned", "suggested"],
+      "title": "Kind"
+    },
+    "at": { "type": "string", "format": "date-time", "title": "At" },
+    "card_id": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Card Id"
+    },
+    "card_name": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Card Name"
+    },
+    "image_url": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Image Url"
+    },
+    "quantity": {
+      "anyOf": [{ "type": "integer" }, { "type": "null" }],
+      "title": "Quantity"
+    },
+    "value_usd": {
+      "anyOf": [{ "type": "number" }, { "type": "null" }],
+      "title": "Value Usd"
+    },
+    "detail": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Detail"
+    }
+  },
+  "type": "object",
+  "required": [
+    "kind",
+    "at",
+    "card_id",
+    "card_name",
+    "image_url",
+    "quantity",
+    "value_usd",
+    "detail"
+  ],
+  "title": "ActivityEntry",
+  "description": "One thing that happened, flattened from the tables that record it.",
+  "x-readme-ref-name": "ActivityEntry"
+}

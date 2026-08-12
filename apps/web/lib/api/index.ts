@@ -1,5 +1,7 @@
 export type { AddCardMutationKey } from "./hooks/useAddCard"
 export type { AddToWishlistMutationKey } from "./hooks/useAddToWishlist"
+export type { CollectionActivityQueryKey } from "./hooks/useCollectionActivity"
+export type { CollectionActivitySuspenseQueryKey } from "./hooks/useCollectionActivitySuspense"
 export type { CollectionStatsQueryKey } from "./hooks/useCollectionStats"
 export type { CollectionStatsSuspenseQueryKey } from "./hooks/useCollectionStatsSuspense"
 export type { ConfirmScanMutationKey } from "./hooks/useConfirmScan"
@@ -45,6 +47,10 @@ export type { SpeciesTriviaQueryKey } from "./hooks/useSpeciesTrivia"
 export type { SpeciesTriviaSuspenseQueryKey } from "./hooks/useSpeciesTriviaSuspense"
 export type { UpdateItemMutationKey } from "./hooks/useUpdateItem"
 export type {
+  ActivityEntry,
+  ActivityEntryKindEnumKey,
+} from "./types/ActivityEntry"
+export type {
   AddCard201,
   AddCard422,
   AddCardMutation,
@@ -71,6 +77,11 @@ export type {
 export type { CardSetView } from "./types/CardSetView"
 export type { CardView } from "./types/CardView"
 export type { ChatRequest } from "./types/ChatRequest"
+export type {
+  CollectionActivity200,
+  CollectionActivityQuery,
+  CollectionActivityQueryResponse,
+} from "./types/CollectionActivity"
 export type { CollectionItemView } from "./types/CollectionItemView"
 export type {
   CollectionStats,
@@ -265,6 +276,7 @@ export type {
 } from "./types/WishlistSource"
 export { addCard } from "./clients/addCard"
 export { addToWishlist } from "./clients/addToWishlist"
+export { collectionActivity } from "./clients/collectionActivity"
 export { collectionStats } from "./clients/collectionStats"
 export { confirmScan } from "./clients/confirmScan"
 export { createScan } from "./clients/createScan"
@@ -297,6 +309,12 @@ export { useAddCard } from "./hooks/useAddCard"
 export { addToWishlistMutationKey } from "./hooks/useAddToWishlist"
 export { addToWishlistMutationOptions } from "./hooks/useAddToWishlist"
 export { useAddToWishlist } from "./hooks/useAddToWishlist"
+export { collectionActivityQueryKey } from "./hooks/useCollectionActivity"
+export { collectionActivityQueryOptions } from "./hooks/useCollectionActivity"
+export { useCollectionActivity } from "./hooks/useCollectionActivity"
+export { collectionActivitySuspenseQueryKey } from "./hooks/useCollectionActivitySuspense"
+export { collectionActivitySuspenseQueryOptions } from "./hooks/useCollectionActivitySuspense"
+export { useCollectionActivitySuspense } from "./hooks/useCollectionActivitySuspense"
 export { collectionStatsQueryKey } from "./hooks/useCollectionStats"
 export { collectionStatsQueryOptions } from "./hooks/useCollectionStats"
 export { useCollectionStats } from "./hooks/useCollectionStats"
@@ -429,6 +447,7 @@ export { useSpeciesTriviaSuspense } from "./hooks/useSpeciesTriviaSuspense"
 export { updateItemMutationKey } from "./hooks/useUpdateItem"
 export { updateItemMutationOptions } from "./hooks/useUpdateItem"
 export { useUpdateItem } from "./hooks/useUpdateItem"
+export { activityEntryKindEnum } from "./types/ActivityEntry"
 export { cardConditionEnum } from "./types/CardCondition"
 export { cardReadingConfidenceEnum } from "./types/CardReading"
 export { cardReadingRaritySymbolEnum } from "./types/CardReading"
@@ -438,6 +457,7 @@ export { messageRoleEnum } from "./types/MessageRole"
 export { scanResultStatusEnum } from "./types/ScanResult"
 export { wishlistSourceEnum } from "./types/WishlistSource"
 export { HTTPValidationErrorSchema } from "./zod/HTTPValidationErrorSchema"
+export { activityEntrySchema } from "./zod/activityEntrySchema"
 export { addCardRequestSchema } from "./zod/addCardRequestSchema"
 export {
   addCard201Schema,
@@ -459,6 +479,10 @@ export { cardReadingSchema } from "./zod/cardReadingSchema"
 export { cardSetViewSchema } from "./zod/cardSetViewSchema"
 export { cardViewSchema } from "./zod/cardViewSchema"
 export { chatRequestSchema } from "./zod/chatRequestSchema"
+export {
+  collectionActivity200Schema,
+  collectionActivityQueryResponseSchema,
+} from "./zod/collectionActivitySchema"
 export { collectionItemViewSchema } from "./zod/collectionItemViewSchema"
 export {
   collectionStats200Schema,

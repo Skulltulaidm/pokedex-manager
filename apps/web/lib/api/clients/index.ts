@@ -1,5 +1,6 @@
 export { addCard } from "./addCard"
 export { addToWishlist } from "./addToWishlist"
+export { collectionActivity } from "./collectionActivity"
 export { collectionStats } from "./collectionStats"
 export { confirmScan } from "./confirmScan"
 export { createScan } from "./createScan"
