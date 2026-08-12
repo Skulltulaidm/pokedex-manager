@@ -1,0 +1,46 @@
+{
+  "cardCount": {
+    "firstEd": 104,
+    "holo": 64,
+    "normal": 346,
+    "official": 102,
+    "reverse": 0,
+    "total": 102
+  },
+  "cards": [
+    {
+      "id": "base1-1",
+      "image": "https://assets.tcgdex.net/en/base/base1/1",
+      "localId": "1",
+      "name": "Alakazam"
+    },
+    {
+      "id": "base1-2",
+      "image": "https://assets.tcgdex.net/en/base/base1/2",
+      "localId": "2",
+      "name": "Blastoise"
+    },
+    {
+      "id": "base1-3",
+      "image": "https://assets.tcgdex.net/en/base/base1/3",
+      "localId": "3",
+      "name": "Chansey"
+    }
+  ],
+  "id": "base1",
+  "legal": {
+    "expanded": false,
+    "standard": false
+  },
+  "logo": "https://assets.tcgdex.net/en/base/base1/logo",
+  "name": "Base Set",
+  "releaseDate": "1999-01-09",
+  "serie": {
+    "id": "base",
+    "name": "Base"
+  },
+  "tcgOnline": "BS",
+  "abbreviation": {
+    "official": "BS"
+  }
+}
