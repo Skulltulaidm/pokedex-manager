@@ -34,11 +34,11 @@ which tools you called.
 TURN_LIMITS = UsageLimits(tool_calls_limit=8, request_limit=10)
 
 
-def build_agent(session: ClientSession, model: str) -> Agent[None, str]:
+def build_agent(session: ClientSession, model: str, known: str = "") -> Agent[None, str]:
     """A fresh agent per turn, bound to that turn's authenticated MCP session."""
     return Agent(
         build_model(model),
-        instructions=SYSTEM_PROMPT,
+        instructions=SYSTEM_PROMPT + known,
         toolsets=[McpToolset(session)],
         model_settings=ModelSettings(temperature=0.2),
     )

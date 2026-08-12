@@ -10,7 +10,14 @@ from pokedex.mcp.auth import JwksTokenVerifier, current_user_id
 from pokedex.schemas.catalog import CardView, CollectionItemView
 from pokedex.schemas.collection import CollectionFilters
 from pokedex.schemas.gaps import AddWishlistRequest, WishlistItemView
-from pokedex.services import catalog, collection, gaps, stats, wishlist
+from pokedex.services import (
+    catalog,
+    collection,
+    gaps,
+    preferences,
+    stats,
+    wishlist,
+)
 from pokedex.services.collection import CardNotFoundError
 
 INSTRUCTIONS = """\
@@ -23,6 +30,10 @@ about whether the user owns it.
 You cannot add cards to the collection: only the user handling a real card can
 do that. You can suggest a card for their wishlist with suggest_card, and you
 must say what you are suggesting and why before you call it.
+
+When the user states a standing fact about how they collect, store it with
+remember. Anything already known about them is given to you below; you do not
+need a tool to read it back.
 
 Answer in Spanish.
 """
@@ -150,3 +161,27 @@ async def suggest_card(card_id: str, reason: str) -> dict[str, Any]:
         await db.commit()
 
     return {"added": True, "item": view.model_dump(mode="json")}
+
+
+@server.tool()
+async def remember(key: str, value: str) -> dict[str, Any]:
+    """Store something durable the user said about how they collect.
+
+    For standing facts only — what they collect, what they avoid, what they are
+    working towards — never for the subject of the current question.
+    """
+    user_id = current_user_id()
+    async with SessionFactory() as db:
+        await preferences.remember(db, user_id, key.strip().lower(), value)
+        await db.commit()
+    return {"remembered": {key: value}}
+
+
+@server.tool()
+async def forget(key: str) -> dict[str, Any]:
+    """Drop something previously remembered."""
+    user_id = current_user_id()
+    async with SessionFactory() as db:
+        removed = await preferences.forget(db, user_id, key.strip().lower())
+        await db.commit()
+    return {"forgotten": removed}

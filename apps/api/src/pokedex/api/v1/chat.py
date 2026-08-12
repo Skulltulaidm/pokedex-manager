@@ -27,6 +27,7 @@ from pokedex.schemas.chat import (
     MessageView,
 )
 from pokedex.services import conversation as conversations
+from pokedex.services import preferences
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -81,11 +82,13 @@ async def run_turn(caller: Caller, payload: ChatRequest) -> AsyncIterator[str]:
             conversation = found
             history = await conversations.load_history(db, conversation.id)
 
+        known = preferences.as_text(await preferences.list_all(db, user_id))
+
         yield sse("conversation", {"id": str(conversation.id), "title": conversation.title})
 
         try:
             async with mcp_session(settings.mcp_agent_url, caller.token) as session:
-                agent = build_agent(session, settings.agent_model)
+                agent = build_agent(session, settings.agent_model, known)
                 async for event in agent.run_stream_events(
                     payload.message, message_history=history, usage_limits=TURN_LIMITS
                 ):
