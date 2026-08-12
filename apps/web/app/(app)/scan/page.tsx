@@ -2,19 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Camera, Check, ImagePlus, RotateCcw } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ScreenHeader } from "@/components/screen-header";
+import { Button, buttonVariants } from "@workspace/ui/components/button";
 import { TypeDots } from "@/components/type-dot";
 import { apiClient } from "@/lib/api-client";
 import { confirmScan } from "@/lib/api/clients/confirmScan";
 import { createScan } from "@/lib/api/clients/createScan";
 import type { CardCandidate, ScanResult } from "@/lib/api/types";
 import { CONDITION_ORDER, conditionLabel } from "@/lib/labels";
-import { Button } from "@workspace/ui/components/button";
 import { Spinner } from "@workspace/ui/components/spinner";
 import { cn } from "@workspace/ui/lib/utils";
 
@@ -26,7 +25,6 @@ const SIGNAL_LABELS: Record<string, string> = {
 };
 
 export default function ScanPage() {
-  const router = useRouter();
   const camera = useRef<HTMLInputElement>(null);
   const library = useRef<HTMLInputElement>(null);
 
@@ -36,6 +34,8 @@ export default function ScanPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [condition, setCondition] = useState("near_mint");
   const [showAll, setShowAll] = useState(false);
+  const [saved, setSaved] = useState<SavedCard[]>([]);
+  const [dragging, setDragging] = useState(false);
 
   async function upload(file: File) {
     setPreview(URL.createObjectURL(file));
@@ -62,8 +62,18 @@ export default function ScanPage() {
         { card_id: candidate.card.id, condition: condition as never, quantity: 1 },
         { client: apiClient },
       );
-      toast.success(`${candidate.card.name} guardada en tu colección`);
-      router.push("/collection");
+      // Scanning a box is the real task, so the screen resets for the next card
+      // instead of leaving after one.
+      setSaved((prev) => [
+        {
+          id: candidate.card.id,
+          name: candidate.card.name,
+          image: candidate.card.image_small_url ?? null,
+        },
+        ...prev,
+      ]);
+      toast.success(`${candidate.card.name} guardada`);
+      reset();
     } catch {
       toast.error("No se pudo guardar la carta.");
       setSaving(null);
@@ -74,6 +84,14 @@ export default function ScanPage() {
     setPreview(null);
     setResult(null);
     setShowAll(false);
+    setSaving(null);
+  }
+
+  function onDrop(event: React.DragEvent) {
+    event.preventDefault();
+    setDragging(false);
+    const file = event.dataTransfer.files[0];
+    if (file?.type.startsWith("image/")) upload(file);
   }
 
   const settled = result?.status === "resolved" && !showAll;
@@ -82,7 +100,13 @@ export default function ScanPage() {
 
   return (
     <>
-      <ScreenHeader title="Escanear" />
+      <ScreenHeader title="Escanear">
+        {saved.length > 0 && (
+          <Link href="/collection" className={buttonVariants({ size: "sm" })}>
+            Terminar · {saved.length}
+          </Link>
+        )}
+      </ScreenHeader>
 
       <input
         ref={camera}
@@ -102,8 +126,26 @@ export default function ScanPage() {
 
       {!preview && (
         <div className="mx-auto max-w-md text-center">
-          <div className="ring-edge bg-surface/60 mb-6 grid aspect-[63/88] max-h-[46svh] w-full place-items-center rounded-2xl ring-1">
-            <Camera className="text-muted-foreground/40 size-12" strokeWidth={1.25} />
+          <div
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={onDrop}
+            className={cn(
+              "mb-6 grid aspect-[63/88] max-h-[46svh] w-full place-items-center rounded-2xl border-2 border-dashed transition-colors",
+              dragging
+                ? "border-foreground bg-accent"
+                : "border-edge bg-surface/60",
+            )}
+          >
+            <div className="px-6">
+              <Camera className="text-muted-foreground/40 mx-auto size-12" strokeWidth={1.25} />
+              <p className="text-muted-foreground/60 mt-3 hidden text-sm md:block">
+                {dragging ? "Suelta la foto" : "o arrastra una foto aquí"}
+              </p>
+            </div>
           </div>
           <h2 className="font-display text-lg font-semibold">Fotografía la carta</h2>
           <p className="text-muted-foreground mx-auto mt-2 mb-6 max-w-xs text-sm">
@@ -120,6 +162,7 @@ export default function ScanPage() {
               Elegir de la galería
             </Button>
           </div>
+          {saved.length > 0 && <SavedStrip saved={saved} />}
         </div>
       )}
 
@@ -292,5 +335,34 @@ function NotFound() {
         <Button variant="outline">Buscar por nombre</Button>
       </Link>
     </div>
+  );
+}
+
+
+type SavedCard = { id: string; name: string; image: string | null };
+
+/** What this session has already catalogued, so a long box feels like progress. */
+function SavedStrip({ saved }: { saved: SavedCard[] }) {
+  return (
+    <section className="mt-8 text-left">
+      <h2 className="text-muted-foreground mb-3 text-[11px] tracking-wide uppercase">
+        Guardadas ahora · {saved.length}
+      </h2>
+      <ul className="scrollbar-none -mx-4 flex gap-2.5 overflow-x-auto px-4">
+        {saved.map((card, index) => (
+          <li
+            key={`${card.id}-${index}`}
+            className="settle shrink-0"
+            style={{ "--index": Math.min(index, 6) } as React.CSSProperties}
+          >
+            <div className="ring-edge relative aspect-[63/88] w-14 overflow-hidden rounded-lg ring-1">
+              {card.image && (
+                <Image src={card.image} alt={card.name} fill sizes="56px" className="object-cover" />
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

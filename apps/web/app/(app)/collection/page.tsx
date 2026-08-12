@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { ArrowLeftRight, Search, SlidersHorizontal, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -53,6 +53,17 @@ function CollectionGrid() {
   const page = Number(params.get("p") ?? 1);
 
   const [draft, setDraft] = useState(query);
+  const [comparing, setComparing] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+
+  function pick(cardId: string) {
+    const next = picked.includes(cardId)
+      ? picked.filter((id) => id !== cardId)
+      : [...picked, cardId].slice(-2);
+
+    setPicked(next);
+    if (next.length === 2) router.push(`/compare?a=${next[0]}&b=${next[1]}`);
+  }
   const activeFilters = [setId, generation, condition, params.get("orden")].filter(
     Boolean,
   ).length;
@@ -105,6 +116,17 @@ function CollectionGrid() {
           )
         }
       >
+        <Button
+          variant={comparing ? "default" : "ghost"}
+          size="icon"
+          aria-label={comparing ? "Salir de comparar" : "Comparar dos cartas"}
+          onClick={() => {
+            setComparing(!comparing);
+            setPicked([]);
+          }}
+        >
+          <ArrowLeftRight />
+        </Button>
         <ShareMenu />
       </ScreenHeader>
 
@@ -139,6 +161,14 @@ function CollectionGrid() {
           onApply={(next) => setParam({ ...next, p: undefined })}
         />
       </div>
+
+      {comparing && (
+        <p className="ring-edge bg-surface text-muted-foreground mb-4 rounded-xl px-4 py-2.5 text-sm ring-1">
+          {picked.length === 0
+            ? "Toca dos cartas para compararlas."
+            : "Toca una segunda carta."}
+        </p>
+      )}
 
       {stats && stats.types.length > 0 && (
         <div className="scrollbar-none -mx-4 mb-5 overflow-x-auto px-4 md:-mx-6 md:px-6">
@@ -180,9 +210,11 @@ function CollectionGrid() {
                 className="settle"
                 style={{ "--index": Math.min(index, 11) } as React.CSSProperties}
               >
-                <Link
+                <ItemLink
+                  comparing={comparing}
+                  picked={picked.includes(item.card.id)}
                   href={`/collection/${item.id}`}
-                  className="focus-visible:ring-ring block rounded-lg focus-visible:ring-2 focus-visible:outline-none"
+                  onPick={() => pick(item.card.id)}
                 >
                   <CardPocket
                     name={item.card.name}
@@ -194,7 +226,7 @@ function CollectionGrid() {
                     quantity={item.quantity}
                     condition={conditionLabel(item.condition)}
                   />
-                </Link>
+                </ItemLink>
               </li>
             ))}
           </ul>
@@ -425,5 +457,43 @@ export default function CollectionPage() {
     <Suspense fallback={<PocketSkeleton />}>
       <CollectionGrid />
     </Suspense>
+  );
+}
+
+
+/**
+ * The same tile is a link most of the time and a checkbox while comparing.
+ * Keeping one element avoids the grid reflowing when the mode changes.
+ */
+function ItemLink({
+  comparing,
+  picked,
+  href,
+  onPick,
+  children,
+}: {
+  comparing: boolean;
+  picked: boolean;
+  href: string;
+  onPick: () => void;
+  children: React.ReactNode;
+}) {
+  const ring = cn(
+    "focus-visible:ring-ring block rounded-lg transition-[outline-color,transform] focus-visible:ring-2 focus-visible:outline-none",
+    picked && "outline-foreground scale-[0.97] outline-2 outline-offset-4",
+  );
+
+  if (comparing) {
+    return (
+      <button onClick={onPick} aria-pressed={picked} className={cn(ring, "w-full text-left")}>
+        {children}
+      </button>
+    );
+  }
+
+  return (
+    <Link href={href} className={ring}>
+      {children}
+    </Link>
   );
 }
