@@ -7,6 +7,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ScreenHeader } from "@/components/screen-header";
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 import { ScrollRow } from "@/components/scroll-row";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
 import { TypeDots } from "@/components/type-dot";
@@ -26,6 +27,7 @@ const SIGNAL_LABELS: Record<string, string> = {
 };
 
 export default function ScanPage() {
+  const isMobile = useIsMobile();
   const camera = useRef<HTMLInputElement>(null);
   const library = useRef<HTMLInputElement>(null);
 
@@ -109,14 +111,18 @@ export default function ScanPage() {
         )}
       </ScreenHeader>
 
-      <input
-        ref={camera}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="sr-only"
-        onChange={(event) => event.target.files?.[0] && upload(event.target.files[0])}
-      />
+      {/* capture opens the camera, which only exists on a phone. On a desktop it
+          leaves the primary button doing nothing. */}
+      {isMobile && (
+        <input
+          ref={camera}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="sr-only"
+          onChange={(event) => event.target.files?.[0] && upload(event.target.files[0])}
+        />
+      )}
       <input
         ref={library}
         type="file"
@@ -127,7 +133,8 @@ export default function ScanPage() {
 
       {!preview && (
         <div className="mx-auto max-w-md text-center">
-          <div
+          <button
+            onClick={() => library.current?.click()}
             onDragOver={(event) => {
               event.preventDefault();
               setDragging(true);
@@ -138,29 +145,38 @@ export default function ScanPage() {
               "mb-6 grid aspect-[63/88] max-h-[46svh] w-full place-items-center rounded-2xl border-2 border-dashed transition-colors",
               dragging
                 ? "border-foreground bg-accent"
-                : "border-edge bg-surface/60",
+                : "border-edge bg-surface/60 hover:border-muted-foreground/40 hover:bg-accent/40",
             )}
           >
             <div className="px-6">
-              <Camera className="text-muted-foreground/40 mx-auto size-12" strokeWidth={1.25} />
-              <p className="text-muted-foreground/60 mt-3 hidden text-sm md:block">
-                {dragging ? "Suelta la foto" : "o arrastra una foto aquí"}
+              <ImagePlus className="text-muted-foreground/40 mx-auto size-12" strokeWidth={1.25} />
+              <p className="text-muted-foreground/70 mt-3 text-sm">
+                {dragging ? "Suelta la foto" : "Toca para elegir una foto"}
+              </p>
+              <p className="text-muted-foreground/50 mt-1 hidden text-xs md:block">
+                o arrástrala aquí
               </p>
             </div>
-          </div>
+          </button>
           <h2 className="font-display text-lg font-semibold">Fotografía la carta</h2>
           <p className="text-muted-foreground mx-auto mt-2 mb-6 max-w-xs text-sm">
             Encuadra la carta completa y con buena luz. El número y el total del
             set son lo que más ayuda a identificarla.
           </p>
           <div className="flex flex-col gap-2">
-            <Button size="lg" onClick={() => camera.current?.click()}>
-              <Camera />
-              Tomar foto
-            </Button>
-            <Button variant="outline" size="lg" onClick={() => library.current?.click()}>
+            {isMobile && (
+              <Button size="lg" onClick={() => camera.current?.click()}>
+                <Camera />
+                Tomar foto
+              </Button>
+            )}
+            <Button
+              variant={isMobile ? "outline" : "default"}
+              size="lg"
+              onClick={() => library.current?.click()}
+            >
               <ImagePlus />
-              Elegir de la galería
+              {isMobile ? "Elegir de la galería" : "Elegir una foto"}
             </Button>
           </div>
           {saved.length > 0 && <SavedStrip saved={saved} />}
