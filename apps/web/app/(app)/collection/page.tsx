@@ -7,7 +7,9 @@ import { Suspense, useEffect, useState } from "react";
 
 import { BinderMark } from "@/components/binder-mark";
 import { CardPocket } from "@/components/card-pocket";
+import { Pager } from "@/components/pager";
 import { ScreenHeader } from "@/components/screen-header";
+import { ScrollRow } from "@/components/scroll-row";
 import { ShareMenu } from "@/components/share-menu";
 import { TYPE_ICON, typeColor, typeLabel } from "@/components/type-dot";
 import { apiClient } from "@/lib/api-client";
@@ -116,6 +118,7 @@ function CollectionGrid() {
           )
         }
       >
+        <Pager page={page} lastPage={lastPage} onChange={(next) => setParam({ p: String(next) })} />
         <Button
           variant={comparing ? "default" : "ghost"}
           size="icon"
@@ -171,22 +174,20 @@ function CollectionGrid() {
       )}
 
       {stats && stats.types.length > 0 && (
-        <div className="scrollbar-none -mx-4 mb-5 overflow-x-auto px-4 md:-mx-6 md:px-6">
-          <div className="flex w-max gap-2 pb-0.5">
-            <Chip active={!type} onClick={() => setParam({ type: undefined, p: undefined })}>
-              Todos
-            </Chip>
-            {stats.types.map((entry) => (
-              <TypeFilterChip
-                key={entry.type}
-                type={entry.type}
-                count={entry.count}
-                active={type === entry.type}
-                onClick={() => setParam({ type: entry.type, p: undefined })}
-              />
-            ))}
-          </div>
-        </div>
+        <ScrollRow className="mb-5">
+          <Chip active={!type} onClick={() => setParam({ type: undefined, p: undefined })}>
+            Todos
+          </Chip>
+          {stats.types.map((entry) => (
+            <TypeFilterChip
+              key={entry.type}
+              type={entry.type}
+              count={entry.count}
+              active={type === entry.type}
+              onClick={() => setParam({ type: entry.type, p: undefined })}
+            />
+          ))}
+        </ScrollRow>
       )}
 
       {isPending && <PocketSkeleton />}
@@ -231,29 +232,6 @@ function CollectionGrid() {
             ))}
           </ul>
 
-          {lastPage > 1 && (
-            <nav className="mt-8 flex items-center justify-between" aria-label="Paginación">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setParam({ p: String(page - 1) })}
-              >
-                Anterior
-              </Button>
-              <p className="text-muted-foreground text-sm tabular-nums">
-                {page} de {lastPage}
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= lastPage}
-                onClick={() => setParam({ p: String(page + 1) })}
-              >
-                Siguiente
-              </Button>
-            </nav>
-          )}
         </>
       )}
     </>
@@ -409,7 +387,7 @@ function TypeFilterChip({
     <button
       onClick={onClick}
       aria-pressed={active}
-      className="flex shrink-0 items-center gap-1.5 rounded-full py-1.5 pr-3.5 pl-2.5 text-[13px] font-medium transition-colors"
+      className="flex shrink-0 items-center gap-1.5 rounded-full py-1.5 pr-3.5 pl-2.5 text-[13px] font-medium transition-all hover:-translate-y-px hover:brightness-105 active:translate-y-0"
       style={{
         color: active ? "var(--background)" : color,
         background: active ? color : `color-mix(in oklch, ${color} 13%, transparent)`,
@@ -437,10 +415,10 @@ function Chip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors",
+        "shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-all hover:-translate-y-px active:translate-y-0",
         active
           ? "bg-foreground text-background"
-          : "bg-secondary text-muted-foreground hover:text-foreground",
+          : "bg-secondary text-muted-foreground hover:bg-accent hover:text-foreground",
       )}
     >
       {children}

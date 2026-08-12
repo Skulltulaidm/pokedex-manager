@@ -6,6 +6,7 @@ import Image from "next/image";
 import { apiClient } from "@/lib/api-client";
 import { useOwnedCardIds } from "@/lib/api/hooks/useOwnedCardIds";
 import { useSearchCards } from "@/lib/api/hooks/useSearchCards";
+import { ScrollRow } from "@/components/scroll-row";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
 
@@ -54,15 +55,15 @@ export function SpeciesStrip({
         </p>
       </div>
 
-      <ul className="scrollbar-none -mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1">
+      <ScrollRow bleed={false} className="py-1">
         {cards.map((card) => {
           const isOwned = held.has(card.id);
           return (
-            <li key={card.id} className="shrink-0">
+            <div key={card.id} className="shrink-0">
               <div
                 className={cn(
-                  "ring-edge relative aspect-[63/88] w-16 overflow-hidden rounded-lg ring-1 transition-transform",
-                  card.id === currentCardId && "outline-foreground outline-2 outline-offset-2",
+                  "ring-edge relative aspect-[63/88] w-16 overflow-hidden rounded-lg ring-1 transition-transform hover:-translate-y-0.5",
+                  card.id === currentCardId && "ring-primary ring-2",
                   !isOwned && "grayscale",
                 )}
                 title={`${card.card_set.name} · ${card.number}/${card.card_set.printed_total}`}
@@ -85,10 +86,10 @@ export function SpeciesStrip({
               <p className="text-muted-foreground mt-1.5 w-16 truncate text-[11px]">
                 {card.card_set.name}
               </p>
-            </li>
+            </div>
           );
         })}
-      </ul>
+      </ScrollRow>
     </section>
   );
 }

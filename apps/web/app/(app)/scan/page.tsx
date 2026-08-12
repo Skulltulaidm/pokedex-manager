@@ -7,6 +7,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ScreenHeader } from "@/components/screen-header";
+import { ScrollRow } from "@/components/scroll-row";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
 import { TypeDots } from "@/components/type-dot";
 import { apiClient } from "@/lib/api-client";
@@ -348,9 +349,9 @@ function SavedStrip({ saved }: { saved: SavedCard[] }) {
       <h2 className="text-muted-foreground mb-3 text-[11px] tracking-wide uppercase">
         Guardadas ahora · {saved.length}
       </h2>
-      <ul className="scrollbar-none -mx-4 flex gap-2.5 overflow-x-auto px-4">
+      <ScrollRow>
         {saved.map((card, index) => (
-          <li
+          <div
             key={`${card.id}-${index}`}
             className="settle shrink-0"
             style={{ "--index": Math.min(index, 6) } as React.CSSProperties}
@@ -360,9 +361,9 @@ function SavedStrip({ saved }: { saved: SavedCard[] }) {
                 <Image src={card.image} alt={card.name} fill sizes="56px" className="object-cover" />
               )}
             </div>
-          </li>
+          </div>
         ))}
-      </ul>
+      </ScrollRow>
     </section>
   );
 }
