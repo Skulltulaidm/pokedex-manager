@@ -15,6 +15,7 @@ from pokedex.db.models.conversation import (
 )
 from pokedex.db.models.external import auth_user
 from pokedex.db.models.share import ShareLink
+from pokedex.db.models.trivia import SpeciesTrivia
 
 __all__ = [
     "Card",
@@ -28,6 +29,7 @@ __all__ = [
     "ScanStatus",
     "ShareLink",
     "Species",
+    "SpeciesTrivia",
     "UserPreference",
     "WishlistItem",
     "WishlistSource",

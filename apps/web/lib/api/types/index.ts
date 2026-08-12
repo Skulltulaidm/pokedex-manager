@@ -188,7 +188,15 @@ export type {
 export type { SetCoverage } from "./SetCoverage"
 export type { SetGap } from "./SetGap"
 export type { ShareLinkView } from "./ShareLinkView"
+export type {
+  SpeciesTrivia200,
+  SpeciesTrivia422,
+  SpeciesTriviaPathParams,
+  SpeciesTriviaQuery,
+  SpeciesTriviaQueryResponse,
+} from "./SpeciesTrivia"
 export type { SpeciesView } from "./SpeciesView"
+export type { TriviaView } from "./TriviaView"
 export type { TypeCount } from "./TypeCount"
 export type {
   UpdateItem200,

@@ -1,0 +1,10 @@
+{
+  "properties": {
+    "text": { "type": "string", "title": "Text" },
+    "model": { "type": "string", "title": "Model" }
+  },
+  "type": "object",
+  "required": ["text", "model"],
+  "title": "TriviaView",
+  "x-readme-ref-name": "TriviaView"
+}

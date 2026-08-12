@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { InfoTile } from "@/components/info-tile";
 import { SpeciesStrip } from "@/components/species-strip";
+import { SpeciesTrivia } from "@/components/species-trivia";
 import { StatRadar } from "@/components/stat-radar";
 import { TypeChip, typeColor } from "@/components/type-dot";
 import { formatUsd } from "@/lib/format";
@@ -181,6 +182,7 @@ export default function ItemDetailPage() {
               stats={card.species.stats}
               color={typeColor(card.species.types[0] ?? "normal")}
             />
+            <SpeciesTrivia speciesId={card.species.id} />
           </div>
         </Section>
       ) : (

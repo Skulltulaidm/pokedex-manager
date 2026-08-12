@@ -158,7 +158,14 @@ export {
 export { setCoverageSchema } from "./setCoverageSchema"
 export { setGapSchema } from "./setGapSchema"
 export { shareLinkViewSchema } from "./shareLinkViewSchema"
+export {
+  speciesTrivia200Schema,
+  speciesTrivia422Schema,
+  speciesTriviaPathParamsSchema,
+  speciesTriviaQueryResponseSchema,
+} from "./speciesTriviaSchema"
 export { speciesViewSchema } from "./speciesViewSchema"
+export { triviaViewSchema } from "./triviaViewSchema"
 export { typeCountSchema } from "./typeCountSchema"
 export { updateItemRequestSchema } from "./updateItemRequestSchema"
 export {

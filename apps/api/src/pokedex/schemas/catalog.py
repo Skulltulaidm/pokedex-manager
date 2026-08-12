@@ -62,3 +62,10 @@ class CollectionItemView(BaseModel):
     acquired_at: date | None
     created_at: datetime
     card: CardView
+
+
+class TriviaView(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    text: str
+    model: str

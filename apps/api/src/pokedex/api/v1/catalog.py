@@ -1,8 +1,10 @@
+from typing import Any
+
 from fastapi import APIRouter, HTTPException, Query, status
 
 from pokedex.api.deps import CurrentUser, DbSession
-from pokedex.schemas.catalog import CardView, SpeciesView
-from pokedex.services import catalog, collection
+from pokedex.schemas.catalog import CardView, SpeciesView, TriviaView
+from pokedex.services import catalog, collection, trivia
 
 router = APIRouter(prefix="/catalog", tags=["catalog"])
 
@@ -20,6 +22,16 @@ async def search_cards(
         db, query=q, set_id=set_id, species_id=species_id, limit=limit
     )
     return [CardView.model_validate(card) for card in found]
+
+
+@router.get("/species/{species_id}/trivia", response_model=TriviaView | None)
+async def species_trivia(species_id: int, user: CurrentUser, db: DbSession) -> Any:
+    """A blurb about the species, generated once and shared by every reader."""
+    species = await catalog.get_species(db, species_id)
+    if species is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Species not found")
+
+    return await trivia.get_or_create(db, species)
 
 
 @router.get("/owned-ids", response_model=list[str])

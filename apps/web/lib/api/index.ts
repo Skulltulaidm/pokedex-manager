@@ -41,6 +41,8 @@ export type { SearchCardsSuspenseQueryKey } from "./hooks/useSearchCardsSuspense
 export type { SearchSpeciesQueryKey } from "./hooks/useSearchSpecies"
 export type { SearchSpeciesSuspenseQueryKey } from "./hooks/useSearchSpeciesSuspense"
 export type { SendMessageMutationKey } from "./hooks/useSendMessage"
+export type { SpeciesTriviaQueryKey } from "./hooks/useSpeciesTrivia"
+export type { SpeciesTriviaSuspenseQueryKey } from "./hooks/useSpeciesTriviaSuspense"
 export type { UpdateItemMutationKey } from "./hooks/useUpdateItem"
 export type {
   AddCard201,
@@ -236,7 +238,15 @@ export type {
 export type { SetCoverage } from "./types/SetCoverage"
 export type { SetGap } from "./types/SetGap"
 export type { ShareLinkView } from "./types/ShareLinkView"
+export type {
+  SpeciesTrivia200,
+  SpeciesTrivia422,
+  SpeciesTriviaPathParams,
+  SpeciesTriviaQuery,
+  SpeciesTriviaQueryResponse,
+} from "./types/SpeciesTrivia"
 export type { SpeciesView } from "./types/SpeciesView"
+export type { TriviaView } from "./types/TriviaView"
 export type { TypeCount } from "./types/TypeCount"
 export type {
   UpdateItem200,
@@ -279,6 +289,7 @@ export { revokeShareLink } from "./clients/revokeShareLink"
 export { searchCards } from "./clients/searchCards"
 export { searchSpecies } from "./clients/searchSpecies"
 export { sendMessage } from "./clients/sendMessage"
+export { speciesTrivia } from "./clients/speciesTrivia"
 export { updateItem } from "./clients/updateItem"
 export { addCardMutationKey } from "./hooks/useAddCard"
 export { addCardMutationOptions } from "./hooks/useAddCard"
@@ -409,6 +420,12 @@ export { useSearchSpeciesSuspense } from "./hooks/useSearchSpeciesSuspense"
 export { sendMessageMutationKey } from "./hooks/useSendMessage"
 export { sendMessageMutationOptions } from "./hooks/useSendMessage"
 export { useSendMessage } from "./hooks/useSendMessage"
+export { speciesTriviaQueryKey } from "./hooks/useSpeciesTrivia"
+export { speciesTriviaQueryOptions } from "./hooks/useSpeciesTrivia"
+export { useSpeciesTrivia } from "./hooks/useSpeciesTrivia"
+export { speciesTriviaSuspenseQueryKey } from "./hooks/useSpeciesTriviaSuspense"
+export { speciesTriviaSuspenseQueryOptions } from "./hooks/useSpeciesTriviaSuspense"
+export { useSpeciesTriviaSuspense } from "./hooks/useSpeciesTriviaSuspense"
 export { updateItemMutationKey } from "./hooks/useUpdateItem"
 export { updateItemMutationOptions } from "./hooks/useUpdateItem"
 export { useUpdateItem } from "./hooks/useUpdateItem"
@@ -580,7 +597,14 @@ export {
 export { setCoverageSchema } from "./zod/setCoverageSchema"
 export { setGapSchema } from "./zod/setGapSchema"
 export { shareLinkViewSchema } from "./zod/shareLinkViewSchema"
+export {
+  speciesTrivia200Schema,
+  speciesTrivia422Schema,
+  speciesTriviaPathParamsSchema,
+  speciesTriviaQueryResponseSchema,
+} from "./zod/speciesTriviaSchema"
 export { speciesViewSchema } from "./zod/speciesViewSchema"
+export { triviaViewSchema } from "./zod/triviaViewSchema"
 export { typeCountSchema } from "./zod/typeCountSchema"
 export { updateItemRequestSchema } from "./zod/updateItemRequestSchema"
 export {
