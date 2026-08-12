@@ -3,11 +3,13 @@
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 
+import { ChatHistory } from "@/components/chat-history";
 import { CollectionFilters } from "@/components/collection-filters";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 
 const PANELS: Record<string, { title: string; content: React.ReactNode }> = {
   "/collection": { title: "Filtros", content: <CollectionFilters /> },
+  "/chat": { title: "Conversaciones", content: <ChatHistory /> },
 };
 
 /**

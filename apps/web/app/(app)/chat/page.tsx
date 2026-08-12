@@ -129,7 +129,12 @@ export default function ChatPage() {
         <Sheet>
           <SheetTrigger
             render={
-              <Button variant="ghost" size="icon" aria-label="Conversaciones">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Conversaciones"
+                className="lg:hidden"
+              >
                 <History />
               </Button>
             }
@@ -162,7 +167,13 @@ export default function ChatPage() {
         <h1 className="font-display text-[17px] font-semibold tracking-[-0.02em]">Preguntar</h1>
 
         <div className="ml-auto flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={reset} aria-label="Nueva conversación">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={reset}
+            aria-label="Nueva conversación"
+            className="lg:hidden"
+          >
             <SquarePen />
           </Button>
           <AccountMenu email={session?.user.email} />

@@ -204,7 +204,7 @@ function CollectionGrid() {
       )}
 
       {stats && stats.sets.length > 1 && (
-        <ScrollRow className="mb-5">
+        <ScrollRow className="mb-5 lg:hidden">
           <Chip active={!setId} onClick={() => setParam({ set: undefined, p: undefined })}>
             Todos los sets
           </Chip>
