@@ -1,6 +1,7 @@
 export { addCard } from "./addCard"
 export { addToWishlist } from "./addToWishlist"
 export { collectionStats } from "./collectionStats"
+export { compareCards } from "./compareCards"
 export { confirmScan } from "./confirmScan"
 export { createScan } from "./createScan"
 export { createShareLink } from "./createShareLink"

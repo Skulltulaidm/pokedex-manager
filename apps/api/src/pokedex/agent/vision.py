@@ -17,12 +17,12 @@ prefix. HP appears at the top right. rarity_symbol is the small shape beside the
 collector number.
 """
 
-def build_output(name: str) -> Any:
+def build_output(name: str, schema: Any = CardReading) -> Any:
     # Structured output defaults to tool calling, which the open vision models
     # served by Ollama do not implement. Prompting for JSON works on any of them.
     if name.startswith(OLLAMA_PREFIX):
-        return PromptedOutput(CardReading)
-    return CardReading
+        return PromptedOutput(schema)
+    return schema
 
 
 async def read_card(image: bytes, model: str) -> CardReading:

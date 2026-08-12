@@ -34,6 +34,13 @@ export type {
 } from "./CollectionStats"
 export type { CollectionValue } from "./CollectionValue"
 export type {
+  CompareCards200,
+  CompareCards422,
+  CompareCardsQuery,
+  CompareCardsQueryParams,
+  CompareCardsQueryResponse,
+} from "./CompareCards"
+export type {
   ConfirmScan201,
   ConfirmScan422,
   ConfirmScanMutation,
@@ -208,6 +215,7 @@ export type {
 } from "./UpdateItem"
 export type { UpdateItemRequest } from "./UpdateItemRequest"
 export type { ValidationError } from "./ValidationError"
+export type { VisualComparison } from "./VisualComparison"
 export type { WishlistItemView } from "./WishlistItemView"
 export type { WishlistSource, WishlistSourceEnumKey } from "./WishlistSource"
 export { cardConditionEnum } from "./CardCondition"

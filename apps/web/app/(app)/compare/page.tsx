@@ -8,6 +8,7 @@ import { Suspense } from "react";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { TypeChip, typeColor } from "@/components/type-dot";
+import { VisualComparison } from "@/components/visual-comparison";
 import { apiClient } from "@/lib/api-client";
 import { useGetCard } from "@/lib/api/hooks/useGetCard";
 import type { CardView } from "@/lib/api/types";
@@ -74,6 +75,8 @@ function Comparison() {
         }
         lowerWins
       />
+
+      <VisualComparison a={cards[0].id} b={cards[1].id} />
 
       {cards.every((card) => card.species) && (
         <section className="mt-9">

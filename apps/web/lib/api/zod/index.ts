@@ -28,6 +28,12 @@ export {
 } from "./collectionStatsSchema"
 export { collectionValueSchema } from "./collectionValueSchema"
 export {
+  compareCards200Schema,
+  compareCards422Schema,
+  compareCardsQueryParamsSchema,
+  compareCardsQueryResponseSchema,
+} from "./compareCardsSchema"
+export {
   confirmScan201Schema,
   confirmScan422Schema,
   confirmScanMutationRequestSchema,
@@ -176,5 +182,6 @@ export {
   updateItemPathParamsSchema,
 } from "./updateItemSchema"
 export { validationErrorSchema } from "./validationErrorSchema"
+export { visualComparisonSchema } from "./visualComparisonSchema"
 export { wishlistItemViewSchema } from "./wishlistItemViewSchema"
 export { wishlistSourceSchema } from "./wishlistSourceSchema"

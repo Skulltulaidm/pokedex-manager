@@ -2,6 +2,8 @@ export type { AddCardMutationKey } from "./hooks/useAddCard"
 export type { AddToWishlistMutationKey } from "./hooks/useAddToWishlist"
 export type { CollectionStatsQueryKey } from "./hooks/useCollectionStats"
 export type { CollectionStatsSuspenseQueryKey } from "./hooks/useCollectionStatsSuspense"
+export type { CompareCardsQueryKey } from "./hooks/useCompareCards"
+export type { CompareCardsSuspenseQueryKey } from "./hooks/useCompareCardsSuspense"
 export type { ConfirmScanMutationKey } from "./hooks/useConfirmScan"
 export type { CreateScanMutationKey } from "./hooks/useCreateScan"
 export type { CreateShareLinkMutationKey } from "./hooks/useCreateShareLink"
@@ -79,6 +81,13 @@ export type {
   CollectionStatsQueryResponse,
 } from "./types/CollectionStats"
 export type { CollectionValue } from "./types/CollectionValue"
+export type {
+  CompareCards200,
+  CompareCards422,
+  CompareCardsQuery,
+  CompareCardsQueryParams,
+  CompareCardsQueryResponse,
+} from "./types/CompareCards"
 export type {
   ConfirmScan201,
   ConfirmScan422,
@@ -258,6 +267,7 @@ export type {
 } from "./types/UpdateItem"
 export type { UpdateItemRequest } from "./types/UpdateItemRequest"
 export type { ValidationError } from "./types/ValidationError"
+export type { VisualComparison } from "./types/VisualComparison"
 export type { WishlistItemView } from "./types/WishlistItemView"
 export type {
   WishlistSource,
@@ -266,6 +276,7 @@ export type {
 export { addCard } from "./clients/addCard"
 export { addToWishlist } from "./clients/addToWishlist"
 export { collectionStats } from "./clients/collectionStats"
+export { compareCards } from "./clients/compareCards"
 export { confirmScan } from "./clients/confirmScan"
 export { createScan } from "./clients/createScan"
 export { createShareLink } from "./clients/createShareLink"
@@ -303,6 +314,12 @@ export { useCollectionStats } from "./hooks/useCollectionStats"
 export { collectionStatsSuspenseQueryKey } from "./hooks/useCollectionStatsSuspense"
 export { collectionStatsSuspenseQueryOptions } from "./hooks/useCollectionStatsSuspense"
 export { useCollectionStatsSuspense } from "./hooks/useCollectionStatsSuspense"
+export { compareCardsQueryKey } from "./hooks/useCompareCards"
+export { compareCardsQueryOptions } from "./hooks/useCompareCards"
+export { useCompareCards } from "./hooks/useCompareCards"
+export { compareCardsSuspenseQueryKey } from "./hooks/useCompareCardsSuspense"
+export { compareCardsSuspenseQueryOptions } from "./hooks/useCompareCardsSuspense"
+export { useCompareCardsSuspense } from "./hooks/useCompareCardsSuspense"
 export { confirmScanMutationKey } from "./hooks/useConfirmScan"
 export { confirmScanMutationOptions } from "./hooks/useConfirmScan"
 export { useConfirmScan } from "./hooks/useConfirmScan"
@@ -467,6 +484,12 @@ export {
 } from "./zod/collectionStatsSchema"
 export { collectionValueSchema } from "./zod/collectionValueSchema"
 export {
+  compareCards200Schema,
+  compareCards422Schema,
+  compareCardsQueryParamsSchema,
+  compareCardsQueryResponseSchema,
+} from "./zod/compareCardsSchema"
+export {
   confirmScan201Schema,
   confirmScan422Schema,
   confirmScanMutationRequestSchema,
@@ -615,5 +638,6 @@ export {
   updateItemPathParamsSchema,
 } from "./zod/updateItemSchema"
 export { validationErrorSchema } from "./zod/validationErrorSchema"
+export { visualComparisonSchema } from "./zod/visualComparisonSchema"
 export { wishlistItemViewSchema } from "./zod/wishlistItemViewSchema"
 export { wishlistSourceSchema } from "./zod/wishlistSourceSchema"
