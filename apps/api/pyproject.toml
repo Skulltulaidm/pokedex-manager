@@ -1,0 +1,56 @@
+[project]
+name = "pokedex"
+version = "0.1.0"
+description = "PokeDex Manager API - domain services, REST adapter and MCP server"
+readme = "README.md"
+authors = [
+    { name = "Skulltulaidm", email = "skulltula.mn35@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.19.1",
+    "asyncpg>=0.31.0",
+    "fastapi[standard]>=0.141.1",
+    "httpx>=0.28.1",
+    "mcp>=2.0.0",
+    "pillow>=12.3.0",
+    "pydantic-ai-slim[google,mcp]>=1.47.0",
+    "pydantic-settings>=2.15.0",
+    "pyjwt[crypto]>=2.13.0",
+    "scalar-fastapi>=1.8.2",
+    "sqlalchemy[asyncio]>=2.0.52",
+]
+
+[project.scripts]
+pokedex = "pokedex:main"
+
+[build-system]
+requires = ["uv_build>=0.11.29,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "mypy>=2.3.0",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.2",
+    "types-pillow>=10.2.0.20240822",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+# Alembic writes these from its own template; they are reviewed by hand, not linted.
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

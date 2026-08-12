@@ -1,0 +1,13 @@
+{
+  "name": "api",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "uv run fastapi dev src/pokedex/main.py --port ${API_PORT:-8010}",
+    "build": "uv sync --frozen",
+    "lint": "uv run ruff check .",
+    "format": "uv run ruff format .",
+    "typecheck": "uv run mypy src",
+    "test": "uv run pytest"
+  }
+}
