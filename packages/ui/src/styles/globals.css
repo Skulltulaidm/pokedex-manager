@@ -39,11 +39,39 @@
 /* Floating chrome. Detached from the screen edge and translucent, so content
    scrolls visibly beneath it instead of hitting a wall. */
 @utility glass {
-    background: color-mix(in oklch, var(--surface) 82%, transparent);
-    backdrop-filter: blur(20px) saturate(1.6);
+    background: color-mix(in oklch, var(--surface) 78%, transparent);
+    backdrop-filter: blur(24px) saturate(1.8);
     box-shadow:
         inset 0 0 0 1px var(--edge),
-        var(--lift);
+        inset 0 1px 0 var(--sheen),
+        var(--float);
+}
+
+/* One page-level entrance rather than an effect per element. */
+@utility rise {
+    animation: rise 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes rise {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+}
+
+/* The cards deal themselves out, the way a hand is spread on a table. Each one
+   sets --deal to its own resting rotation. */
+@utility deal {
+    animation: deal 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: var(--deal-delay, 0s);
+}
+
+@keyframes deal {
+    from {
+        opacity: 0;
+        transform: translateX(calc(-50% + var(--deal-x, 0px))) translateY(28px) rotate(0deg)
+            scale(0.94);
+    }
 }
 
 @source "../../../apps/**/*.{ts,tsx}";
@@ -129,6 +157,8 @@
     --raised: oklch(0.975 0.003 285);
     --edge: oklch(0.19 0.012 285 / 0.1);
     --lift: 0 1px 2px oklch(0.19 0.012 285 / 0.06), 0 8px 24px -14px oklch(0.19 0.012 285 / 0.14);
+    --float: 0 2px 6px oklch(0.19 0.012 285 / 0.08), 0 16px 40px -12px oklch(0.19 0.012 285 / 0.22);
+    --sheen: oklch(1 0 0 / 0.7);
     /* Light thrown onto a dark page reads as grime on a light one. */
     --aura-strength: 0.28;
 
@@ -193,6 +223,8 @@
     --raised: oklch(0.23 0.021 285);
     --edge: oklch(1 0 0 / 0.09);
     --lift: 0 1px 2px oklch(0 0 0 / 0.3), 0 12px 32px -14px oklch(0 0 0 / 0.7);
+    --float: 0 2px 8px oklch(0 0 0 / 0.4), 0 18px 44px -12px oklch(0 0 0 / 0.75);
+    --sheen: oklch(1 0 0 / 0.07);
     --aura-strength: 1;
 
     --card: var(--surface);
@@ -268,6 +300,15 @@
     }
 
     ::selection {
-        background: oklch(0.72 0.15 285 / 0.35);
+        background: color-mix(in oklch, var(--ring) 32%, transparent);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
     }
 }

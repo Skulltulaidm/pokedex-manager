@@ -8,7 +8,6 @@ import { clearAccessToken } from "@/lib/api-client";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
-import { Label } from "@workspace/ui/components/label";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -48,7 +47,7 @@ export default function SignInPage() {
       <div className="w-full max-w-sm">
         <CardFan />
 
-        <h1 className="font-display mt-2 text-center text-[2rem] leading-none font-extrabold tracking-tight">
+        <h1 className="font-display mt-2 text-center text-[2rem] leading-[1.05] font-semibold tracking-[-0.03em]">
           Tu colección,
           <br />
           <span className="text-muted-foreground">carta por carta.</span>
@@ -58,35 +57,32 @@ export default function SignInPage() {
           completar cada set.
         </p>
 
-        <form onSubmit={submit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Correo</Label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="password">Contraseña</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
-              required
-              minLength={8}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </div>
+        <form onSubmit={submit} className="space-y-3">
+          <Input
+            type="email"
+            autoComplete="email"
+            required
+            placeholder="Correo"
+            aria-label="Correo"
+            className="bg-secondary h-12 rounded-xl border-transparent px-4 text-[15px]"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+          <Input
+            type="password"
+            autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
+            required
+            minLength={8}
+            placeholder="Contraseña"
+            aria-label="Contraseña"
+            className="bg-secondary h-12 rounded-xl border-transparent px-4 text-[15px]"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
 
           {error && <p className="text-destructive text-sm">{error}</p>}
 
-          <Button type="submit" className="w-full" disabled={busy}>
+          <Button type="submit" size="lg" className="h-12 w-full rounded-xl" disabled={busy}>
             {mode === "sign-in" ? "Entrar" : "Crear cuenta"}
           </Button>
         </form>

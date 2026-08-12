@@ -96,7 +96,7 @@ function CollectionGrid() {
       />
 
       <div className="mb-3 flex gap-2">
-        <InputGroup className="flex-1">
+        <InputGroup className="bg-secondary h-11 flex-1 rounded-full border-transparent">
           <InputGroupAddon>
             <Search className="size-4" />
           </InputGroupAddon>
@@ -231,7 +231,7 @@ function FilterSheet({
     <Sheet>
       <SheetTrigger
         render={
-          <Button variant="outline" className="shrink-0">
+          <Button variant="outline" className="size-11 shrink-0 rounded-full sm:w-auto sm:px-4">
             <SlidersHorizontal />
             <span className="hidden sm:inline">Filtros</span>
             {count > 0 && (

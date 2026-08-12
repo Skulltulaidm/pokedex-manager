@@ -62,27 +62,34 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 pt-5 pb-28 md:px-6 md:pb-12">{children}</main>
+      <main key={pathname} className="rise mx-auto max-w-6xl px-4 pt-5 pb-32 md:px-6 md:pb-12">
+        {children}
+      </main>
 
-      <nav className="border-edge bg-background/85 fixed inset-x-0 bottom-0 z-20 border-t backdrop-blur-xl md:hidden">
-        <ul
-          className="mx-auto flex max-w-md"
-          style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.25rem)" }}
-        >
+      <nav
+        className="fixed inset-x-0 z-20 flex justify-center px-4 md:hidden"
+        style={{ bottom: "max(env(safe-area-inset-bottom), 1.25rem)" }}
+      >
+        <ul className="glass flex gap-0.5 rounded-full p-1.5">
           {NAV.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
             return (
-              <li key={href} className="flex-1">
+              <li key={href}>
                 <Link
                   href={href}
                   aria-current={active ? "page" : undefined}
+                  aria-label={label}
                   className={cn(
-                    "flex flex-col items-center gap-1 py-2 text-[10px] font-medium transition-colors",
-                    active ? "text-foreground" : "text-muted-foreground",
+                    "flex items-center gap-2 rounded-full px-3.5 py-2.5 text-[13px] font-medium transition-all duration-300",
+                    active
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground active:scale-90",
                   )}
                 >
-                  <Icon className={cn("size-[22px]", active && "stroke-[2.4]")} />
-                  {label}
+                  <Icon className="size-[18px] shrink-0" />
+                  {/* Only the current tab is named: four labels at once fill the
+                      bar on a 360px screen. */}
+                  {active && label}
                 </Link>
               </li>
             );

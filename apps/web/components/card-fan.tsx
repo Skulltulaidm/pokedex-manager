@@ -21,15 +21,18 @@ const CARD_W = "clamp(88px, 26vw, 116px)";
 export function CardFan() {
   return (
     <div className="relative h-48 w-full sm:h-56" aria-hidden>
-      {FAN.map((card) => (
+      {FAN.map((card, index) => (
         <div
           key={card.id}
-          className="absolute top-0 left-1/2 aspect-[63/88]"
-          style={{
-            width: CARD_W,
-            transform: `translateX(calc(-50% + ${card.x} * ${CARD_W})) translateY(${card.y}px) rotate(${card.rotate}deg)`,
-            zIndex: card.z,
-          }}
+          className="deal absolute top-0 left-1/2 aspect-[63/88]"
+          style={
+            {
+              width: CARD_W,
+              transform: `translateX(calc(-50% + ${card.x} * ${CARD_W})) translateY(${card.y}px) rotate(${card.rotate}deg)`,
+              zIndex: card.z,
+              "--deal-delay": `${index * 0.07}s`,
+            } as React.CSSProperties
+          }
         >
           <div
             className="aura absolute -inset-5 opacity-55 blur-2xl"
