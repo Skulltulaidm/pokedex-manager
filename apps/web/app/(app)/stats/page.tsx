@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { BinderMark } from "@/components/binder-mark";
+import { ScreenHeader } from "@/components/screen-header";
 import { CoverageStrip, TypeSpectrum } from "@/components/coverage-strip";
 import { typeColor, typeLabel } from "@/components/type-dot";
 import { apiClient } from "@/lib/api-client";
@@ -46,11 +47,11 @@ export default function StatsPage() {
   );
 
   return (
-    <div className="space-y-10">
-      <h1 className="font-display text-3xl font-extrabold tracking-tight">Resumen</h1>
+    <div className="space-y-9">
+      <ScreenHeader title="Resumen" />
 
       <section>
-        <p className="font-display text-[2.75rem] leading-none font-extrabold tabular-nums">
+        <p className="font-display text-[2.75rem] leading-none font-semibold tabular-nums">
           {data.total_cards}
           <span className="text-muted-foreground ml-2.5 text-base font-medium">
             {data.total_cards === 1 ? "carta" : "cartas"}

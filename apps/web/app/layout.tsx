@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 
 import "@workspace/ui/globals.css";
 import { QueryProvider } from "@/components/query-provider";
@@ -8,12 +8,7 @@ import { Toaster } from "@workspace/ui/components/sonner";
 import { cn } from "@workspace/ui/lib/utils";
 
 const body = Geist({ subsets: ["latin"], variable: "--font-sans" });
-
-const display = Bricolage_Grotesque({
-  subsets: ["latin"],
-  weight: ["600", "700", "800"],
-  variable: "--font-display",
-});
+const display = Geist({ subsets: ["latin"], variable: "--font-display" });
 
 const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
@@ -40,7 +35,7 @@ export default function RootLayout({
       )}
     >
       <body className="bg-background text-foreground min-h-svh">
-        <ThemeProvider forcedTheme="dark">
+        <ThemeProvider>
           <QueryProvider>{children}</QueryProvider>
           <Toaster position="top-center" />
         </ThemeProvider>

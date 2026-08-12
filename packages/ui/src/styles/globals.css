@@ -10,8 +10,7 @@
     background: var(--surface);
     box-shadow:
         inset 0 0 0 1px var(--edge),
-        0 1px 2px oklch(0 0 0 / 0.3),
-        0 8px 24px -12px oklch(0 0 0 / 0.5);
+        var(--lift);
 }
 
 /* Light thrown by a card onto the page behind it, tinted by its own type. The
@@ -19,6 +18,7 @@
    to a house colour. */
 @utility aura {
     background: radial-gradient(60% 55% at 50% 45%, var(--glow, transparent), transparent 72%);
+    opacity: var(--aura-strength);
 }
 
 /* Foil. Real holo cards refract into bands, not a smooth rainbow, so the stops
@@ -39,12 +39,11 @@
 /* Floating chrome. Detached from the screen edge and translucent, so content
    scrolls visibly beneath it instead of hitting a wall. */
 @utility glass {
-    background: color-mix(in oklch, var(--surface) 78%, transparent);
+    background: color-mix(in oklch, var(--surface) 82%, transparent);
     backdrop-filter: blur(20px) saturate(1.6);
     box-shadow:
         inset 0 0 0 1px var(--edge),
-        inset 0 1px 0 oklch(1 0 0 / 0.06),
-        0 12px 32px -12px oklch(0 0 0 / 0.7);
+        var(--lift);
 }
 
 @source "../../../apps/**/*.{ts,tsx}";
@@ -124,15 +123,81 @@
    violet cast rather than neutral grey, which keeps it from going flat next to
    the warm hues most card art leans on. */
 :root {
+    --background: oklch(0.985 0.002 285);
+    --foreground: oklch(0.19 0.012 285);
+    --surface: oklch(1 0 0);
+    --raised: oklch(0.975 0.003 285);
+    --edge: oklch(0.19 0.012 285 / 0.1);
+    --lift: 0 1px 2px oklch(0.19 0.012 285 / 0.06), 0 8px 24px -14px oklch(0.19 0.012 285 / 0.14);
+    /* Light thrown onto a dark page reads as grime on a light one. */
+    --aura-strength: 0.28;
+
+    --card: var(--surface);
+    --card-foreground: var(--foreground);
+    --popover: var(--surface);
+    --popover-foreground: var(--foreground);
+    --primary: oklch(0.21 0.014 285);
+    --primary-foreground: oklch(0.99 0.002 285);
+    --secondary: oklch(0.965 0.003 285);
+    --secondary-foreground: var(--foreground);
+    --muted: oklch(0.955 0.004 285);
+    --muted-foreground: oklch(0.5 0.014 285);
+    --accent: oklch(0.955 0.004 285);
+    --accent-foreground: var(--foreground);
+    --destructive: oklch(0.55 0.21 25);
+    --border: var(--edge);
+    --input: oklch(0.19 0.012 285 / 0.14);
+    --ring: oklch(0.6 0.16 285);
+    --radius: 0.875rem;
+    --star: oklch(0.68 0.15 80);
+
+    --chart-1: oklch(0.6 0.2 38);
+    --chart-2: oklch(0.56 0.18 250);
+    --chart-3: oklch(0.58 0.16 145);
+    --chart-4: oklch(0.68 0.16 85);
+    --chart-5: oklch(0.54 0.2 320);
+
+    --type-normal: oklch(0.62 0.04 90);
+    --type-fire: oklch(0.6 0.2 38);
+    --type-water: oklch(0.56 0.18 250);
+    --type-electric: oklch(0.68 0.16 85);
+    --type-grass: oklch(0.58 0.16 145);
+    --type-ice: oklch(0.62 0.11 210);
+    --type-fighting: oklch(0.54 0.2 25);
+    --type-poison: oklch(0.54 0.2 320);
+    --type-ground: oklch(0.6 0.12 70);
+    --type-flying: oklch(0.6 0.13 275);
+    --type-psychic: oklch(0.6 0.2 355);
+    --type-bug: oklch(0.58 0.16 120);
+    --type-rock: oklch(0.56 0.07 80);
+    --type-ghost: oklch(0.52 0.17 300);
+    --type-dragon: oklch(0.54 0.2 280);
+    --type-dark: oklch(0.45 0.05 60);
+    --type-steel: oklch(0.58 0.04 220);
+    --type-fairy: oklch(0.64 0.14 350);
+
+    --sidebar: var(--surface);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: var(--accent);
+    --sidebar-accent-foreground: var(--accent-foreground);
+    --sidebar-border: var(--edge);
+    --sidebar-ring: var(--ring);
+}
+
+.dark {
     --background: oklch(0.135 0.017 285);
     --foreground: oklch(0.97 0.005 285);
     --surface: oklch(0.185 0.019 285);
     --raised: oklch(0.23 0.021 285);
     --edge: oklch(1 0 0 / 0.09);
+    --lift: 0 1px 2px oklch(0 0 0 / 0.3), 0 12px 32px -14px oklch(0 0 0 / 0.7);
+    --aura-strength: 1;
 
     --card: var(--surface);
     --card-foreground: var(--foreground);
-    --popover: oklch(0.2 0.02 285);
+    --popover: oklch(0.21 0.02 285);
     --popover-foreground: var(--foreground);
     --primary: oklch(0.97 0.005 285);
     --primary-foreground: oklch(0.16 0.02 285);
@@ -146,20 +211,14 @@
     --border: var(--edge);
     --input: oklch(1 0 0 / 0.12);
     --ring: oklch(0.72 0.15 285);
-    --radius: 0.875rem;
-
     --star: oklch(0.84 0.16 88);
 
-    /* Charts read the collection's own palette rather than an abstract sequence. */
     --chart-1: oklch(0.72 0.18 38);
     --chart-2: oklch(0.7 0.16 250);
     --chart-3: oklch(0.76 0.17 145);
     --chart-4: oklch(0.82 0.17 95);
     --chart-5: oklch(0.7 0.17 320);
 
-    /* Pokemon types. Data, not decoration — and the only chroma the app owns.
-       Lightness sits high because every one of these is read against the dark
-       ground, where the light-mode values collapsed into mud. */
     --type-normal: oklch(0.76 0.04 90);
     --type-fire: oklch(0.72 0.19 38);
     --type-water: oklch(0.7 0.16 250);
@@ -196,13 +255,16 @@
 
     body {
         @apply bg-background text-foreground;
-        /* Two fixed pools of light, as if the binder were open under a lamp. They
-           stop the large dark areas from reading as an empty void. */
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+    }
+
+    .dark body {
+        /* Large dark areas read as a void without something behind them. */
         background-image:
             radial-gradient(80% 50% at 15% -5%, oklch(0.45 0.13 285 / 0.22), transparent 60%),
             radial-gradient(70% 45% at 95% 8%, oklch(0.5 0.12 200 / 0.14), transparent 65%);
         background-attachment: fixed;
-        -webkit-font-smoothing: antialiased;
     }
 
     ::selection {

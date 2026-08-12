@@ -1,9 +1,9 @@
 "use client";
 
+import { LayoutGrid, MessageCircle, PieChart, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { LayoutGrid, MessageCircle, PieChart, Plus } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
 import { Spinner } from "@workspace/ui/components/spinner";
@@ -35,69 +35,59 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-svh">
-      <header className="border-edge/70 bg-background/70 sticky top-0 z-20 border-b backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center gap-6 px-4 py-3.5">
+      <header className="border-edge bg-background/80 sticky top-0 z-20 hidden border-b backdrop-blur-xl md:block">
+        <div className="mx-auto flex max-w-6xl items-center gap-1 px-6 py-3">
           <Link
             href="/collection"
-            className="font-display text-lg font-extrabold tracking-tight"
+            className="font-display mr-6 text-[17px] font-semibold tracking-[-0.02em]"
           >
             Poké<span className="text-muted-foreground">Dex</span>
           </Link>
 
-          <nav className="ml-auto hidden gap-1 md:flex">
-            {NAV.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm transition-colors",
-                  pathname === href
-                    ? "bg-accent text-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Icon className="size-4" />
-                {label}
-              </Link>
-            ))}
-          </nav>
-
-          <button
-            onClick={() => authClient.signOut()}
-            className="text-muted-foreground hover:text-foreground ml-auto text-sm transition-colors md:ml-0"
-          >
-            Salir
-          </button>
+          {NAV.map(({ href, label, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                pathname === href
+                  ? "bg-accent text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Icon className="size-4" />
+              {label}
+            </Link>
+          ))}
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 pt-5 pb-32 md:pb-12">{children}</main>
+      <main className="mx-auto max-w-6xl px-4 pt-5 pb-28 md:px-6 md:pb-12">{children}</main>
 
-      <nav className="fixed inset-x-0 bottom-5 z-20 flex justify-center px-4 md:hidden">
-        <div className="glass flex gap-1 rounded-full p-1.5">
+      <nav className="border-edge bg-background/85 fixed inset-x-0 bottom-0 z-20 border-t backdrop-blur-xl md:hidden">
+        <ul
+          className="mx-auto flex max-w-md"
+          style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.25rem)" }}
+        >
           {NAV.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
             return (
-              <Link
-                key={href}
-                href={href}
-                aria-current={active ? "page" : undefined}
-                aria-label={label}
-                className={cn(
-                  "flex items-center gap-2 rounded-full px-3.5 py-2.5 text-[13px] font-medium transition-colors",
-                  active
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground",
-                )}
-              >
-                <Icon className="size-[18px]" />
-                {/* Only the current tab is named: four labels at once turn the bar
-                    into a wall of text on a 360px screen. */}
-                {active && label}
-              </Link>
+              <li key={href} className="flex-1">
+                <Link
+                  href={href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex flex-col items-center gap-1 py-2 text-[10px] font-medium transition-colors",
+                    active ? "text-foreground" : "text-muted-foreground",
+                  )}
+                >
+                  <Icon className={cn("size-[22px]", active && "stroke-[2.4]")} />
+                  {label}
+                </Link>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </nav>
     </div>
   );

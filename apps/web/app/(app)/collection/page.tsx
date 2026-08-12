@@ -1,28 +1,37 @@
 "use client";
 
+import { Search, SlidersHorizontal, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import { BinderMark } from "@/components/binder-mark";
 import { CardPocket } from "@/components/card-pocket";
+import { ScreenHeader } from "@/components/screen-header";
 import { typeLabel } from "@/components/type-dot";
 import { apiClient } from "@/lib/api-client";
 import { useCollectionStats } from "@/lib/api/hooks/useCollectionStats";
 import { useListCollection } from "@/lib/api/hooks/useListCollection";
 import { CONDITION_ORDER, conditionLabel } from "@/lib/labels";
-import { buttonVariants } from "@workspace/ui/components/button";
+import { Button, buttonVariants } from "@workspace/ui/components/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@workspace/ui/components/select";
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@workspace/ui/components/input-group";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@workspace/ui/components/sheet";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
 
-const ANY = "__any__";
+const PAGE_SIZE = 24;
 
 function CollectionGrid() {
   const params = useSearchParams();
@@ -32,7 +41,20 @@ function CollectionGrid() {
   const setId = params.get("set") ?? undefined;
   const generation = params.get("gen") ?? undefined;
   const condition = params.get("estado") ?? undefined;
-  const anyFilter = Boolean(type || setId || generation || condition);
+  const query = params.get("q") ?? "";
+  const page = Number(params.get("p") ?? 1);
+
+  const [draft, setDraft] = useState(query);
+  const activeFilters = [setId, generation, condition].filter(Boolean).length;
+
+  useEffect(() => setDraft(query), [query]);
+
+  useEffect(() => {
+    if (draft === query) return;
+    const timer = setTimeout(() => setParam({ q: draft || undefined, p: undefined }), 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft]);
 
   const { data: stats } = useCollectionStats({ client: { client: apiClient } });
   const { data, isPending, error } = useListCollection(
@@ -41,92 +63,87 @@ function CollectionGrid() {
       set_id: setId,
       generation: generation ? Number(generation) : undefined,
       condition: condition as never,
-      limit: 60,
+      search: query || undefined,
+      limit: PAGE_SIZE,
+      offset: (page - 1) * PAGE_SIZE,
     },
     { client: { client: apiClient } },
   );
 
-  function setParam(key: string, value: string | undefined) {
-    const next = new URLSearchParams(params.toString());
-    if (value && value !== ANY) next.set(key, value);
-    else next.delete(key);
-    router.replace(next.size ? `/collection?${next}` : "/collection");
+  function setParam(next: Record<string, string | undefined>) {
+    const search = new URLSearchParams(params.toString());
+    for (const [key, value] of Object.entries(next)) {
+      if (value) search.set(key, value);
+      else search.delete(key);
+    }
+    router.replace(search.size ? `/collection?${search}` : "/collection", { scroll: false });
   }
+
+  const total = data?.total ?? 0;
+  const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <>
-      <div className="mb-4 flex items-baseline justify-between gap-4">
-        <h1 className="font-display text-2xl font-extrabold tracking-tight">
-          Mi colección
-        </h1>
-        {data && (
-          <p className="text-muted-foreground shrink-0 font-mono text-sm">
-            {data.total} {data.total === 1 ? "entrada" : "entradas"}
-          </p>
-        )}
+      <ScreenHeader
+        title="Mi colección"
+        meta={
+          data && (
+            <span className="text-muted-foreground shrink-0 text-sm tabular-nums">
+              {total}
+            </span>
+          )
+        }
+      />
+
+      <div className="mb-3 flex gap-2">
+        <InputGroup className="flex-1">
+          <InputGroupAddon>
+            <Search className="size-4" />
+          </InputGroupAddon>
+          <InputGroupInput
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder="Buscar una carta"
+            aria-label="Buscar en tu colección"
+          />
+          {draft && (
+            <InputGroupAddon align="inline-end">
+              <button onClick={() => setDraft("")} aria-label="Limpiar búsqueda">
+                <X className="size-4" />
+              </button>
+            </InputGroupAddon>
+          )}
+        </InputGroup>
+
+        <FilterSheet
+          setId={setId}
+          generation={generation}
+          condition={condition}
+          count={activeFilters}
+          sets={stats?.sets ?? []}
+          generations={stats?.generations ?? []}
+          onApply={(next) => setParam({ ...next, p: undefined })}
+        />
       </div>
 
       {stats && stats.types.length > 0 && (
-        <div className="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1">
-          <FilterChip active={!type} onClick={() => setParam("type", undefined)}>
-            Todos los tipos
-          </FilterChip>
-          {stats.types.map((entry) => (
-            <FilterChip
-              key={entry.type}
-              active={type === entry.type}
-              onClick={() => setParam("type", entry.type)}
-            >
-              {typeLabel(entry.type)}
-            </FilterChip>
-          ))}
+        <div className="scrollbar-none -mx-4 mb-5 overflow-x-auto px-4 md:-mx-6 md:px-6">
+          <div className="flex w-max gap-2 pb-0.5">
+            <Chip active={!type} onClick={() => setParam({ type: undefined, p: undefined })}>
+              Todos
+            </Chip>
+            {stats.types.map((entry) => (
+              <Chip
+                key={entry.type}
+                active={type === entry.type}
+                onClick={() => setParam({ type: entry.type, p: undefined })}
+              >
+                {typeLabel(entry.type)}
+              </Chip>
+            ))}
+          </div>
         </div>
       )}
-
-      <div className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1">
-        <Compact
-          value={setId}
-          placeholder="Set"
-          onChange={(value) => setParam("set", value)}
-          options={
-            stats?.sets.map((entry) => ({
-              value: entry.set_id,
-              label: entry.set_name,
-            })) ?? []
-          }
-        />
-        <Compact
-          value={generation}
-          placeholder="Generación"
-          onChange={(value) => setParam("gen", value)}
-          options={
-            stats?.generations.map((entry) => ({
-              value: String(entry.generation),
-              label: `Gen ${entry.generation}`,
-            })) ?? []
-          }
-        />
-        {/* Conditions are a fixed list, so this would render on an empty collection. */}
-        {stats && stats.total_groups > 0 && (
-          <Compact
-            value={condition}
-            placeholder="Estado"
-            onChange={(value) => setParam("estado", value)}
-            options={CONDITION_ORDER.map((value) => ({
-              value,
-              label: conditionLabel(value),
-            }))}
-          />
-        )}
-        {anyFilter && (
-          <button
-            onClick={() => router.replace("/collection")}
-            className="text-muted-foreground hover:text-foreground px-1 text-sm underline"
-          >
-            Quitar filtros
-          </button>
-        )}
-      </div>
 
       {isPending && <PocketSkeleton />}
 
@@ -136,71 +153,181 @@ function CollectionGrid() {
         </p>
       )}
 
-      {data && data.items.length === 0 && <EmptyCollection filtered={anyFilter} />}
+      {data && data.items.length === 0 && (
+        <EmptyCollection filtered={Boolean(query || type || activeFilters)} />
+      )}
 
       {data && data.items.length > 0 && (
-        <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 lg:grid-cols-5">
-          {data.items.map((item) => (
-            <li key={item.id}>
-              <Link
-                href={`/collection/${item.id}`}
-                className="focus-visible:ring-ring block rounded-md focus-visible:ring-2 focus-visible:outline-none"
+        <>
+          <ul className="grid grid-cols-2 gap-x-3.5 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
+            {data.items.map((item) => (
+              <li key={item.id}>
+                <Link
+                  href={`/collection/${item.id}`}
+                  className="focus-visible:ring-ring block rounded-lg focus-visible:ring-2 focus-visible:outline-none"
+                >
+                  <CardPocket
+                    name={item.card.name}
+                    setName={item.card.card_set.name}
+                    number={item.card.number}
+                    printedTotal={item.card.card_set.printed_total}
+                    imageUrl={item.card.image_large_url ?? item.card.image_small_url ?? null}
+                    types={item.card.species?.types ?? []}
+                    quantity={item.quantity}
+                    condition={conditionLabel(item.condition)}
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {lastPage > 1 && (
+            <nav className="mt-8 flex items-center justify-between" aria-label="Paginación">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setParam({ p: String(page - 1) })}
               >
-                <CardPocket
-                  name={item.card.name}
-                  setName={item.card.card_set.name}
-                  number={item.card.number}
-                  printedTotal={item.card.card_set.printed_total}
-                  imageUrl={item.card.image_large_url ?? item.card.image_small_url ?? null}
-                  types={item.card.species?.types ?? []}
-                  quantity={item.quantity}
-                  condition={conditionLabel(item.condition)}
-                />
-              </Link>
-            </li>
-          ))}
-        </ul>
+                Anterior
+              </Button>
+              <p className="text-muted-foreground text-sm tabular-nums">
+                {page} de {lastPage}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= lastPage}
+                onClick={() => setParam({ p: String(page + 1) })}
+              >
+                Siguiente
+              </Button>
+            </nav>
+          )}
+        </>
       )}
     </>
   );
 }
 
-function Compact({
+function FilterSheet({
+  setId,
+  generation,
+  condition,
+  count,
+  sets,
+  generations,
+  onApply,
+}: {
+  setId?: string;
+  generation?: string;
+  condition?: string;
+  count: number;
+  sets: { set_id: string; set_name: string }[];
+  generations: { generation: number }[];
+  onApply: (next: Record<string, string | undefined>) => void;
+}) {
+  return (
+    <Sheet>
+      <SheetTrigger
+        render={
+          <Button variant="outline" className="shrink-0">
+            <SlidersHorizontal />
+            <span className="hidden sm:inline">Filtros</span>
+            {count > 0 && (
+              <span className="bg-foreground text-background grid size-5 place-items-center rounded-full text-[11px] tabular-nums">
+                {count}
+              </span>
+            )}
+          </Button>
+        }
+      />
+      <SheetContent side="bottom" className="rounded-t-2xl">
+        <SheetHeader>
+          <SheetTitle>Filtros</SheetTitle>
+        </SheetHeader>
+
+        <div className="grid gap-6 px-4 py-2">
+          <Picker
+            label="Set"
+            value={setId}
+            options={sets.map((entry) => ({ value: entry.set_id, label: entry.set_name }))}
+            onChange={(value) => onApply({ set: value })}
+          />
+          <Picker
+            label="Generación"
+            value={generation}
+            options={generations.map((entry) => ({
+              value: String(entry.generation),
+              label: `Generación ${entry.generation}`,
+            }))}
+            onChange={(value) => onApply({ gen: value })}
+          />
+          <Picker
+            label="Estado"
+            value={condition}
+            options={CONDITION_ORDER.map((value) => ({
+              value,
+              label: conditionLabel(value),
+            }))}
+            onChange={(value) => onApply({ estado: value })}
+          />
+        </div>
+
+        <SheetFooter className="flex-row gap-2">
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => onApply({ set: undefined, gen: undefined, estado: undefined })}
+          >
+            Limpiar
+          </Button>
+          <SheetClose render={<Button className="flex-1">Ver resultados</Button>} />
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+/**
+ * Options as chips rather than a select: every value is visible without opening a
+ * popup, and one tap applies it instead of two.
+ */
+function Picker({
+  label,
   value,
-  placeholder,
   options,
   onChange,
 }: {
+  label: string;
   value: string | undefined;
-  placeholder: string;
   options: { value: string; label: string }[];
   onChange: (value: string | undefined) => void;
 }) {
   if (options.length === 0) return null;
 
   return (
-    <Select
-      // Null rather than a sentinel: a sentinel becomes the trigger's visible
-      // label, and the placeholder never shows.
-      value={value ?? null}
-      onValueChange={(next) => onChange(next ?? undefined)}
-    >
-      <SelectTrigger className="bg-card h-9 w-auto min-w-32" aria-label={placeholder}>
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value={ANY}>Cualquiera</SelectItem>
+    <fieldset>
+      <legend className="text-muted-foreground mb-2.5 text-sm">{label}</legend>
+      <div className="flex flex-wrap gap-2">
+        <Chip active={!value} onClick={() => onChange(undefined)}>
+          Cualquiera
+        </Chip>
         {options.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
+          <Chip
+            key={option.value}
+            active={value === option.value}
+            onClick={() => onChange(option.value)}
+          >
             {option.label}
-          </SelectItem>
+          </Chip>
         ))}
-      </SelectContent>
-    </Select>
+      </div>
+    </fieldset>
   );
 }
 
-function FilterChip({
+function Chip({
   active,
   onClick,
   children,
@@ -214,10 +341,10 @@ function FilterChip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "shrink-0 rounded-full px-4 py-2 text-[13px] font-medium transition-colors",
+        "shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors",
         active
           ? "bg-foreground text-background"
-          : "bg-surface text-muted-foreground ring-edge hover:text-foreground ring-1",
+          : "bg-secondary text-muted-foreground hover:text-foreground",
       )}
     >
       {children}
@@ -227,10 +354,10 @@ function FilterChip({
 
 function PocketSkeleton() {
   return (
-    <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 lg:grid-cols-5">
+    <ul className="grid grid-cols-2 gap-x-3.5 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
       {Array.from({ length: 8 }).map((_, index) => (
         <li key={index} className="space-y-2">
-          <Skeleton className="aspect-[63/88] rounded-md" />
+          <Skeleton className="aspect-[63/88] rounded-lg" />
           <Skeleton className="h-3.5 w-3/4" />
           <Skeleton className="h-3 w-1/2" />
         </li>
@@ -242,23 +369,23 @@ function PocketSkeleton() {
 function EmptyCollection({ filtered }: { filtered: boolean }) {
   if (filtered) {
     return (
-      <div className="ring-edge bg-surface/60 rounded-lg py-14 text-center ring-1">
+      <div className="ring-edge bg-surface/60 rounded-2xl py-16 text-center ring-1">
         <p className="text-muted-foreground text-sm">
-          Ninguna carta de tu colección cumple estos filtros.
+          Ninguna carta de tu colección cumple esta búsqueda.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="ring-edge bg-surface/60 rounded-lg px-6 py-14 text-center ring-1">
-      <BinderMark className="mx-auto mb-6" />
-      <h2 className="font-display text-lg font-bold">Tu binder está vacío</h2>
+    <div className="ring-edge bg-surface/60 rounded-2xl px-6 py-16 text-center ring-1">
+      <BinderMark className="mx-auto mb-7" />
+      <h2 className="font-display text-lg font-semibold">Tu binder está vacío</h2>
       <p className="text-muted-foreground mx-auto mt-2 max-w-sm text-sm">
         Registra tu primera carta y empieza a ver qué tienes, de qué tipos y qué
         te falta para completar cada set.
       </p>
-      <Link href="/collection/add" className={cn(buttonVariants(), "mt-5")}>
+      <Link href="/collection/add" className={cn(buttonVariants(), "mt-6")}>
         Agregar una carta
       </Link>
     </div>

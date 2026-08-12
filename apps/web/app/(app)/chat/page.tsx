@@ -1,14 +1,34 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowUp, ArrowUpRight, MessageSquareText, Square } from "lucide-react";
+import {
+  ArrowUp,
+  History,
+  Layers,
+  PieChart,
+  SearchCheck,
+  SquarePen,
+  Square,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { AccountMenu } from "@/components/account-menu";
 import { getConversation } from "@/lib/api/clients/getConversation";
-import { useListConversations } from "@/lib/api/hooks/useListConversations";
-import { listConversationsQueryKey } from "@/lib/api/hooks/useListConversations";
+import {
+  listConversationsQueryKey,
+  useListConversations,
+} from "@/lib/api/hooks/useListConversations";
 import { apiClient } from "@/lib/api-client";
+import { authClient } from "@/lib/auth-client";
 import { streamChat } from "@/lib/chat-stream";
+import { Button } from "@workspace/ui/components/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@workspace/ui/components/sheet";
 import { Spinner } from "@workspace/ui/components/spinner";
 import { cn } from "@workspace/ui/lib/utils";
 
@@ -22,9 +42,9 @@ const TOOL_LABELS: Record<string, string> = {
 };
 
 const SUGGESTIONS = [
-  "¿Cuántas cartas tengo y de qué tipos?",
-  "¿Qué me falta para completar el Base Set?",
-  "¿Tengo algún Charizard?",
+  { icon: PieChart, text: "¿Cuántas cartas tengo y de qué tipos?" },
+  { icon: SearchCheck, text: "¿Qué me falta para completar el Base Set?" },
+  { icon: Layers, text: "¿Cuál es la carta más valiosa que tengo?" },
 ];
 
 export default function ChatPage() {
@@ -37,6 +57,7 @@ export default function ChatPage() {
   const bottom = useRef<HTMLDivElement>(null);
 
   const queryClient = useQueryClient();
+  const { data: session } = authClient.useSession();
   const { data: previous } = useListConversations({ client: { client: apiClient } });
 
   useEffect(() => {
@@ -47,6 +68,13 @@ export default function ChatPage() {
     const detail = await getConversation(id, { client: apiClient });
     conversationId.current = id;
     setTurns(detail.messages.map(({ role, text }) => ({ role, text })));
+  }
+
+  function reset() {
+    abort.current?.abort();
+    conversationId.current = null;
+    setTurns([]);
+    setDraft("");
   }
 
   async function send(text: string) {
@@ -96,62 +124,82 @@ export default function ChatPage() {
   const empty = turns.length === 0;
 
   return (
-    <div className="flex min-h-[calc(100svh-11rem)] flex-col">
-      <h1 className="font-display mb-4 text-3xl font-extrabold tracking-tight">Preguntar</h1>
+    <div className="flex min-h-[calc(100svh-9rem)] flex-col md:min-h-[calc(100svh-8rem)]">
+      <header className="mb-6 flex items-center gap-2">
+        <Sheet>
+          <SheetTrigger
+            render={
+              <Button variant="ghost" size="icon" aria-label="Conversaciones">
+                <History />
+              </Button>
+            }
+          />
+          <SheetContent side="left" className="w-80">
+            <SheetHeader>
+              <SheetTitle>Conversaciones</SheetTitle>
+            </SheetHeader>
+            <ul className="overflow-y-auto px-2">
+              {previous?.length ? (
+                previous.map((conversation) => (
+                  <li key={conversation.id}>
+                    <button
+                      onClick={() => resume(conversation.id)}
+                      className="hover:bg-accent w-full truncate rounded-lg px-3 py-2.5 text-left text-sm transition-colors"
+                    >
+                      {conversation.title}
+                    </button>
+                  </li>
+                ))
+              ) : (
+                <li className="text-muted-foreground px-3 py-2 text-sm">
+                  Todavía no has preguntado nada.
+                </li>
+              )}
+            </ul>
+          </SheetContent>
+        </Sheet>
+
+        <h1 className="font-display text-[17px] font-semibold tracking-[-0.02em]">Preguntar</h1>
+
+        <div className="ml-auto flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={reset} aria-label="Nueva conversación">
+            <SquarePen />
+          </Button>
+          <AccountMenu email={session?.user.email} />
+        </div>
+      </header>
 
       {empty ? (
-        <div className="flex flex-1 flex-col justify-center pb-6">
-          <p className="text-muted-foreground mb-6 max-w-sm text-sm leading-relaxed">
-            Pregunta sobre tu colección en tus propias palabras. Lee tus cartas
-            reales, no el catálogo completo.
-          </p>
-          <ul className="flex flex-col gap-2">
-            {SUGGESTIONS.map((suggestion) => (
-              <li key={suggestion}>
+        <div className="flex flex-1 flex-col justify-end pb-4">
+          <h2 className="font-display mb-6 text-[26px] leading-tight font-semibold tracking-[-0.02em]">
+            ¿Qué quieres saber
+            <br />
+            <span className="text-muted-foreground">de tu colección?</span>
+          </h2>
+          <ul className="divide-edge divide-y">
+            {SUGGESTIONS.map(({ icon: Icon, text }) => (
+              <li key={text}>
                 <button
-                  onClick={() => send(suggestion)}
-                  className="ring-edge bg-surface hover:bg-accent group flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left text-sm ring-1 transition-colors"
+                  onClick={() => send(text)}
+                  className="hover:text-foreground text-muted-foreground flex w-full items-center gap-3.5 py-3.5 text-left text-[15px] transition-colors"
                 >
-                  <span className="flex-1">{suggestion}</span>
-                  <ArrowUpRight className="text-muted-foreground group-hover:text-foreground size-4 shrink-0 transition-colors" />
+                  <Icon className="size-[18px] shrink-0" />
+                  {text}
                 </button>
               </li>
             ))}
           </ul>
-
-          {previous && previous.length > 0 && (
-            <section className="mt-8">
-              <h2 className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
-                Conversaciones anteriores
-              </h2>
-              <ul className="divide-edge divide-y">
-                {previous.slice(0, 5).map((conversation) => (
-                  <li key={conversation.id}>
-                    <button
-                      onClick={() => resume(conversation.id)}
-                      className="hover:text-foreground text-muted-foreground flex w-full items-center gap-2.5 py-2.5 text-left text-sm transition-colors"
-                    >
-                      <MessageSquareText className="size-4 shrink-0" />
-                      <span className="truncate">{conversation.title}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
         </div>
       ) : (
-        <ol className="flex-1 space-y-5 pb-4">
+        <ol className="flex-1 space-y-6 pb-4">
           {turns.map((turn, index) => (
             <li key={index}>
               {turn.role === "user" ? (
-                <p className="bg-surface ring-edge ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-md px-4 py-2.5 text-sm ring-1">
+                <p className="bg-secondary ml-auto w-fit max-w-[85%] rounded-3xl px-4 py-2.5 text-[15px]">
                   {turn.text}
                 </p>
               ) : (
-                <p className="max-w-[95%] text-[15px] leading-[1.65] whitespace-pre-wrap">
-                  {turn.text}
-                </p>
+                <p className="text-[15px] leading-[1.7] whitespace-pre-wrap">{turn.text}</p>
               )}
             </li>
           ))}
@@ -170,7 +218,7 @@ export default function ChatPage() {
           event.preventDefault();
           send(draft);
         }}
-        className="glass sticky bottom-24 mt-auto flex items-end gap-2 rounded-3xl p-1.5 md:bottom-4"
+        className="bg-secondary ring-edge sticky bottom-20 mt-auto flex items-end gap-2 rounded-[1.75rem] p-2 ring-1 md:bottom-4"
       >
         <textarea
           value={draft}
@@ -182,9 +230,9 @@ export default function ChatPage() {
             }
           }}
           rows={1}
-          placeholder="¿Qué quieres saber de tu colección?"
+          placeholder="Pregunta lo que quieras"
           aria-label="Mensaje"
-          className="max-h-32 min-h-11 flex-1 resize-none bg-transparent px-3.5 py-2.5 text-sm focus-visible:outline-none"
+          className="max-h-40 min-h-9 flex-1 resize-none bg-transparent px-3 py-2 text-[15px] focus-visible:outline-none"
         />
         <button
           type={busy ? "button" : "submit"}
@@ -192,11 +240,11 @@ export default function ChatPage() {
           disabled={!busy && !draft.trim()}
           aria-label={busy ? "Detener" : "Enviar"}
           className={cn(
-            "bg-foreground text-background grid size-11 shrink-0 place-items-center rounded-full transition-opacity",
-            !busy && !draft.trim() && "opacity-30",
+            "bg-foreground text-background grid size-9 shrink-0 place-items-center rounded-full transition-opacity",
+            !busy && !draft.trim() && "opacity-25",
           )}
         >
-          {busy ? <Square className="size-4 fill-current" /> : <ArrowUp className="size-5" />}
+          {busy ? <Square className="size-3.5 fill-current" /> : <ArrowUp className="size-[18px]" />}
         </button>
       </form>
     </div>

@@ -24,7 +24,7 @@ export default function AddCardPage() {
 
   return (
     <>
-      <h1 className="font-display mb-1 text-2xl font-extrabold tracking-tight">
+      <h1 className="font-display mb-1 text-2xl font-semibold tracking-tight">
         Agregar una carta
       </h1>
       <p className="text-muted-foreground mb-5 text-sm">
