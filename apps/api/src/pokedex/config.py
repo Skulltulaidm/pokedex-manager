@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     agent_model: str = "google-gla:gemini-flash-latest"
     google_api_key: str = ""
 
+    vision_model: str = "google-gla:gemini-flash-latest"
+    ollama_url: str = "http://localhost:11434/v1"
+
     @property
     def agent_enabled(self) -> bool:
         """Everything else must keep working when no model is configured."""

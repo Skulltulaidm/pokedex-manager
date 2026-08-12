@@ -188,3 +188,17 @@ def test_a_strong_but_lonely_score_below_the_bar_fails() -> None:
 
 def test_no_candidates_at_all_fails() -> None:
     assert _status([]) == "failed"
+
+
+def test_a_printed_fraction_is_split_into_its_parts() -> None:
+    reading = CardReading(collector_number="4/102")
+
+    assert reading.collector_number == "4"
+    assert reading.set_total == 102
+
+
+def test_an_explicit_set_total_is_not_overwritten_by_the_fraction() -> None:
+    reading = CardReading(collector_number="4/102", set_total=64)
+
+    assert reading.collector_number == "4"
+    assert reading.set_total == 64

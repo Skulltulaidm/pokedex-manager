@@ -1,9 +1,11 @@
+import logging
 from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import Response
 
+from pokedex.agent import read_card
 from pokedex.api.deps import CurrentUser, DbSession
 from pokedex.config import get_settings
 from pokedex.schemas.collection import AddCardRequest
@@ -12,6 +14,7 @@ from pokedex.services import collection, resolve
 from pokedex.services import scan as scans
 from pokedex.storage import InvalidImageError, LocalFilesystemStorage, StorageBackend, prepare
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/scans", tags=["scans"])
 
 
@@ -40,13 +43,19 @@ async def create_scan(
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
 
     scan_id, key = await scans.store_image(storage, user.id, prepared)
+    model = get_settings().vision_model
 
-    # Vision is not wired in yet; an empty reading resolves to `failed`, which is
-    # the same path a provider outage takes and diverts the user to manual entry.
-    reading = CardReading()
+    try:
+        reading = await read_card(prepared, model)
+    except Exception:
+        # A provider outage degrades this scan to manual entry; the row is still
+        # written so the stored image can be retried without reading it again.
+        logger.exception("vision extraction failed")
+        reading = CardReading()
+
     result = await resolve.resolve(db, reading)
 
-    await scans.record(db, scan_id, user.id, key, reading, result, model=None)
+    await scans.record(db, scan_id, user.id, key, reading, result, model=model)
     result.scan_id = scan_id
     return result
 

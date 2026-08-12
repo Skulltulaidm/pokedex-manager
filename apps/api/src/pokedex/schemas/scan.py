@@ -1,7 +1,7 @@
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from pokedex.schemas.catalog import CardView
 
@@ -40,6 +40,17 @@ class CardReading(BaseModel):
         if isinstance(value, str) and len(value) > 16:
             return None
         return value
+
+    @model_validator(mode="after")
+    def split_printed_fraction(self) -> "CardReading":
+        # Models routinely return the whole "4/102" for collector_number despite
+        # the instruction, which then matches no card at all.
+        if self.collector_number and "/" in self.collector_number:
+            left, _, right = self.collector_number.partition("/")
+            self.collector_number = left.strip() or None
+            if self.set_total is None and right.strip().isdigit():
+                self.set_total = int(right.strip())
+        return self
 
 
 class CardCandidate(BaseModel):

@@ -1,12 +1,10 @@
-import os
-
 from mcp import ClientSession
 from pydantic_ai import Agent
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import UsageLimits
 
+from pokedex.agent.models import build_model
 from pokedex.agent.toolset import McpToolset
-from pokedex.config import get_settings
 
 SYSTEM_PROMPT = """\
 You help a collector understand their own Pokemon card collection.
@@ -38,14 +36,8 @@ TURN_LIMITS = UsageLimits(tool_calls_limit=8, request_limit=10)
 
 def build_agent(session: ClientSession, model: str) -> Agent[None, str]:
     """A fresh agent per turn, bound to that turn's authenticated MCP session."""
-    settings = get_settings()
-    if settings.google_api_key:
-        # pydantic-ai providers read credentials from the environment; the rest of the
-        # project reads .env. This is the one line that bridges the two.
-        os.environ.setdefault("GOOGLE_API_KEY", settings.google_api_key)
-
     return Agent(
-        model,
+        build_model(model),
         instructions=SYSTEM_PROMPT,
         toolsets=[McpToolset(session)],
         model_settings=ModelSettings(temperature=0.2),
