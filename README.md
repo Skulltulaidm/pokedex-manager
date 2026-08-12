@@ -95,6 +95,21 @@ A tool that cannot resolve its user fails rather than falling back to a default.
 
 ---
 
+## What it does
+
+|                |                                                                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **Scan**       | Photograph a card. The model transcribes what is printed; the lookup decides which card that is and shows why.                       |
+| **Collection** | Search, filter by type, sort by name, number or price. Two cards can be compared side by side.                                       |
+| **Summary**    | Composition by type, per-set coverage, estimated value in USD with the share of cards that carry a price.                            |
+| **Ask**        | Chat about the collection in Spanish. The assistant reads through the MCP server and remembers standing facts between conversations. |
+| **Share**      | A revocable public link, and CSV or JSON export.                                                                                     |
+
+The public view is a separate schema from the owner's: notes and acquisition
+dates never leave the account.
+
+---
+
 ## Architecture
 
 ```
@@ -124,7 +139,7 @@ right card. The user decides what to save, and only when the ambiguity is real.
 ## Verifying
 
 ```bash
-npm run test        # 107 tests
+npm run test        # 128 tests
 npm run typecheck   # mypy strict + tsc
 npm run lint
 ```
