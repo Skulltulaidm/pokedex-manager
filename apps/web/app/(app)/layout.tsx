@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGrid, MessageCircle, PieChart, Plus } from "lucide-react";
+import { LayoutGrid, MessageCircle, PieChart, ScanLine } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -11,7 +11,7 @@ import { cn } from "@workspace/ui/lib/utils";
 
 const NAV = [
   { href: "/collection", label: "Colección", icon: LayoutGrid },
-  { href: "/collection/add", label: "Agregar", icon: Plus },
+  { href: "/scan", label: "Escanear", icon: ScanLine },
   { href: "/stats", label: "Resumen", icon: PieChart },
   { href: "/chat", label: "Preguntar", icon: MessageCircle },
 ];

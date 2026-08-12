@@ -1,12 +1,16 @@
 export type { AddCardMutationKey } from "./hooks/useAddCard"
 export type { CollectionStatsQueryKey } from "./hooks/useCollectionStats"
 export type { CollectionStatsSuspenseQueryKey } from "./hooks/useCollectionStatsSuspense"
+export type { ConfirmScanMutationKey } from "./hooks/useConfirmScan"
+export type { CreateScanMutationKey } from "./hooks/useCreateScan"
 export type { GetCardQueryKey } from "./hooks/useGetCard"
 export type { GetCardSuspenseQueryKey } from "./hooks/useGetCardSuspense"
 export type { GetConversationQueryKey } from "./hooks/useGetConversation"
 export type { GetConversationSuspenseQueryKey } from "./hooks/useGetConversationSuspense"
 export type { GetItemQueryKey } from "./hooks/useGetItem"
 export type { GetItemSuspenseQueryKey } from "./hooks/useGetItemSuspense"
+export type { GetScanImageQueryKey } from "./hooks/useGetScanImage"
+export type { GetScanImageSuspenseQueryKey } from "./hooks/useGetScanImageSuspense"
 export type { HealthQueryKey } from "./hooks/useHealth"
 export type { HealthSuspenseQueryKey } from "./hooks/useHealthSuspense"
 export type { ListCollectionQueryKey } from "./hooks/useListCollection"
@@ -30,7 +34,14 @@ export type {
   AddCardMutationResponse,
 } from "./types/AddCard"
 export type { AddCardRequest } from "./types/AddCardRequest"
+export type { BodyCreateScan } from "./types/BodyCreateScan"
+export type { CardCandidate } from "./types/CardCandidate"
 export type { CardCondition, CardConditionEnumKey } from "./types/CardCondition"
+export type {
+  CardReading,
+  CardReadingConfidenceEnumKey,
+  CardReadingRaritySymbolEnumKey,
+} from "./types/CardReading"
 export type { CardSetView } from "./types/CardSetView"
 export type { CardView } from "./types/CardView"
 export type { ChatRequest } from "./types/ChatRequest"
@@ -41,8 +52,23 @@ export type {
   CollectionStatsQuery,
   CollectionStatsQueryResponse,
 } from "./types/CollectionStats"
+export type {
+  ConfirmScan201,
+  ConfirmScan422,
+  ConfirmScanMutation,
+  ConfirmScanMutationRequest,
+  ConfirmScanMutationResponse,
+  ConfirmScanPathParams,
+} from "./types/ConfirmScan"
 export type { ConversationDetail } from "./types/ConversationDetail"
 export type { ConversationView } from "./types/ConversationView"
+export type {
+  CreateScan201,
+  CreateScan422,
+  CreateScanMutation,
+  CreateScanMutationRequest,
+  CreateScanMutationResponse,
+} from "./types/CreateScan"
 export type { GenerationCount } from "./types/GenerationCount"
 export type {
   GetCard200,
@@ -65,6 +91,13 @@ export type {
   GetItemQuery,
   GetItemQueryResponse,
 } from "./types/GetItem"
+export type {
+  GetScanImage200,
+  GetScanImage422,
+  GetScanImagePathParams,
+  GetScanImageQuery,
+  GetScanImageQueryResponse,
+} from "./types/GetScanImage"
 export type { HTTPValidationError } from "./types/HTTPValidationError"
 export type {
   Health200,
@@ -96,6 +129,7 @@ export type {
   RemoveItemMutationResponse,
   RemoveItemPathParams,
 } from "./types/RemoveItem"
+export type { ScanResult, ScanResultStatusEnumKey } from "./types/ScanResult"
 export type {
   SearchCards200,
   SearchCards422,
@@ -132,9 +166,12 @@ export type { UpdateItemRequest } from "./types/UpdateItemRequest"
 export type { ValidationError } from "./types/ValidationError"
 export { addCard } from "./clients/addCard"
 export { collectionStats } from "./clients/collectionStats"
+export { confirmScan } from "./clients/confirmScan"
+export { createScan } from "./clients/createScan"
 export { getCard } from "./clients/getCard"
 export { getConversation } from "./clients/getConversation"
 export { getItem } from "./clients/getItem"
+export { getScanImage } from "./clients/getScanImage"
 export { health } from "./clients/health"
 export { listCollection } from "./clients/listCollection"
 export { listConversations } from "./clients/listConversations"
@@ -153,6 +190,12 @@ export { useCollectionStats } from "./hooks/useCollectionStats"
 export { collectionStatsSuspenseQueryKey } from "./hooks/useCollectionStatsSuspense"
 export { collectionStatsSuspenseQueryOptions } from "./hooks/useCollectionStatsSuspense"
 export { useCollectionStatsSuspense } from "./hooks/useCollectionStatsSuspense"
+export { confirmScanMutationKey } from "./hooks/useConfirmScan"
+export { confirmScanMutationOptions } from "./hooks/useConfirmScan"
+export { useConfirmScan } from "./hooks/useConfirmScan"
+export { createScanMutationKey } from "./hooks/useCreateScan"
+export { createScanMutationOptions } from "./hooks/useCreateScan"
+export { useCreateScan } from "./hooks/useCreateScan"
 export { getCardQueryKey } from "./hooks/useGetCard"
 export { getCardQueryOptions } from "./hooks/useGetCard"
 export { useGetCard } from "./hooks/useGetCard"
@@ -171,6 +214,12 @@ export { useGetItem } from "./hooks/useGetItem"
 export { getItemSuspenseQueryKey } from "./hooks/useGetItemSuspense"
 export { getItemSuspenseQueryOptions } from "./hooks/useGetItemSuspense"
 export { useGetItemSuspense } from "./hooks/useGetItemSuspense"
+export { getScanImageQueryKey } from "./hooks/useGetScanImage"
+export { getScanImageQueryOptions } from "./hooks/useGetScanImage"
+export { useGetScanImage } from "./hooks/useGetScanImage"
+export { getScanImageSuspenseQueryKey } from "./hooks/useGetScanImageSuspense"
+export { getScanImageSuspenseQueryOptions } from "./hooks/useGetScanImageSuspense"
+export { useGetScanImageSuspense } from "./hooks/useGetScanImageSuspense"
 export { healthQueryKey } from "./hooks/useHealth"
 export { healthQueryOptions } from "./hooks/useHealth"
 export { useHealth } from "./hooks/useHealth"
@@ -217,7 +266,10 @@ export { updateItemMutationKey } from "./hooks/useUpdateItem"
 export { updateItemMutationOptions } from "./hooks/useUpdateItem"
 export { useUpdateItem } from "./hooks/useUpdateItem"
 export { cardConditionEnum } from "./types/CardCondition"
+export { cardReadingConfidenceEnum } from "./types/CardReading"
+export { cardReadingRaritySymbolEnum } from "./types/CardReading"
 export { messageRoleEnum } from "./types/MessageRole"
+export { scanResultStatusEnum } from "./types/ScanResult"
 export { HTTPValidationErrorSchema } from "./zod/HTTPValidationErrorSchema"
 export { addCardRequestSchema } from "./zod/addCardRequestSchema"
 export {
@@ -226,7 +278,10 @@ export {
   addCardMutationRequestSchema,
   addCardMutationResponseSchema,
 } from "./zod/addCardSchema"
+export { bodyCreateScanSchema } from "./zod/bodyCreateScanSchema"
+export { cardCandidateSchema } from "./zod/cardCandidateSchema"
 export { cardConditionSchema } from "./zod/cardConditionSchema"
+export { cardReadingSchema } from "./zod/cardReadingSchema"
 export { cardSetViewSchema } from "./zod/cardSetViewSchema"
 export { cardViewSchema } from "./zod/cardViewSchema"
 export { chatRequestSchema } from "./zod/chatRequestSchema"
@@ -236,8 +291,21 @@ export {
   collectionStatsQueryResponseSchema,
   collectionStatsSchema,
 } from "./zod/collectionStatsSchema"
+export {
+  confirmScan201Schema,
+  confirmScan422Schema,
+  confirmScanMutationRequestSchema,
+  confirmScanMutationResponseSchema,
+  confirmScanPathParamsSchema,
+} from "./zod/confirmScanSchema"
 export { conversationDetailSchema } from "./zod/conversationDetailSchema"
 export { conversationViewSchema } from "./zod/conversationViewSchema"
+export {
+  createScan201Schema,
+  createScan422Schema,
+  createScanMutationRequestSchema,
+  createScanMutationResponseSchema,
+} from "./zod/createScanSchema"
 export { generationCountSchema } from "./zod/generationCountSchema"
 export {
   getCard200Schema,
@@ -257,6 +325,12 @@ export {
   getItemPathParamsSchema,
   getItemQueryResponseSchema,
 } from "./zod/getItemSchema"
+export {
+  getScanImage200Schema,
+  getScanImage422Schema,
+  getScanImagePathParamsSchema,
+  getScanImageQueryResponseSchema,
+} from "./zod/getScanImageSchema"
 export { health200Schema, healthQueryResponseSchema } from "./zod/healthSchema"
 export {
   listCollection200Schema,
@@ -280,6 +354,7 @@ export {
   removeItemMutationResponseSchema,
   removeItemPathParamsSchema,
 } from "./zod/removeItemSchema"
+export { scanResultSchema } from "./zod/scanResultSchema"
 export {
   searchCards200Schema,
   searchCards422Schema,

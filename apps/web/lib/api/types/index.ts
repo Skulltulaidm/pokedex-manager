@@ -6,7 +6,14 @@ export type {
   AddCardMutationResponse,
 } from "./AddCard"
 export type { AddCardRequest } from "./AddCardRequest"
+export type { BodyCreateScan } from "./BodyCreateScan"
+export type { CardCandidate } from "./CardCandidate"
 export type { CardCondition, CardConditionEnumKey } from "./CardCondition"
+export type {
+  CardReading,
+  CardReadingConfidenceEnumKey,
+  CardReadingRaritySymbolEnumKey,
+} from "./CardReading"
 export type { CardSetView } from "./CardSetView"
 export type { CardView } from "./CardView"
 export type { ChatRequest } from "./ChatRequest"
@@ -17,8 +24,23 @@ export type {
   CollectionStatsQuery,
   CollectionStatsQueryResponse,
 } from "./CollectionStats"
+export type {
+  ConfirmScan201,
+  ConfirmScan422,
+  ConfirmScanMutation,
+  ConfirmScanMutationRequest,
+  ConfirmScanMutationResponse,
+  ConfirmScanPathParams,
+} from "./ConfirmScan"
 export type { ConversationDetail } from "./ConversationDetail"
 export type { ConversationView } from "./ConversationView"
+export type {
+  CreateScan201,
+  CreateScan422,
+  CreateScanMutation,
+  CreateScanMutationRequest,
+  CreateScanMutationResponse,
+} from "./CreateScan"
 export type { GenerationCount } from "./GenerationCount"
 export type {
   GetCard200,
@@ -41,6 +63,13 @@ export type {
   GetItemQuery,
   GetItemQueryResponse,
 } from "./GetItem"
+export type {
+  GetScanImage200,
+  GetScanImage422,
+  GetScanImagePathParams,
+  GetScanImageQuery,
+  GetScanImageQueryResponse,
+} from "./GetScanImage"
 export type { HTTPValidationError } from "./HTTPValidationError"
 export type { Health200, HealthQuery, HealthQueryResponse } from "./Health"
 export type {
@@ -68,6 +97,7 @@ export type {
   RemoveItemMutationResponse,
   RemoveItemPathParams,
 } from "./RemoveItem"
+export type { ScanResult, ScanResultStatusEnumKey } from "./ScanResult"
 export type {
   SearchCards200,
   SearchCards422,
@@ -103,4 +133,7 @@ export type {
 export type { UpdateItemRequest } from "./UpdateItemRequest"
 export type { ValidationError } from "./ValidationError"
 export { cardConditionEnum } from "./CardCondition"
+export { cardReadingConfidenceEnum } from "./CardReading"
+export { cardReadingRaritySymbolEnum } from "./CardReading"
 export { messageRoleEnum } from "./MessageRole"
+export { scanResultStatusEnum } from "./ScanResult"

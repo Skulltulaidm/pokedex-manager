@@ -1,0 +1,46 @@
+{
+  "properties": {
+    "name": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Name"
+    },
+    "collector_number": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Collector Number"
+    },
+    "set_total": {
+      "anyOf": [{ "type": "integer" }, { "type": "null" }],
+      "title": "Set Total"
+    },
+    "set_symbol_text": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Set Symbol Text"
+    },
+    "hp": {
+      "anyOf": [{ "type": "integer" }, { "type": "null" }],
+      "title": "Hp"
+    },
+    "rarity_symbol": {
+      "anyOf": [
+        { "type": "string", "enum": ["circle", "diamond", "star", "none"] },
+        { "type": "null" }
+      ],
+      "title": "Rarity Symbol"
+    },
+    "variant_hints": {
+      "items": { "type": "string" },
+      "type": "array",
+      "title": "Variant Hints"
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low"],
+      "title": "Confidence",
+      "default": "low"
+    }
+  },
+  "type": "object",
+  "title": "CardReading",
+  "description": "What is PRINTED on the card. It does not identify: it transcribes.\n\nMerging transcription and identification is what makes these features\nhallucinate a card that fits what the model thinks it saw.",
+  "x-readme-ref-name": "CardReading"
+}

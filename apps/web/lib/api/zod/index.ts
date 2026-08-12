@@ -6,7 +6,10 @@ export {
   addCardMutationRequestSchema,
   addCardMutationResponseSchema,
 } from "./addCardSchema"
+export { bodyCreateScanSchema } from "./bodyCreateScanSchema"
+export { cardCandidateSchema } from "./cardCandidateSchema"
 export { cardConditionSchema } from "./cardConditionSchema"
+export { cardReadingSchema } from "./cardReadingSchema"
 export { cardSetViewSchema } from "./cardSetViewSchema"
 export { cardViewSchema } from "./cardViewSchema"
 export { chatRequestSchema } from "./chatRequestSchema"
@@ -16,8 +19,21 @@ export {
   collectionStatsQueryResponseSchema,
   collectionStatsSchema,
 } from "./collectionStatsSchema"
+export {
+  confirmScan201Schema,
+  confirmScan422Schema,
+  confirmScanMutationRequestSchema,
+  confirmScanMutationResponseSchema,
+  confirmScanPathParamsSchema,
+} from "./confirmScanSchema"
 export { conversationDetailSchema } from "./conversationDetailSchema"
 export { conversationViewSchema } from "./conversationViewSchema"
+export {
+  createScan201Schema,
+  createScan422Schema,
+  createScanMutationRequestSchema,
+  createScanMutationResponseSchema,
+} from "./createScanSchema"
 export { generationCountSchema } from "./generationCountSchema"
 export {
   getCard200Schema,
@@ -37,6 +53,12 @@ export {
   getItemPathParamsSchema,
   getItemQueryResponseSchema,
 } from "./getItemSchema"
+export {
+  getScanImage200Schema,
+  getScanImage422Schema,
+  getScanImagePathParamsSchema,
+  getScanImageQueryResponseSchema,
+} from "./getScanImageSchema"
 export { health200Schema, healthQueryResponseSchema } from "./healthSchema"
 export {
   listCollection200Schema,
@@ -60,6 +82,7 @@ export {
   removeItemMutationResponseSchema,
   removeItemPathParamsSchema,
 } from "./removeItemSchema"
+export { scanResultSchema } from "./scanResultSchema"
 export {
   searchCards200Schema,
   searchCards422Schema,

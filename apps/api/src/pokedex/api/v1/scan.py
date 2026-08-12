@@ -8,6 +8,7 @@ from fastapi.responses import Response
 from pokedex.agent import read_card
 from pokedex.api.deps import CurrentUser, DbSession
 from pokedex.config import get_settings
+from pokedex.schemas.catalog import CollectionItemView
 from pokedex.schemas.collection import AddCardRequest
 from pokedex.schemas.scan import CardReading, ScanResult
 from pokedex.services import collection, resolve
@@ -73,7 +74,11 @@ async def get_scan_image(
     return Response(content=await storage.get(scan.image_key), media_type="image/jpeg")
 
 
-@router.post("/{scan_id}/confirm", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{scan_id}/confirm",
+    response_model=CollectionItemView,
+    status_code=status.HTTP_201_CREATED,
+)
 async def confirm_scan(
     scan_id: UUID, payload: AddCardRequest, user: CurrentUser, db: DbSession
 ) -> Any:
@@ -86,6 +91,18 @@ async def confirm_scan(
     if scan is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Scan not found")
 
-    item = await collection.add_card(db, user.id, payload)
+    try:
+        item = await collection.add_card(db, user.id, payload)
+    except collection.CardNotFoundError as exc:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, f"Unknown card: {payload.card_id}"
+        ) from exc
+
     scan.resolved_card_id = payload.card_id
-    return item
+
+    # Relationships load lazily with raise-on-access, so the view needs the row
+    # re-read rather than the one the insert returned.
+    stored = await collection.get_item(db, user.id, item.id)
+    if stored is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Collection item not found")
+    return CollectionItemView.model_validate(stored)

@@ -1,0 +1,13 @@
+{
+  "properties": {
+    "image": {
+      "type": "string",
+      "contentMediaType": "application/octet-stream",
+      "title": "Image"
+    }
+  },
+  "type": "object",
+  "required": ["image"],
+  "title": "Body_create_scan",
+  "x-readme-ref-name": "Body_create_scan"
+}
