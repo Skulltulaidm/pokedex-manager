@@ -78,10 +78,15 @@ async def test_every_signal_agreeing_resolves(catalogued: AsyncSession) -> None:
 async def test_set_total_breaks_a_tie_between_identical_numbers(
     catalogued: AsyncSession,
 ) -> None:
-    """Two sets hold a number 4; only the printed total says which one was scanned."""
+    """Two sets hold a number 4; only the printed total says which one was scanned.
+
+    Scoped to the seeded ids: the live catalogue holds other sets of 64 cards, and
+    the point here is which of *these* two wins.
+    """
     result = await resolve(catalogued, CardReading(collector_number="4", set_total=64))
 
-    assert result.candidates[0].card.id == "jungle-4"
+    seeded = [c for c in result.candidates if c.card.id in {"base1-4", "jungle-4"}]
+    assert seeded[0].card.id == "jungle-4"
 
 
 async def test_a_misread_field_does_not_discard_the_right_card(

@@ -99,7 +99,12 @@ def _ordering(sort: SortKey) -> tuple[Any, ...]:
             CollectionItem.id.desc(),
         )
     if sort == "price":
-        return (Card.price_usd.desc().nullslast(), CollectionItem.id.desc())
+        # Position value, not unit price. Three copies at 174 outweigh one at 223,
+        # and a list that says otherwise while showing the totals is wrong.
+        return (
+            (Card.price_usd * CollectionItem.quantity).desc().nullslast(),
+            CollectionItem.id.desc(),
+        )
     return (CollectionItem.created_at.desc(), CollectionItem.id.desc())
 
 

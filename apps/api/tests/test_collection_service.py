@@ -291,3 +291,22 @@ async def test_sorting_by_price_puts_unpriced_cards_last(
         Decimal("12.00"),
         None,
     ]
+
+
+async def test_sorting_by_price_ranks_by_position_not_unit_price(
+    sortable: AsyncSession, user_id: str
+) -> None:
+    """Four copies at 12 outweigh one at 40, and the list has to say so."""
+    await collection.add_card(
+        sortable, user_id, AddCardRequest(card_id="base1-9", quantity=3)
+    )
+
+    items = await collection.list_items(sortable, user_id, CollectionFilters(sort="price"))
+    values = [
+        (item.card.price_usd or 0) * item.quantity
+        for item in items
+        if item.card.price_usd is not None
+    ]
+
+    assert values == sorted(values, reverse=True)
+    assert items[0].card.name == "Zapdos"
