@@ -122,6 +122,10 @@ export {
   marketCardsQueryResponseSchema,
 } from "./marketCardsSchema"
 export {
+  marketSets200Schema,
+  marketSetsQueryResponseSchema,
+} from "./marketSetsSchema"
+export {
   marketSummary200Schema,
   marketSummaryQueryResponseSchema,
   marketSummarySchema,
@@ -184,6 +188,7 @@ export {
 } from "./sendMessageSchema"
 export { setCoverageSchema } from "./setCoverageSchema"
 export { setGapSchema } from "./setGapSchema"
+export { setMarketViewSchema } from "./setMarketViewSchema"
 export { shareLinkViewSchema } from "./shareLinkViewSchema"
 export {
   speciesTrivia200Schema,

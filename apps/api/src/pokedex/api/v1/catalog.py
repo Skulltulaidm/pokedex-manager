@@ -11,6 +11,7 @@ from pokedex.schemas.market import (
     MarketCardView,
     MarketFilters,
     MarketSummary,
+    SetMarketView,
 )
 from pokedex.services import catalog, collection, market, trivia
 
@@ -59,6 +60,12 @@ async def market_cards(
 @router.get("/market/summary", response_model=MarketSummary)
 async def market_summary(user: CurrentUser, db: DbSession) -> MarketSummary:
     return await market.summary(db, user.id)
+
+
+@router.get("/market/sets", response_model=list[SetMarketView])
+async def market_sets(user: CurrentUser, db: DbSession) -> list[SetMarketView]:
+    """Each set as a position, costliest to finish first."""
+    return await market.set_breakdown(db, user.id)
 
 
 @router.get("/species/{species_id}/trivia", response_model=TriviaView | None)

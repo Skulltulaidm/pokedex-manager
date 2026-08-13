@@ -149,6 +149,11 @@ export type {
   MarketCardsQueryResponse,
 } from "./MarketCards"
 export type {
+  MarketSets200,
+  MarketSetsQuery,
+  MarketSetsQueryResponse,
+} from "./MarketSets"
+export type {
   MarketSummary,
   MarketSummary200,
   MarketSummaryQuery,
@@ -220,6 +225,7 @@ export type {
 } from "./SendMessage"
 export type { SetCoverage } from "./SetCoverage"
 export type { SetGap } from "./SetGap"
+export type { SetMarketView } from "./SetMarketView"
 export type { ShareLinkView } from "./ShareLinkView"
 export type {
   SpeciesTrivia200,

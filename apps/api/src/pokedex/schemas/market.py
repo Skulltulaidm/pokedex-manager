@@ -63,6 +63,18 @@ class CardMarketContext(BaseModel):
     change: PriceChange | None = None
 
 
+class SetMarketView(BaseModel):
+    """One set as a position: how much of it is held, and what finishing costs."""
+
+    set_id: str
+    set_name: str
+    cards: int
+    owned: int
+    held_value: Decimal
+    missing_value: Decimal
+    total_value: Decimal
+
+
 class MarketSummary(BaseModel):
     total_cards: int
     owned_cards: int

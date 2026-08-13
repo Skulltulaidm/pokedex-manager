@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Any
 
 from mcp.server import MCPServer
@@ -14,6 +15,7 @@ from pokedex.services import (
     catalog,
     collection,
     gaps,
+    market,
     preferences,
     stats,
     wishlist,
@@ -106,6 +108,52 @@ async def collection_stats() -> dict[str, Any]:
     async with SessionFactory() as db:
         result = await stats.collection_stats(db, user_id)
         return result.model_dump(mode="json")
+
+
+@server.tool()
+async def market_summary() -> dict[str, Any]:
+    """What the catalog is worth and how much of it the user holds.
+
+    Answers questions about money rather than shape: what the collection is
+    worth, what finishing it would cost, and which set is furthest from done.
+    Every amount is in US dollars. Price movement is present only once the
+    catalog has been synced on more than one day; a null change means unknown,
+    not flat.
+    """
+    user_id = current_user_id()
+    async with SessionFactory() as db:
+        totals = await market.summary(db, user_id)
+        sets = await market.set_breakdown(db, user_id)
+
+    return {
+        "currency": "USD",
+        "totals": totals.model_dump(mode="json"),
+        "sets": [entry.model_dump(mode="json") for entry in sets],
+    }
+
+
+@server.tool()
+async def cheapest_missing(set_id: str | None = None, limit: int = 20) -> dict[str, Any]:
+    """The least expensive cards the user does not own, cheapest first.
+
+    This is the order a set actually gets finished in, so prefer it over
+    find_gaps when the question involves cost, budget or what to buy next.
+    The running total says what the listed cards cost together, in US dollars.
+    Cards without a price are left out: they cannot be budgeted for.
+    """
+    user_id = current_user_id()
+    async with SessionFactory() as db:
+        found = await market.cheapest_missing(db, user_id, set_id=set_id, limit=limit)
+        cards = [CardView.model_validate(card).model_dump(mode="json") for card in found]
+
+    return {
+        "currency": "USD",
+        "count": len(cards),
+        "running_total_usd": str(
+            sum((Decimal(card["price_usd"]) for card in cards), Decimal(0))
+        ),
+        "cards": cards,
+    }
 
 
 @server.tool()

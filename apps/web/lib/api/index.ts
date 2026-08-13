@@ -33,6 +33,8 @@ export type { ListWishlistQueryKey } from "./hooks/useListWishlist"
 export type { ListWishlistSuspenseQueryKey } from "./hooks/useListWishlistSuspense"
 export type { MarketCardsQueryKey } from "./hooks/useMarketCards"
 export type { MarketCardsSuspenseQueryKey } from "./hooks/useMarketCardsSuspense"
+export type { MarketSetsQueryKey } from "./hooks/useMarketSets"
+export type { MarketSetsSuspenseQueryKey } from "./hooks/useMarketSetsSuspense"
 export type { MarketSummaryQueryKey } from "./hooks/useMarketSummary"
 export type { MarketSummarySuspenseQueryKey } from "./hooks/useMarketSummarySuspense"
 export type { MeQueryKey } from "./hooks/useMe"
@@ -210,6 +212,11 @@ export type {
   MarketCardsQueryResponse,
 } from "./types/MarketCards"
 export type {
+  MarketSets200,
+  MarketSetsQuery,
+  MarketSetsQueryResponse,
+} from "./types/MarketSets"
+export type {
   MarketSummary,
   MarketSummary200,
   MarketSummaryQuery,
@@ -281,6 +288,7 @@ export type {
 } from "./types/SendMessage"
 export type { SetCoverage } from "./types/SetCoverage"
 export type { SetGap } from "./types/SetGap"
+export type { SetMarketView } from "./types/SetMarketView"
 export type { ShareLinkView } from "./types/ShareLinkView"
 export type {
   SpeciesTrivia200,
@@ -327,6 +335,7 @@ export { listConversations } from "./clients/listConversations"
 export { listGaps } from "./clients/listGaps"
 export { listWishlist } from "./clients/listWishlist"
 export { marketCards } from "./clients/marketCards"
+export { marketSets } from "./clients/marketSets"
 export { marketSummary } from "./clients/marketSummary"
 export { me } from "./clients/me"
 export { ownedCardIds } from "./clients/ownedCardIds"
@@ -444,6 +453,12 @@ export { useMarketCards } from "./hooks/useMarketCards"
 export { marketCardsSuspenseQueryKey } from "./hooks/useMarketCardsSuspense"
 export { marketCardsSuspenseQueryOptions } from "./hooks/useMarketCardsSuspense"
 export { useMarketCardsSuspense } from "./hooks/useMarketCardsSuspense"
+export { marketSetsQueryKey } from "./hooks/useMarketSets"
+export { marketSetsQueryOptions } from "./hooks/useMarketSets"
+export { useMarketSets } from "./hooks/useMarketSets"
+export { marketSetsSuspenseQueryKey } from "./hooks/useMarketSetsSuspense"
+export { marketSetsSuspenseQueryOptions } from "./hooks/useMarketSetsSuspense"
+export { useMarketSetsSuspense } from "./hooks/useMarketSetsSuspense"
 export { marketSummaryQueryKey } from "./hooks/useMarketSummary"
 export { marketSummaryQueryOptions } from "./hooks/useMarketSummary"
 export { useMarketSummary } from "./hooks/useMarketSummary"
@@ -636,6 +651,10 @@ export {
   marketCardsQueryResponseSchema,
 } from "./zod/marketCardsSchema"
 export {
+  marketSets200Schema,
+  marketSetsQueryResponseSchema,
+} from "./zod/marketSetsSchema"
+export {
   marketSummary200Schema,
   marketSummaryQueryResponseSchema,
   marketSummarySchema,
@@ -698,6 +717,7 @@ export {
 } from "./zod/sendMessageSchema"
 export { setCoverageSchema } from "./zod/setCoverageSchema"
 export { setGapSchema } from "./zod/setGapSchema"
+export { setMarketViewSchema } from "./zod/setMarketViewSchema"
 export { shareLinkViewSchema } from "./zod/shareLinkViewSchema"
 export {
   speciesTrivia200Schema,

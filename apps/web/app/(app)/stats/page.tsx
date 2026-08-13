@@ -7,12 +7,15 @@ import { useState } from "react";
 import { ActivityFeed } from "@/components/activity-feed";
 import { BinderMark } from "@/components/binder-mark";
 import { CardRow } from "@/components/card-row";
-import { CoverageStrip, TypeSpectrum } from "@/components/coverage-strip";
+import { TypeSpectrum } from "@/components/coverage-strip";
+import { PriceDelta } from "@/components/price-delta";
 import { ScreenHeader } from "@/components/screen-header";
+import { SetPositions } from "@/components/set-positions";
 import { typeColor, typeLabel } from "@/components/type-dot";
 import { apiClient } from "@/lib/api-client";
 import { formatShare, formatUsd } from "@/lib/format";
 import { useCollectionStats } from "@/lib/api/hooks/useCollectionStats";
+import { useMarketSummary } from "@/lib/api/hooks/useMarketSummary";
 import type { CollectionStats } from "@/lib/api/types";
 import { useListCollection } from "@/lib/api/hooks/useListCollection";
 import {
@@ -110,30 +113,14 @@ export default function StatsPage() {
 
           <section>
             <h2 className="font-display text-lg font-semibold tracking-tight">
-              Cobertura por set
+              Tus sets
             </h2>
             <p className="text-muted-foreground mt-1 mb-5 text-sm">
-              Cada casilla es una carta impresa. Las encendidas son las tuyas, y su
-              color es el tipo de la carta.
+              Cada casilla es una carta impresa; las encendidas son las tuyas. Van
+              ordenados por lo que cuesta terminarlos, no por lo que les falta.
             </p>
 
-            <div className="grid gap-7 lg:grid-cols-2 lg:gap-x-10">
-              {data.sets.map((set) => (
-                <div key={set.set_id}>
-                  <div className="mb-2.5 flex items-baseline justify-between gap-3">
-                    <h3 className="truncate font-medium">{set.set_name}</h3>
-                    <p className="shrink-0 font-mono text-sm tabular-nums">
-                      {set.owned}
-                      <span className="text-muted-foreground/50">/{set.printed_total}</span>
-                    </p>
-                  </div>
-                  <CoverageStrip
-                    printedTotal={set.printed_total}
-                    ownedSlots={set.owned_slots}
-                  />
-                </div>
-              ))}
-            </div>
+            <SetPositions />
           </section>
 
           {data.generations.length > 0 && (
@@ -178,6 +165,8 @@ export default function StatsPage() {
  * price, and the figure alone would read as complete.
  */
 function Value({ value }: { value: CollectionStats["value"] }) {
+  const { data: summary } = useMarketSummary({ client: { client: apiClient } });
+
   if (value.priced_cards === 0) return null;
 
   const total = Number(value.total_usd);
@@ -191,9 +180,12 @@ function Value({ value }: { value: CollectionStats["value"] }) {
           <p className="text-muted-foreground text-[11px] tracking-wide uppercase">
             Valor estimado
           </p>
-          <p className="font-display mt-1.5 text-[2.25rem] leading-none font-semibold tabular-nums">
-            {formatUsd(total, true)}
-          </p>
+          <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3">
+            <p className="font-display text-[2.25rem] leading-none font-semibold tabular-nums">
+              {formatUsd(total, true)}
+            </p>
+            <PriceDelta change={summary?.change} showAmount />
+          </div>
         </div>
         <span className="ring-edge text-muted-foreground rounded-full px-2.5 py-1 text-[11px] ring-1">
           USD
@@ -239,11 +231,21 @@ function TopHoldings({ total }: { total: number }) {
   const priced = data?.items.filter((item) => item.card.price_usd != null) ?? [];
   if (priced.length === 0) return null;
 
+  // Concentration: a portfolio resting on a handful of cards carries a
+  // different risk from one spread across a hundred, and the total hides it.
+  const top = priced.reduce(
+    (sum, item) => sum + Number(item.card.price_usd) * item.quantity,
+    0,
+  );
+
   return (
     <section>
-      <h2 className="font-display mb-4 text-lg font-semibold tracking-tight">
+      <h2 className="font-display mb-1 text-lg font-semibold tracking-tight">
         Tus cartas más valiosas
       </h2>
+      <p className="text-muted-foreground mb-4 text-sm">
+        Estas {priced.length} suman el {formatShare(top, total)} de tu cartera.
+      </p>
       <ul className="space-y-2.5">
         {priced.map((item) => {
           const unit = Number(item.card.price_usd);

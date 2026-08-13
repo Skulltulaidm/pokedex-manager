@@ -340,6 +340,41 @@ async def test_recording_prices_skips_cards_without_one(
     assert written == 0
 
 
+async def test_set_breakdown_splits_held_from_what_finishing_costs(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    rows = await market.set_breakdown(stocked, user_id)
+    mine = next(row for row in rows if row.set_id == SET_ID)
+
+    assert mine.cards == 3
+    assert mine.owned == 1
+    # Two copies of the $100 Charizard held; the $10 Squirtle is what is missing.
+    assert mine.held_value == Decimal("200.00")
+    assert mine.missing_value == Decimal("10.00")
+    assert mine.total_value == Decimal("110.00")
+
+
+async def test_cheapest_missing_is_ordered_by_price(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    await catalog.upsert_cards(
+        stocked, [card(f"{SET_ID}-7", 7, "Squirtle", "7", Decimal("3.00"))]
+    )
+
+    found = await market.cheapest_missing(stocked, user_id, set_id=SET_ID)
+
+    # The unpriced Chikorita is absent: a card with no price cannot be budgeted.
+    assert [c.id for c in found] == [f"{SET_ID}-7", f"{SET_ID}-63"]
+
+
+async def test_cheapest_missing_excludes_what_is_held(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    found = await market.cheapest_missing(stocked, user_id, set_id=SET_ID)
+
+    assert f"{SET_ID}-4" not in [c.id for c in found]
+
+
 async def test_type_facets_count_the_catalog_and_the_part_held(
     stocked: AsyncSession, user_id: str
 ) -> None:

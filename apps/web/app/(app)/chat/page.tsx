@@ -11,6 +11,7 @@ import {
   Square,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import Markdown from "react-markdown";
 
 import { AccountMenu } from "@/components/account-menu";
 import { getConversation } from "@/lib/api/clients/getConversation";
@@ -210,7 +211,7 @@ export default function ChatPage() {
                   {turn.text}
                 </p>
               ) : (
-                <p className="text-[15px] leading-[1.7] whitespace-pre-wrap">{turn.text}</p>
+                <Answer text={turn.text} />
               )}
             </li>
           ))}
@@ -258,6 +259,20 @@ export default function ChatPage() {
           {busy ? <Square className="size-3.5 fill-current" /> : <ArrowUp className="size-[18px]" />}
         </button>
       </form>
+    </div>
+  );
+}
+
+/**
+ * The model answers in markdown, so it is rendered as markdown.
+ *
+ * react-markdown ignores raw HTML unless a plugin turns it on, which is what
+ * keeps model output from reaching the DOM as markup.
+ */
+function Answer({ text }: { text: string }) {
+  return (
+    <div className="text-[15px] leading-[1.7] [&_code]:font-mono [&_code]:text-[13px] [&_li]:my-1 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-3 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-5">
+      <Markdown>{text}</Markdown>
     </div>
   );
 }

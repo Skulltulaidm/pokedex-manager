@@ -7,13 +7,14 @@ from sqlalchemy import BigInteger, ColumnElement, Select, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from pokedex.db.models import Card, CardPrice, CollectionItem, Species
+from pokedex.db.models import Card, CardPrice, CardSet, CollectionItem, Species
 from pokedex.schemas.market import (
     CardMarketContext,
     MarketFilters,
     MarketSummary,
     MarketTypeCount,
     PriceChange,
+    SetMarketView,
 )
 
 # How far back a reported change looks. Long enough that a weekly sync produces
@@ -265,6 +266,64 @@ async def card_context(
         set_value=Decimal(set_value),
         change=await card_change(db, card),
     )
+
+
+async def set_breakdown(db: AsyncSession, user_id: str) -> list[SetMarketView]:
+    """Every set as a position, ordered by what it would cost to finish.
+
+    Held value counts duplicates because that is what the reader owns; missing
+    value counts each absent card once because that is what buying it costs.
+    """
+    owned = _owned_total(user_id)
+    price = func.coalesce(Card.price_usd, 0)
+
+    result = await db.execute(
+        select(
+            CardSet.id,
+            CardSet.name,
+            func.count(),
+            func.count().filter(owned > 0),
+            func.coalesce(func.sum(price * owned), 0),
+            func.coalesce(func.sum(price).filter(owned == 0), 0),
+            func.coalesce(func.sum(price), 0),
+        )
+        .select_from(Card)
+        .join(CardSet, CardSet.id == Card.set_id)
+        .group_by(CardSet.id, CardSet.name)
+        .order_by(func.coalesce(func.sum(price).filter(owned == 0), 0).desc())
+    )
+
+    return [
+        SetMarketView(
+            set_id=row[0],
+            set_name=row[1],
+            cards=row[2],
+            owned=row[3],
+            held_value=Decimal(row[4]),
+            missing_value=Decimal(row[5]),
+            total_value=Decimal(row[6]),
+        )
+        for row in result
+    ]
+
+
+async def cheapest_missing(
+    db: AsyncSession, user_id: str, set_id: str | None = None, limit: int = 20
+) -> Sequence[Card]:
+    """The least expensive cards still absent, which is the order anyone
+    actually finishes a set in."""
+    owned = _owned_total(user_id)
+    statement = (
+        select(Card)
+        .options(joinedload(Card.card_set), joinedload(Card.species))
+        .where(owned == 0, Card.price_usd.is_not(None))
+        .order_by(Card.price_usd)
+        .limit(limit)
+    )
+    if set_id:
+        statement = statement.where(Card.set_id == set_id)
+
+    return (await db.execute(statement)).unique().scalars().all()
 
 
 async def _types(db: AsyncSession, user_id: str) -> list[MarketTypeCount]:

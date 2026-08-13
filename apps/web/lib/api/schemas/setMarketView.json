@@ -1,0 +1,36 @@
+{
+  "properties": {
+    "set_id": { "type": "string", "title": "Set Id" },
+    "set_name": { "type": "string", "title": "Set Name" },
+    "cards": { "type": "integer", "title": "Cards" },
+    "owned": { "type": "integer", "title": "Owned" },
+    "held_value": {
+      "type": "string",
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Held Value"
+    },
+    "missing_value": {
+      "type": "string",
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Missing Value"
+    },
+    "total_value": {
+      "type": "string",
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Total Value"
+    }
+  },
+  "type": "object",
+  "required": [
+    "set_id",
+    "set_name",
+    "cards",
+    "owned",
+    "held_value",
+    "missing_value",
+    "total_value"
+  ],
+  "title": "SetMarketView",
+  "description": "One set as a position: how much of it is held, and what finishing costs.",
+  "x-readme-ref-name": "SetMarketView"
+}
