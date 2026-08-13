@@ -19,7 +19,7 @@ import {
 } from "@workspace/ui/components/sidebar";
 
 export const NAV = [
-  { href: "/collection", label: "Colección", icon: LayoutGrid },
+  { href: "/collection", label: "Catálogo", icon: LayoutGrid },
   { href: "/scan", label: "Escanear", icon: ScanLine },
   { href: "/stats", label: "Resumen", icon: PieChart },
   { href: "/chat", label: "Preguntar", icon: MessageCircle },

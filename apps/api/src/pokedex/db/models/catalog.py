@@ -86,3 +86,20 @@ class Card(Base):
 
     card_set: Mapped[CardSet] = relationship(back_populates="cards")
     species: Mapped[Species | None] = relationship()
+
+
+class CardPrice(Base):
+    """One price reading per card per day.
+
+    `card.price_usd` only ever holds the latest reading, which makes movement
+    unmeasurable. This is the history behind it; a re-sync on the same day
+    overwrites rather than appending, so the series stays one point per day.
+    """
+
+    __tablename__ = "card_price"
+
+    card_id: Mapped[str] = mapped_column(
+        ForeignKey(f"{SCHEMA}.card.id", ondelete="CASCADE"), primary_key=True
+    )
+    recorded_on: Mapped[date] = mapped_column(primary_key=True, index=True)
+    price_usd: Mapped[Decimal] = mapped_column(Numeric(10, 2))

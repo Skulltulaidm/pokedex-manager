@@ -1,0 +1,64 @@
+{
+  "properties": {
+    "price_rank": {
+      "anyOf": [{ "type": "integer" }, { "type": "null" }],
+      "title": "Price Rank"
+    },
+    "priced_in_set": { "type": "integer", "title": "Priced In Set" },
+    "cards_in_set": { "type": "integer", "title": "Cards In Set" },
+    "owned_in_set": { "type": "integer", "title": "Owned In Set" },
+    "set_value": {
+      "type": "string",
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Set Value"
+    },
+    "change": {
+      "anyOf": [
+        {
+          "properties": {
+            "since": { "type": "string", "format": "date", "title": "Since" },
+            "from_value": {
+              "type": "string",
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "title": "From Value"
+            },
+            "to_value": {
+              "type": "string",
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "title": "To Value"
+            },
+            "absolute": {
+              "type": "string",
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "title": "Absolute"
+            },
+            "percent": { "type": "number", "title": "Percent" }
+          },
+          "type": "object",
+          "required": [
+            "since",
+            "from_value",
+            "to_value",
+            "absolute",
+            "percent"
+          ],
+          "title": "PriceChange",
+          "description": "Movement between the oldest reading inside a window and today.",
+          "x-readme-ref-name": "PriceChange"
+        },
+        { "type": "null" }
+      ]
+    }
+  },
+  "type": "object",
+  "required": [
+    "price_rank",
+    "priced_in_set",
+    "cards_in_set",
+    "owned_in_set",
+    "set_value"
+  ],
+  "title": "CardMarketContext",
+  "description": "Where one card sits in its set: what it is worth relative to the rest, and\nhow much of that set the reader already holds.",
+  "x-readme-ref-name": "CardMarketContext"
+}

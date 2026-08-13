@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { apiClient } from "@/lib/api-client";
 import { useCollectionStats } from "@/lib/api/hooks/useCollectionStats";
-import { CONDITION_ORDER, conditionLabel } from "@/lib/labels";
 import { Button } from "@workspace/ui/components/button";
 import {
   DropdownMenu,
@@ -17,9 +16,10 @@ import {
 import { cn } from "@workspace/ui/lib/utils";
 
 const SORTS = [
-  { value: "name", label: "Nombre" },
   { value: "number", label: "Número" },
   { value: "price", label: "Precio" },
+  { value: "name", label: "Nombre" },
+  { value: "owned", label: "Tuyas primero" },
 ];
 
 type Option = { value: string; label: string; count?: string };
@@ -58,11 +58,6 @@ export function FilterBar() {
       })),
     },
     {
-      key: "estado",
-      label: "Estado",
-      options: CONDITION_ORDER.map((value) => ({ value, label: conditionLabel(value) })),
-    },
-    {
       key: "gen",
       label: "Generación",
       options: (stats?.generations ?? []).map((entry) => ({
@@ -92,9 +87,7 @@ export function FilterBar() {
           variant="ghost"
           size="sm"
           className="text-muted-foreground"
-          onClick={() =>
-            set({ set: undefined, gen: undefined, estado: undefined, orden: undefined })
-          }
+          onClick={() => set({ set: undefined, gen: undefined, orden: undefined })}
         >
           <X />
           Limpiar

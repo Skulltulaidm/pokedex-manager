@@ -1,11 +1,12 @@
 from collections.abc import Sequence
+from datetime import date
 
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from pokedex.db.models import Card, CardSet, Species
+from pokedex.db.models import Card, CardPrice, CardSet, Species
 from pokedex.integrations.pokeapi import SpeciesPayload
 from pokedex.integrations.tcgdex import CardPayload, SetPayload
 
@@ -85,6 +86,34 @@ async def upsert_cards(db: AsyncSession, payloads: Sequence[CardPayload]) -> int
             )
         }
         | {"fetched_at": func.now()},
+    )
+
+    await db.execute(statement)
+    return len(rows)
+
+
+async def record_prices(db: AsyncSession, payloads: Sequence[CardPayload]) -> int:
+    """Append today's price reading for every card that has one.
+
+    Re-running a sync on the same day overwrites that day rather than appending,
+    which keeps the series at one point per day and makes the job idempotent.
+    """
+    rows = [
+        {
+            "card_id": payload.id,
+            "recorded_on": date.today(),
+            "price_usd": payload.price_usd,
+        }
+        for payload in payloads
+        if payload.price_usd is not None
+    ]
+    if not rows:
+        return 0
+
+    statement = insert(CardPrice).values(rows)
+    statement = statement.on_conflict_do_update(
+        index_elements=[CardPrice.card_id, CardPrice.recorded_on],
+        set_={"price_usd": statement.excluded.price_usd},
     )
 
     await db.execute(statement)

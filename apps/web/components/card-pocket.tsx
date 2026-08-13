@@ -1,23 +1,14 @@
-import { CARD_RATIO, CardImage } from "@/components/card-image";
+import { CardImage } from "@/components/card-image";
 import { TypeDots } from "@/components/type-dot";
 import { formatUsd } from "@/lib/format";
 import { cn } from "@workspace/ui/lib/utils";
 
-export function EmptyPocket({ label }: { label?: string }) {
-  return (
-    <div
-      className={cn(
-        CARD_RATIO,
-        "border-edge/60 flex items-center justify-center rounded-lg border border-dashed",
-      )}
-    >
-      {label && (
-        <span className="text-muted-foreground/40 font-mono text-xs">{label}</span>
-      )}
-    </div>
-  );
-}
-
+/**
+ * One catalog card in the grid, in one of two states.
+ *
+ * Held cards keep their type aura and full colour; the rest are desaturated and
+ * unlit. The aura is the whole tell, so it is passed only when a card is held.
+ */
 export function CardPocket({
   name,
   setName,
@@ -25,10 +16,10 @@ export function CardPocket({
   printedTotal,
   imageUrl,
   types,
-  quantity,
-  condition,
+  owned,
   price,
   rarity,
+  category,
 }: {
   name: string;
   setName: string;
@@ -36,24 +27,32 @@ export function CardPocket({
   printedTotal: number;
   imageUrl: string | null;
   types: string[];
-  quantity: number;
-  condition?: string;
+  owned: number;
   price?: number | null;
   rarity?: string | null;
+  category?: string;
 }) {
+  const held = owned > 0;
+
   return (
     <div className="group flex flex-col gap-2.5">
       <CardImage
         src={imageUrl}
         alt={name}
         sizes="(min-width: 1536px) 13vw, (min-width: 1024px) 17vw, (min-width: 640px) 28vw, 46vw"
-        glowType={types[0]}
-        foil
-        className="transition-transform duration-300 group-hover:-translate-y-1"
+        glowType={held ? types[0] : null}
+        locked={!held}
+        foil={held}
+        art
+        category={category}
+        className={cn(
+          "transition-transform duration-300 group-hover:-translate-y-1",
+          !held && "opacity-80 transition-opacity group-hover:opacity-100",
+        )}
       >
-        {quantity > 1 && (
+        {owned > 1 && (
           <span className="glass text-foreground absolute top-2 right-2 rounded-full px-2 py-0.5 font-mono text-[11px] leading-none">
-            ×{quantity}
+            ×{owned}
           </span>
         )}
         {rarity && (
@@ -65,32 +64,33 @@ export function CardPocket({
 
       <div className="min-w-0">
         <div className="flex items-baseline justify-between gap-2">
-          <p className="truncate text-sm leading-tight font-semibold">{name}</p>
-          <TypeDots types={types} className="shrink-0" />
+          <p
+            className={cn(
+              "truncate text-sm leading-tight font-semibold",
+              !held && "text-muted-foreground",
+            )}
+          >
+            {name}
+          </p>
+          <TypeDots types={types} className={cn("shrink-0", !held && "opacity-45")} />
         </div>
 
-        {/* Price gets its own baseline rather than sharing one with the set: at
-            six columns the two together truncate the set to three letters. */}
         <p className="mt-1 flex items-baseline justify-between gap-2">
           <span className="text-muted-foreground shrink-0 font-mono text-xs tabular-nums">
             {number}
             <span className="text-muted-foreground/45">/{printedTotal}</span>
           </span>
-          <span className="shrink-0 text-sm font-semibold tabular-nums">
+          <span
+            className={cn(
+              "shrink-0 text-sm font-semibold tabular-nums",
+              !held && "text-muted-foreground/70 font-medium",
+            )}
+          >
             {price == null ? <span className="text-muted-foreground/40">—</span> : formatUsd(price)}
           </span>
         </p>
 
-        <p className="text-muted-foreground/70 mt-0.5 flex items-baseline justify-between gap-2 text-[11px]">
-          <span className="truncate">{setName}</span>
-          {quantity > 1 && price != null && (
-            <span className="shrink-0 tabular-nums">{formatUsd(price * quantity)}</span>
-          )}
-        </p>
-
-        {condition && (
-          <p className="text-muted-foreground/50 mt-0.5 truncate text-[11px]">{condition}</p>
-        )}
+        <p className="text-muted-foreground/60 mt-0.5 truncate text-[11px]">{setName}</p>
       </div>
     </div>
   );

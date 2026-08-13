@@ -1,0 +1,85 @@
+{
+  "properties": {
+    "total_cards": { "type": "integer", "title": "Total Cards" },
+    "owned_cards": { "type": "integer", "title": "Owned Cards" },
+    "catalog_value": {
+      "type": "string",
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Catalog Value"
+    },
+    "owned_value": {
+      "type": "string",
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Owned Value"
+    },
+    "missing_value": {
+      "type": "string",
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Missing Value"
+    },
+    "types": {
+      "items": {
+        "properties": {
+          "type": { "type": "string", "title": "Type" },
+          "total": { "type": "integer", "title": "Total" },
+          "owned": { "type": "integer", "title": "Owned" }
+        },
+        "type": "object",
+        "required": ["type", "total", "owned"],
+        "title": "MarketTypeCount",
+        "description": "How many catalog cards carry a type, and how many of those are held.",
+        "x-readme-ref-name": "MarketTypeCount"
+      },
+      "type": "array",
+      "title": "Types"
+    },
+    "change": {
+      "anyOf": [
+        {
+          "properties": {
+            "since": { "type": "string", "format": "date", "title": "Since" },
+            "from_value": {
+              "type": "string",
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "title": "From Value"
+            },
+            "to_value": {
+              "type": "string",
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "title": "To Value"
+            },
+            "absolute": {
+              "type": "string",
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "title": "Absolute"
+            },
+            "percent": { "type": "number", "title": "Percent" }
+          },
+          "type": "object",
+          "required": [
+            "since",
+            "from_value",
+            "to_value",
+            "absolute",
+            "percent"
+          ],
+          "title": "PriceChange",
+          "description": "Movement between the oldest reading inside a window and today.",
+          "x-readme-ref-name": "PriceChange"
+        },
+        { "type": "null" }
+      ]
+    }
+  },
+  "type": "object",
+  "required": [
+    "total_cards",
+    "owned_cards",
+    "catalog_value",
+    "owned_value",
+    "missing_value",
+    "types"
+  ],
+  "title": "MarketSummary",
+  "x-readme-ref-name": "MarketSummary"
+}

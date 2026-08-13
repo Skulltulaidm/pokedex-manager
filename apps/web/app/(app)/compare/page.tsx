@@ -60,7 +60,7 @@ function Comparison() {
   return (
     <>
       <Breadcrumbs
-        trail={[{ label: "Colección", href: "/collection" }, { label: "Comparar" }]}
+        trail={[{ label: "Catálogo", href: "/collection" }, { label: "Comparar" }]}
       />
 
       <div className="mx-auto max-w-3xl">

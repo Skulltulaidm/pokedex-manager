@@ -1,0 +1,12 @@
+{
+  "properties": {
+    "type": { "type": "string", "title": "Type" },
+    "total": { "type": "integer", "title": "Total" },
+    "owned": { "type": "integer", "title": "Owned" }
+  },
+  "type": "object",
+  "required": ["type", "total", "owned"],
+  "title": "MarketTypeCount",
+  "description": "How many catalog cards carry a type, and how many of those are held.",
+  "x-readme-ref-name": "MarketTypeCount"
+}

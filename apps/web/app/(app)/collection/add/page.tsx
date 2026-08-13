@@ -2,14 +2,15 @@
 
 import { Search } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { TypeDots } from "@/components/type-dot";
 import { apiClient } from "@/lib/api-client";
 import { useAddCard } from "@/lib/api/hooks/useAddCard";
+import { useGetCard } from "@/lib/api/hooks/useGetCard";
 import { useSearchCards } from "@/lib/api/hooks/useSearchCards";
 import type { CardView } from "@/lib/api/types/CardView";
 import { CONDITION_ORDER, conditionLabel } from "@/lib/labels";
@@ -26,8 +27,29 @@ import { Spinner } from "@workspace/ui/components/spinner";
 import { cn } from "@workspace/ui/lib/utils";
 
 export default function AddCardPage() {
+  return (
+    <Suspense fallback={<ResultsSkeleton />}>
+      <AddCard />
+    </Suspense>
+  );
+}
+
+function AddCard() {
+  const params = useSearchParams();
+  const linkedId = params.get("card");
+
   const [query, setQuery] = useState("");
   const [picked, setPicked] = useState<CardView | null>(null);
+  // Arriving from a card in the grid preselects it; going back has to survive
+  // that, so the link is dropped rather than re-read from the URL.
+  const [followLink, setFollowLink] = useState(true);
+
+  const { data: linked } = useGetCard(linkedId ?? undefined, {
+    client: { client: apiClient },
+    query: { enabled: Boolean(linkedId) && followLink },
+  });
+
+  const card = picked ?? (followLink ? (linked ?? null) : null);
 
   return (
     <>
@@ -38,8 +60,14 @@ export default function AddCardPage() {
         Busca por nombre. Si no reconoces el set, la imagen te lo dice.
       </p>
 
-      {picked ? (
-        <ConfirmForm card={picked} onBack={() => setPicked(null)} />
+      {card ? (
+        <ConfirmForm
+          card={card}
+          onBack={() => {
+            setPicked(null);
+            setFollowLink(false);
+          }}
+        />
       ) : (
         <SearchStep query={query} onQuery={setQuery} onPick={setPicked} />
       )}

@@ -15,7 +15,6 @@ import { formatShare, formatUsd } from "@/lib/format";
 import { useCollectionStats } from "@/lib/api/hooks/useCollectionStats";
 import type { CollectionStats } from "@/lib/api/types";
 import { useListCollection } from "@/lib/api/hooks/useListCollection";
-import { useListGaps } from "@/lib/api/hooks/useListGaps";
 import {
   listWishlistQueryKey,
   useListWishlist,
@@ -55,7 +54,6 @@ export default function StatsPage() {
       <Tabs value={tab} onValueChange={(next) => setTab(next as string)}>
         <TabsList className="mb-6">
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
-          <TabsTrigger value="falta">Me falta</TabsTrigger>
           <TabsTrigger value="deseos">Deseos</TabsTrigger>
         </TabsList>
 
@@ -165,10 +163,6 @@ export default function StatsPage() {
               </ul>
             </section>
           )}
-        </TabsContent>
-
-        <TabsContent value="falta">
-          <Gaps />
         </TabsContent>
 
         <TabsContent value="deseos">
@@ -281,50 +275,6 @@ function TopHoldings({ total }: { total: number }) {
         })}
       </ul>
     </section>
-  );
-}
-
-function Gaps() {
-  const { data, isPending } = useListGaps({ limit: 60 }, { client: { client: apiClient } });
-
-  if (isPending) return <RowsSkeleton />;
-  if (!data?.length) {
-    return (
-      <p className="text-muted-foreground py-10 text-center text-sm">
-        No te falta ninguna carta de los sets que empezaste.
-      </p>
-    );
-  }
-
-  return (
-    <div className="space-y-8">
-      {data.map((gap) => (
-        <section key={gap.set_id}>
-          <div className="mb-3 flex items-baseline justify-between gap-3">
-            <h2 className="font-display text-lg font-semibold tracking-tight">
-              {gap.set_name}
-            </h2>
-            <p className="text-muted-foreground shrink-0 text-sm tabular-nums">
-              {gap.missing.length} por conseguir
-            </p>
-          </div>
-          <ul className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
-            {gap.missing.map((card) => (
-              <li key={card.id}>
-                <CardRow
-                  name={card.name}
-                  number={card.number}
-                  printedTotal={card.card_set.printed_total}
-                  setName={card.card_set.name}
-                  imageUrl={card.image_small_url ?? null}
-                  types={card.species?.types ?? []}
-                />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
-    </div>
   );
 }
 

@@ -10,10 +10,11 @@ import { toast } from "sonner";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CardImage } from "@/components/card-image";
 import { InfoTile } from "@/components/info-tile";
+import { MarketPosition } from "@/components/market-position";
 import { SpeciesStrip } from "@/components/species-strip";
 import { SpeciesTrivia } from "@/components/species-trivia";
 import { StatRadar } from "@/components/stat-radar";
-import { TypeChip, typeColor } from "@/components/type-dot";
+import { TypeChip } from "@/components/type-dot";
 import { formatUsd } from "@/lib/format";
 import { apiClient } from "@/lib/api-client";
 import { useGetItem } from "@/lib/api/hooks/useGetItem";
@@ -97,7 +98,7 @@ export default function ItemDetailPage() {
     <div>
       <Breadcrumbs
         trail={[
-          { label: "Colección", href: "/collection" },
+          { label: "Catálogo", href: "/collection" },
           { label: card.card_set.name, href: `/collection?set=${card.card_set.id}` },
           { label: card.name },
         ]}
@@ -165,22 +166,22 @@ export default function ItemDetailPage() {
         )}
       </div>
 
-      {card.species ? (
+      <MarketPosition
+        cardId={card.id}
+        setName={card.card_set.name}
+        price={price}
+      />
+
+      {/* Trainer and Energy cards get no species block at all: a panel that only
+          says a Pokemon is absent is a panel the card already answers. */}
+      {card.species && (
         <Section title={`Especie · Generación ${card.species.generation}`}>
           <div className="pt-1">
-            <StatRadar
-              stats={card.species.stats}
-              color={typeColor(card.species.types[0] ?? "normal")}
-            />
+            {/* Brand red rather than the type colour: six full-width bars in one
+                of eighteen hues is what drowns out the palette. */}
+            <StatRadar stats={card.species.stats} color="var(--primary)" />
             <SpeciesTrivia speciesId={card.species.id} />
           </div>
-        </Section>
-      ) : (
-        <Section title="La especie">
-          <p className="text-muted-foreground py-1 text-sm">
-            Esta es una carta de {card.category === "Trainer" ? "Entrenador" : "Energía"}:
-            no representa a ningún Pokémon.
-          </p>
         </Section>
       )}
 

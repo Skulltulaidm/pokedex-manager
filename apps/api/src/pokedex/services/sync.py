@@ -60,6 +60,7 @@ async def sync_set(db: AsyncSession, set_id: str) -> SyncReport:
         written_species = await catalog.upsert_species(db, species)
 
     written_cards = await catalog.upsert_cards(db, cards)
+    await catalog.record_prices(db, cards)
     await db.commit()
 
     return SyncReport(set_id, written_cards, written_species, failed)

@@ -1,5 +1,7 @@
 export type { AddCardMutationKey } from "./hooks/useAddCard"
 export type { AddToWishlistMutationKey } from "./hooks/useAddToWishlist"
+export type { CardMarketContextQueryKey } from "./hooks/useCardMarketContext"
+export type { CardMarketContextSuspenseQueryKey } from "./hooks/useCardMarketContextSuspense"
 export type { CollectionActivityQueryKey } from "./hooks/useCollectionActivity"
 export type { CollectionActivitySuspenseQueryKey } from "./hooks/useCollectionActivitySuspense"
 export type { CollectionStatsQueryKey } from "./hooks/useCollectionStats"
@@ -29,6 +31,10 @@ export type { ListGapsQueryKey } from "./hooks/useListGaps"
 export type { ListGapsSuspenseQueryKey } from "./hooks/useListGapsSuspense"
 export type { ListWishlistQueryKey } from "./hooks/useListWishlist"
 export type { ListWishlistSuspenseQueryKey } from "./hooks/useListWishlistSuspense"
+export type { MarketCardsQueryKey } from "./hooks/useMarketCards"
+export type { MarketCardsSuspenseQueryKey } from "./hooks/useMarketCardsSuspense"
+export type { MarketSummaryQueryKey } from "./hooks/useMarketSummary"
+export type { MarketSummarySuspenseQueryKey } from "./hooks/useMarketSummarySuspense"
 export type { MeQueryKey } from "./hooks/useMe"
 export type { MeSuspenseQueryKey } from "./hooks/useMeSuspense"
 export type { OwnedCardIdsQueryKey } from "./hooks/useOwnedCardIds"
@@ -69,6 +75,14 @@ export type { AddWishlistRequest } from "./types/AddWishlistRequest"
 export type { BodyCreateScan } from "./types/BodyCreateScan"
 export type { CardCandidate } from "./types/CardCandidate"
 export type { CardCondition, CardConditionEnumKey } from "./types/CardCondition"
+export type {
+  CardMarketContext,
+  CardMarketContext200,
+  CardMarketContext422,
+  CardMarketContextPathParams,
+  CardMarketContextQuery,
+  CardMarketContextQueryResponse,
+} from "./types/CardMarketContext"
 export type {
   CardReading,
   CardReadingConfidenceEnumKey,
@@ -185,6 +199,23 @@ export type {
   ListWishlistQuery,
   ListWishlistQueryResponse,
 } from "./types/ListWishlist"
+export type { MarketCardView } from "./types/MarketCardView"
+export type {
+  MarketCards200,
+  MarketCards422,
+  MarketCardsQuery,
+  MarketCardsQueryParams,
+  MarketCardsQueryParamsOwnedEnumKey,
+  MarketCardsQueryParamsSortEnumKey,
+  MarketCardsQueryResponse,
+} from "./types/MarketCards"
+export type {
+  MarketSummary,
+  MarketSummary200,
+  MarketSummaryQuery,
+  MarketSummaryQueryResponse,
+} from "./types/MarketSummary"
+export type { MarketTypeCount } from "./types/MarketTypeCount"
 export type { Me200, MeQuery, MeQueryResponse } from "./types/Me"
 export type { MeResponse } from "./types/MeResponse"
 export type { MessageRole, MessageRoleEnumKey } from "./types/MessageRole"
@@ -196,6 +227,8 @@ export type {
 } from "./types/OwnedCardIds"
 export type { OwnedSlot } from "./types/OwnedSlot"
 export type { PageCollectionItemView } from "./types/PageCollectionItemView"
+export type { PageMarketCardView } from "./types/PageMarketCardView"
+export type { PriceChange } from "./types/PriceChange"
 export type { PublicCollection } from "./types/PublicCollection"
 export type { PublicItemView } from "./types/PublicItemView"
 export type {
@@ -276,6 +309,7 @@ export type {
 } from "./types/WishlistSource"
 export { addCard } from "./clients/addCard"
 export { addToWishlist } from "./clients/addToWishlist"
+export { cardMarketContext } from "./clients/cardMarketContext"
 export { collectionActivity } from "./clients/collectionActivity"
 export { collectionStats } from "./clients/collectionStats"
 export { confirmScan } from "./clients/confirmScan"
@@ -292,6 +326,8 @@ export { listCollection } from "./clients/listCollection"
 export { listConversations } from "./clients/listConversations"
 export { listGaps } from "./clients/listGaps"
 export { listWishlist } from "./clients/listWishlist"
+export { marketCards } from "./clients/marketCards"
+export { marketSummary } from "./clients/marketSummary"
 export { me } from "./clients/me"
 export { ownedCardIds } from "./clients/ownedCardIds"
 export { readSharedCollection } from "./clients/readSharedCollection"
@@ -309,6 +345,12 @@ export { useAddCard } from "./hooks/useAddCard"
 export { addToWishlistMutationKey } from "./hooks/useAddToWishlist"
 export { addToWishlistMutationOptions } from "./hooks/useAddToWishlist"
 export { useAddToWishlist } from "./hooks/useAddToWishlist"
+export { cardMarketContextQueryKey } from "./hooks/useCardMarketContext"
+export { cardMarketContextQueryOptions } from "./hooks/useCardMarketContext"
+export { useCardMarketContext } from "./hooks/useCardMarketContext"
+export { cardMarketContextSuspenseQueryKey } from "./hooks/useCardMarketContextSuspense"
+export { cardMarketContextSuspenseQueryOptions } from "./hooks/useCardMarketContextSuspense"
+export { useCardMarketContextSuspense } from "./hooks/useCardMarketContextSuspense"
 export { collectionActivityQueryKey } from "./hooks/useCollectionActivity"
 export { collectionActivityQueryOptions } from "./hooks/useCollectionActivity"
 export { useCollectionActivity } from "./hooks/useCollectionActivity"
@@ -396,6 +438,18 @@ export { useListWishlist } from "./hooks/useListWishlist"
 export { listWishlistSuspenseQueryKey } from "./hooks/useListWishlistSuspense"
 export { listWishlistSuspenseQueryOptions } from "./hooks/useListWishlistSuspense"
 export { useListWishlistSuspense } from "./hooks/useListWishlistSuspense"
+export { marketCardsQueryKey } from "./hooks/useMarketCards"
+export { marketCardsQueryOptions } from "./hooks/useMarketCards"
+export { useMarketCards } from "./hooks/useMarketCards"
+export { marketCardsSuspenseQueryKey } from "./hooks/useMarketCardsSuspense"
+export { marketCardsSuspenseQueryOptions } from "./hooks/useMarketCardsSuspense"
+export { useMarketCardsSuspense } from "./hooks/useMarketCardsSuspense"
+export { marketSummaryQueryKey } from "./hooks/useMarketSummary"
+export { marketSummaryQueryOptions } from "./hooks/useMarketSummary"
+export { useMarketSummary } from "./hooks/useMarketSummary"
+export { marketSummarySuspenseQueryKey } from "./hooks/useMarketSummarySuspense"
+export { marketSummarySuspenseQueryOptions } from "./hooks/useMarketSummarySuspense"
+export { useMarketSummarySuspense } from "./hooks/useMarketSummarySuspense"
 export { meQueryKey } from "./hooks/useMe"
 export { meQueryOptions } from "./hooks/useMe"
 export { useMe } from "./hooks/useMe"
@@ -453,6 +507,8 @@ export { cardReadingConfidenceEnum } from "./types/CardReading"
 export { cardReadingRaritySymbolEnum } from "./types/CardReading"
 export { exportCollectionQueryParamsFormatEnum } from "./types/ExportCollection"
 export { listCollectionQueryParamsSortEnum } from "./types/ListCollection"
+export { marketCardsQueryParamsOwnedEnum } from "./types/MarketCards"
+export { marketCardsQueryParamsSortEnum } from "./types/MarketCards"
 export { messageRoleEnum } from "./types/MessageRole"
 export { scanResultStatusEnum } from "./types/ScanResult"
 export { wishlistSourceEnum } from "./types/WishlistSource"
@@ -475,6 +531,13 @@ export { addWishlistRequestSchema } from "./zod/addWishlistRequestSchema"
 export { bodyCreateScanSchema } from "./zod/bodyCreateScanSchema"
 export { cardCandidateSchema } from "./zod/cardCandidateSchema"
 export { cardConditionSchema } from "./zod/cardConditionSchema"
+export {
+  cardMarketContext200Schema,
+  cardMarketContext422Schema,
+  cardMarketContextPathParamsSchema,
+  cardMarketContextQueryResponseSchema,
+  cardMarketContextSchema,
+} from "./zod/cardMarketContextSchema"
 export { cardReadingSchema } from "./zod/cardReadingSchema"
 export { cardSetViewSchema } from "./zod/cardSetViewSchema"
 export { cardViewSchema } from "./zod/cardViewSchema"
@@ -565,6 +628,19 @@ export {
   listWishlist200Schema,
   listWishlistQueryResponseSchema,
 } from "./zod/listWishlistSchema"
+export { marketCardViewSchema } from "./zod/marketCardViewSchema"
+export {
+  marketCards200Schema,
+  marketCards422Schema,
+  marketCardsQueryParamsSchema,
+  marketCardsQueryResponseSchema,
+} from "./zod/marketCardsSchema"
+export {
+  marketSummary200Schema,
+  marketSummaryQueryResponseSchema,
+  marketSummarySchema,
+} from "./zod/marketSummarySchema"
+export { marketTypeCountSchema } from "./zod/marketTypeCountSchema"
 export { meResponseSchema } from "./zod/meResponseSchema"
 export { me200Schema, meQueryResponseSchema } from "./zod/meSchema"
 export { messageRoleSchema } from "./zod/messageRoleSchema"
@@ -575,6 +651,8 @@ export {
 } from "./zod/ownedCardIdsSchema"
 export { ownedSlotSchema } from "./zod/ownedSlotSchema"
 export { pageCollectionItemViewSchema } from "./zod/pageCollectionItemViewSchema"
+export { pageMarketCardViewSchema } from "./zod/pageMarketCardViewSchema"
+export { priceChangeSchema } from "./zod/priceChangeSchema"
 export { publicCollectionSchema } from "./zod/publicCollectionSchema"
 export { publicItemViewSchema } from "./zod/publicItemViewSchema"
 export {

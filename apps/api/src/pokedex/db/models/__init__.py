@@ -1,4 +1,4 @@
-from pokedex.db.models.catalog import Card, CardSet, Species
+from pokedex.db.models.catalog import Card, CardPrice, CardSet, Species
 from pokedex.db.models.collection import (
     CardCondition,
     CollectionItem,
@@ -20,6 +20,7 @@ from pokedex.db.models.trivia import SpeciesTrivia
 __all__ = [
     "Card",
     "CardCondition",
+    "CardPrice",
     "CardSet",
     "CollectionItem",
     "Conversation",
