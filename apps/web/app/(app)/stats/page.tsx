@@ -2,7 +2,8 @@
 
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 import { ActivityFeed } from "@/components/activity-feed";
 import { BinderMark } from "@/components/binder-mark";
@@ -36,18 +37,37 @@ import { cn } from "@workspace/ui/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function StatsPage() {
-  const [tab, setTab] = useState("resumen");
+  return (
+    <Suspense fallback={<StatsSkeleton />}>
+      <Stats />
+    </Suspense>
+  );
+}
+
+function StatsSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-10 w-48" />
+      <Skeleton className="h-24 w-full rounded-xl" />
+      <Skeleton className="h-40 w-full rounded-xl" />
+    </div>
+  );
+}
+
+function Stats() {
+  // The tab lives in the URL so a link can point at the want list and a reload
+  // stays where it was, the way the catalog already treats its filters.
+  const router = useRouter();
+  const params = useSearchParams();
+  const tab = params.get("tab") === "deseos" ? "deseos" : "resumen";
+  const setTab = (next: string) =>
+    router.replace(next === "resumen" ? "/stats" : `/stats?tab=${next}`, {
+      scroll: false,
+    });
+
   const { data, isPending } = useCollectionStats({ client: { client: apiClient } });
 
-  if (isPending) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <Skeleton className="h-40 w-full rounded-xl" />
-      </div>
-    );
-  }
+  if (isPending) return <StatsSkeleton />;
 
   if (!data || data.total_groups === 0) return <Empty />;
 
