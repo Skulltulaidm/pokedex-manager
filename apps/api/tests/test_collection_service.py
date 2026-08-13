@@ -374,3 +374,39 @@ async def test_a_first_cost_applies_to_a_group_that_had_none(
     )
 
     assert item.unit_cost_usd == Decimal("50.00")
+
+
+async def test_updating_records_a_cost_on_a_group_that_had_none(
+    seeded: AsyncSession, user_id: str
+) -> None:
+    """The only way a collection catalogued before costs existed gets one."""
+    item = await collection.add_card(seeded, user_id, AddCardRequest(card_id="base1-4"))
+
+    updated = await collection.update_item(
+        seeded,
+        user_id,
+        item.id,
+        UpdateItemRequest(unit_cost_usd=Decimal("75.50")),
+    )
+
+    assert updated is not None
+    assert updated.unit_cost_usd == Decimal("75.50")
+    assert updated.quantity == 1
+
+
+async def test_an_explicit_null_clears_a_recorded_cost(
+    seeded: AsyncSession, user_id: str
+) -> None:
+    """Emptying the field means the cost is unknown again, not that it was zero."""
+    item = await collection.add_card(
+        seeded,
+        user_id,
+        AddCardRequest(card_id="base1-4", unit_cost_usd=Decimal("75.50")),
+    )
+
+    updated = await collection.update_item(
+        seeded, user_id, item.id, UpdateItemRequest(unit_cost_usd=None)
+    )
+
+    assert updated is not None
+    assert updated.unit_cost_usd is None

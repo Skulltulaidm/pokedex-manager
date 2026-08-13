@@ -27,6 +27,11 @@ import {
 } from "@/lib/labels";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@workspace/ui/components/input-group";
 import { Label } from "@workspace/ui/components/label";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
@@ -200,6 +205,7 @@ export default function ItemDetailPage() {
             quantity={item.quantity}
             condition={item.condition}
             notes={item.notes}
+            unitCost={item.unit_cost_usd}
             busy={update.isPending}
             onCancel={() => setEditing(false)}
             onSave={(data) => update.mutate({ item_id: item.id, data })}
@@ -219,6 +225,12 @@ export default function ItemDetailPage() {
                 </span>
               )}
             </div>
+
+            <PositionReturn
+              unitCost={item.unit_cost_usd}
+              price={price}
+              quantity={item.quantity}
+            />
 
             {item.notes && (
               <p className="text-muted-foreground mb-5 text-sm leading-relaxed">
@@ -274,10 +286,74 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+/**
+ * This position against what it cost.
+ *
+ * Stated per copy and in total: the unit price is what a trade argues over, and
+ * the total is what actually moved. A position with no recorded cost says so
+ * rather than staying blank, because it is the reason the portfolio return
+ * leaves it out.
+ */
+function PositionReturn({
+  unitCost,
+  price,
+  quantity,
+}: {
+  unitCost: string | number | null;
+  price: number | null;
+  quantity: number;
+}) {
+  if (unitCost == null) {
+    return (
+      <p className="text-muted-foreground/70 mb-5 text-sm">
+        Sin precio de compra, así que esta carta queda fuera de tu rendimiento.
+        Está en <span className="text-muted-foreground">Editar</span>.
+      </p>
+    );
+  }
+
+  const cost = Number(unitCost);
+  const paid = cost * quantity;
+  const worth = price === null ? null : price * quantity;
+  const gain = worth === null ? null : worth - paid;
+  const percent = worth === null || paid <= 0 ? null : ((worth - paid) / paid) * 100;
+  const up = (gain ?? 0) >= 0;
+
+  return (
+    <dl className="border-edge mb-5 flex flex-wrap items-baseline gap-x-6 gap-y-1 border-y py-3 text-sm">
+      <div className="flex gap-2">
+        <dt className="text-muted-foreground">Pagaste</dt>
+        <dd className="font-mono tabular-nums">
+          {formatUsd(cost)}
+          {quantity > 1 && (
+            <span className="text-muted-foreground/60"> ×{quantity} · {formatUsd(paid)}</span>
+          )}
+        </dd>
+      </div>
+      {gain !== null && percent !== null && (
+        <div className="flex gap-2">
+          <dt className="text-muted-foreground">Rendimiento</dt>
+          <dd
+            className={cn(
+              "font-mono font-medium tabular-nums",
+              up ? "text-emerald-500" : "text-destructive",
+            )}
+          >
+            {up ? "+" : "−"}
+            {formatUsd(Math.abs(gain))} · {up ? "+" : "−"}
+            {Math.abs(percent).toFixed(1)}%
+          </dd>
+        </div>
+      )}
+    </dl>
+  );
+}
+
 function EditForm({
   quantity: initialQuantity,
   condition: initialCondition,
   notes: initialNotes,
+  unitCost: initialUnitCost,
   busy,
   onCancel,
   onSave,
@@ -285,17 +361,20 @@ function EditForm({
   quantity: number;
   condition: string;
   notes: string | null;
+  unitCost: string | number | null;
   busy: boolean;
   onCancel: () => void;
   onSave: (data: {
     quantity: number;
     condition: never;
     notes: string | null;
+    unit_cost_usd: number | null;
   }) => void;
 }) {
   const [quantity, setQuantity] = useState(initialQuantity);
   const [condition, setCondition] = useState(initialCondition);
   const [notes, setNotes] = useState(initialNotes ?? "");
+  const [paid, setPaid] = useState(initialUnitCost == null ? "" : String(initialUnitCost));
 
   return (
     <div className="space-y-4 pt-1">
@@ -334,6 +413,30 @@ function EditForm({
       </fieldset>
 
       <div className="space-y-1.5">
+        <Label htmlFor="paid">Precio pagado por unidad</Label>
+        <InputGroup className="h-10 w-40">
+          <InputGroupAddon>
+            <span className="text-muted-foreground">$</span>
+          </InputGroupAddon>
+          <InputGroupInput
+            id="paid"
+            type="number"
+            min={0}
+            step="0.01"
+            inputMode="decimal"
+            placeholder="0.00"
+            value={paid}
+            onChange={(event) => setPaid(event.target.value)}
+            className="font-mono"
+          />
+        </InputGroup>
+        <p className="text-muted-foreground/70 text-xs">
+          Vacío significa que no lo sabés, no que fue gratis: la carta queda
+          fuera del rendimiento en vez de contar como ganancia entera.
+        </p>
+      </div>
+
+      <div className="space-y-1.5">
         <Label htmlFor="notes">Nota</Label>
         <Input
           id="notes"
@@ -354,6 +457,7 @@ function EditForm({
               quantity,
               condition: condition as never,
               notes: notes.trim() || null,
+              unit_cost_usd: paid.trim() ? Number(paid) : null,
             })
           }
         >
