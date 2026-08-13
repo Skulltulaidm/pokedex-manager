@@ -1,6 +1,12 @@
 "use client";
 
-import { LayoutGrid, MessageCircle, PieChart, ScanLine } from "lucide-react";
+import {
+  ArrowLeftRight,
+  LayoutGrid,
+  MessageCircle,
+  PieChart,
+  ScanLine,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -21,6 +27,7 @@ import {
 export const NAV = [
   { href: "/collection", label: "Catálogo", icon: LayoutGrid },
   { href: "/scan", label: "Escanear", icon: ScanLine },
+  { href: "/trades", label: "Trueques", icon: ArrowLeftRight },
   { href: "/stats", label: "Resumen", icon: PieChart },
   { href: "/chat", label: "Preguntar", icon: MessageCircle },
 ];

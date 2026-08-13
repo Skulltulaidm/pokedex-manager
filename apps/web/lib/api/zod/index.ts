@@ -111,6 +111,12 @@ export {
   listGapsQueryResponseSchema,
 } from "./listGapsSchema"
 export {
+  listTrades200Schema,
+  listTrades422Schema,
+  listTradesQueryParamsSchema,
+  listTradesQueryResponseSchema,
+} from "./listTradesSchema"
+export {
   listWishlist200Schema,
   listWishlistQueryResponseSchema,
 } from "./listWishlistSchema"
@@ -142,6 +148,7 @@ export {
 export { ownedSlotSchema } from "./ownedSlotSchema"
 export { pageCollectionItemViewSchema } from "./pageCollectionItemViewSchema"
 export { pageMarketCardViewSchema } from "./pageMarketCardViewSchema"
+export { portfolioReturnSchema } from "./portfolioReturnSchema"
 export { priceChangeSchema } from "./priceChangeSchema"
 export { publicCollectionSchema } from "./publicCollectionSchema"
 export { publicItemViewSchema } from "./publicItemViewSchema"
@@ -197,6 +204,8 @@ export {
   speciesTriviaQueryResponseSchema,
 } from "./speciesTriviaSchema"
 export { speciesViewSchema } from "./speciesViewSchema"
+export { tradeCardSchema } from "./tradeCardSchema"
+export { tradeMatchSchema } from "./tradeMatchSchema"
 export { triviaViewSchema } from "./triviaViewSchema"
 export { typeCountSchema } from "./typeCountSchema"
 export { updateItemRequestSchema } from "./updateItemRequestSchema"

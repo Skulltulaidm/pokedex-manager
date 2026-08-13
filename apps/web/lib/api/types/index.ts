@@ -134,6 +134,13 @@ export type {
   ListGapsQueryResponse,
 } from "./ListGaps"
 export type {
+  ListTrades200,
+  ListTrades422,
+  ListTradesQuery,
+  ListTradesQueryParams,
+  ListTradesQueryResponse,
+} from "./ListTrades"
+export type {
   ListWishlist200,
   ListWishlistQuery,
   ListWishlistQueryResponse,
@@ -172,6 +179,7 @@ export type {
 export type { OwnedSlot } from "./OwnedSlot"
 export type { PageCollectionItemView } from "./PageCollectionItemView"
 export type { PageMarketCardView } from "./PageMarketCardView"
+export type { PortfolioReturn } from "./PortfolioReturn"
 export type { PriceChange } from "./PriceChange"
 export type { PublicCollection } from "./PublicCollection"
 export type { PublicItemView } from "./PublicItemView"
@@ -235,6 +243,8 @@ export type {
   SpeciesTriviaQueryResponse,
 } from "./SpeciesTrivia"
 export type { SpeciesView } from "./SpeciesView"
+export type { TradeCard } from "./TradeCard"
+export type { TradeMatch } from "./TradeMatch"
 export type { TriviaView } from "./TriviaView"
 export type { TypeCount } from "./TypeCount"
 export type {

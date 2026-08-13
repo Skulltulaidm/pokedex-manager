@@ -8,6 +8,7 @@ from pokedex.api.v1 import (
     scan,
     share,
     stats,
+    trade,
     wishlist,
 )
 
@@ -20,5 +21,6 @@ router.include_router(scan.router)
 router.include_router(stats.router)
 router.include_router(wishlist.router)
 router.include_router(share.router)
+router.include_router(trade.router)
 
 __all__ = ["router"]

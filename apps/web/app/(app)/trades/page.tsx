@@ -1,0 +1,176 @@
+"use client";
+
+import { ArrowLeftRight, Handshake } from "lucide-react";
+
+import { CardImage } from "@/components/card-image";
+import { ScreenHeader } from "@/components/screen-header";
+import { apiClient } from "@/lib/api-client";
+import { useListTrades } from "@/lib/api/hooks/useListTrades";
+import type { TradeCard, TradeMatch } from "@/lib/api/types";
+import { formatUsd } from "@/lib/format";
+import { Skeleton } from "@workspace/ui/components/skeleton";
+import { cn } from "@workspace/ui/lib/utils";
+
+export default function TradesPage() {
+  const { data: matches, isPending } = useListTrades(
+    {},
+    { client: { client: apiClient } },
+  );
+
+  return (
+    <>
+      <ScreenHeader
+        title="Trueques"
+        meta={
+          matches && matches.length > 0
+            ? `${matches.length} ${matches.length === 1 ? "coincidencia" : "coincidencias"}`
+            : undefined
+        }
+      />
+
+      <p className="text-muted-foreground mb-7 max-w-2xl text-sm">
+        Coleccionistas que quieren una carta que te sobra y tienen una que
+        buscas. Solo se ofrecen cartas repetidas: la única copia de una carta es
+        tu colección, no inventario.
+      </p>
+
+      {isPending && <MatchesSkeleton />}
+      {matches?.length === 0 && <Empty />}
+
+      <ul className="space-y-4">
+        {matches?.map((match) => (
+          <li key={match.partner_id}>
+            <Match match={match} />
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+/**
+ * Both sides of the swap, side by side, with the balance between them.
+ *
+ * The balance is stated and not acted on: which cards even out a trade is the
+ * two collectors' argument, and a number that picked a winner would be
+ * pretending to knowledge about condition and sentiment that it does not have.
+ */
+function Match({ match }: { match: TradeMatch }) {
+  const balance = Number(match.balance);
+  const favourable = balance >= 0;
+
+  return (
+    <article className="ring-edge bg-surface rounded-2xl p-5 ring-1">
+      <header className="mb-5 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2.5">
+          <span className="bg-secondary text-muted-foreground grid size-8 place-items-center rounded-full text-xs font-medium uppercase">
+            {(match.partner_name ?? "?").slice(0, 2)}
+          </span>
+          <p className="font-medium">{match.partner_name ?? "Coleccionista"}</p>
+        </div>
+
+        <div className="text-right">
+          <p
+            className={cn(
+              "font-mono text-sm font-medium tabular-nums",
+              favourable ? "text-emerald-500" : "text-destructive",
+            )}
+          >
+            {favourable ? "+" : "−"}
+            {formatUsd(Math.abs(balance))}
+          </p>
+          <p className="text-muted-foreground/70 text-[11px]">
+            {favourable ? "a tu favor" : "en tu contra"}
+          </p>
+        </div>
+      </header>
+
+      <div className="grid gap-5 sm:grid-cols-[1fr_auto_1fr] sm:items-start">
+        <Side title="Entregas" cards={match.you_give} value={match.give_value} />
+        <ArrowLeftRight
+          className="text-muted-foreground/30 mx-auto size-5 shrink-0 sm:mt-9"
+          aria-hidden
+        />
+        <Side title="Recibes" cards={match.you_get} value={match.get_value} />
+      </div>
+
+      {match.unpriced > 0 && (
+        <p className="text-muted-foreground/70 mt-4 text-xs">
+          {match.unpriced} {match.unpriced === 1 ? "carta" : "cartas"} sin precio
+          de mercado, fuera de los totales.
+        </p>
+      )}
+    </article>
+  );
+}
+
+function Side({
+  title,
+  cards,
+  value,
+}: {
+  title: string;
+  cards: TradeCard[];
+  value: string;
+}) {
+  return (
+    <section>
+      <div className="mb-3 flex items-baseline justify-between gap-2">
+        <h2 className="text-muted-foreground text-[11px] tracking-wide uppercase">
+          {title}
+        </h2>
+        <p className="font-mono text-sm tabular-nums">{formatUsd(value)}</p>
+      </div>
+
+      <ul className="flex flex-wrap gap-2.5">
+        {cards.map((entry) => (
+          <li key={entry.card.id} className="w-16">
+            <CardImage
+              src={entry.card.image_small_url}
+              alt={entry.card.name}
+              sizes="64px"
+              category={entry.card.category}
+            />
+            <p className="mt-1.5 truncate text-[11px] leading-tight" title={entry.card.name}>
+              {entry.card.name}
+            </p>
+            <p className="text-muted-foreground/70 font-mono text-[10px] tabular-nums">
+              {entry.price_usd ? formatUsd(entry.price_usd) : "sin precio"}
+              {entry.copies > 1 && ` · ${entry.copies} libres`}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function Empty() {
+  return (
+    <div className="ring-edge bg-surface/60 rounded-2xl px-6 py-16 text-center ring-1">
+      <Handshake
+        className="text-muted-foreground/30 mx-auto size-10"
+        strokeWidth={1.25}
+        aria-hidden
+      />
+      <h2 className="font-display mt-4 text-lg font-semibold">
+        Todavía no hay trueques
+      </h2>
+      <p className="text-muted-foreground mx-auto mt-2 max-w-sm text-sm">
+        Un trueque necesita las dos mitades: que alguien quiera una de tus
+        repetidas y que tenga repetida una de tu lista de deseos. Agrega cartas
+        a tus deseos y aparecerán aquí en cuanto alguien las tenga de sobra.
+      </p>
+    </div>
+  );
+}
+
+function MatchesSkeleton() {
+  return (
+    <div className="space-y-4">
+      {Array.from({ length: 2 }).map((_, index) => (
+        <Skeleton key={index} className="h-52 rounded-2xl" />
+      ))}
+    </div>
+  );
+}

@@ -18,6 +18,7 @@ from pokedex.services import (
     market,
     preferences,
     stats,
+    trade,
     wishlist,
 )
 from pokedex.services.collection import CardNotFoundError
@@ -159,6 +160,35 @@ async def cheapest_missing(set_id: str | None = None, limit: int = 20) -> dict[s
             sum((Decimal(card["price_usd"]) for card in cards), Decimal(0))
         ),
         "cards": cards,
+    }
+
+
+@server.tool()
+async def find_trades(limit: int = 10) -> dict[str, Any]:
+    """Collectors who want a card the user has spare, and hold one the user wants.
+
+    Both sides are always present: a match is a swap, not a wish. Only cards a
+    user holds more than once are offered — the only copy of a card is their
+    collection, not stock.
+
+    `balance` is in the user's favour when positive, and it is a starting point
+    rather than a verdict: a lopsided balance is worth saying out loud, and so
+    is a card that both of them are short of. Values count one copy of each
+    card, whatever `copies` says is available. `unpriced` cards carry no market
+    price and are therefore missing from both totals — never call a swap even
+    without checking that number first.
+
+    Nothing here moves a card or contacts anybody. It says a trade is possible,
+    and the two collectors arrange it themselves.
+    """
+    user_id = current_user_id()
+    async with SessionFactory() as db:
+        matches = await trade.find_matches(db, user_id, limit=limit)
+
+    return {
+        "currency": "USD",
+        "count": len(matches),
+        "matches": [match.model_dump(mode="json") for match in matches],
     }
 
 

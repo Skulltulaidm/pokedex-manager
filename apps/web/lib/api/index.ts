@@ -29,6 +29,8 @@ export type { ListConversationsQueryKey } from "./hooks/useListConversations"
 export type { ListConversationsSuspenseQueryKey } from "./hooks/useListConversationsSuspense"
 export type { ListGapsQueryKey } from "./hooks/useListGaps"
 export type { ListGapsSuspenseQueryKey } from "./hooks/useListGapsSuspense"
+export type { ListTradesQueryKey } from "./hooks/useListTrades"
+export type { ListTradesSuspenseQueryKey } from "./hooks/useListTradesSuspense"
 export type { ListWishlistQueryKey } from "./hooks/useListWishlist"
 export type { ListWishlistSuspenseQueryKey } from "./hooks/useListWishlistSuspense"
 export type { MarketCardsQueryKey } from "./hooks/useMarketCards"
@@ -197,6 +199,13 @@ export type {
   ListGapsQueryResponse,
 } from "./types/ListGaps"
 export type {
+  ListTrades200,
+  ListTrades422,
+  ListTradesQuery,
+  ListTradesQueryParams,
+  ListTradesQueryResponse,
+} from "./types/ListTrades"
+export type {
   ListWishlist200,
   ListWishlistQuery,
   ListWishlistQueryResponse,
@@ -235,6 +244,7 @@ export type {
 export type { OwnedSlot } from "./types/OwnedSlot"
 export type { PageCollectionItemView } from "./types/PageCollectionItemView"
 export type { PageMarketCardView } from "./types/PageMarketCardView"
+export type { PortfolioReturn } from "./types/PortfolioReturn"
 export type { PriceChange } from "./types/PriceChange"
 export type { PublicCollection } from "./types/PublicCollection"
 export type { PublicItemView } from "./types/PublicItemView"
@@ -298,6 +308,8 @@ export type {
   SpeciesTriviaQueryResponse,
 } from "./types/SpeciesTrivia"
 export type { SpeciesView } from "./types/SpeciesView"
+export type { TradeCard } from "./types/TradeCard"
+export type { TradeMatch } from "./types/TradeMatch"
 export type { TriviaView } from "./types/TriviaView"
 export type { TypeCount } from "./types/TypeCount"
 export type {
@@ -333,6 +345,7 @@ export { health } from "./clients/health"
 export { listCollection } from "./clients/listCollection"
 export { listConversations } from "./clients/listConversations"
 export { listGaps } from "./clients/listGaps"
+export { listTrades } from "./clients/listTrades"
 export { listWishlist } from "./clients/listWishlist"
 export { marketCards } from "./clients/marketCards"
 export { marketSets } from "./clients/marketSets"
@@ -441,6 +454,12 @@ export { useListGaps } from "./hooks/useListGaps"
 export { listGapsSuspenseQueryKey } from "./hooks/useListGapsSuspense"
 export { listGapsSuspenseQueryOptions } from "./hooks/useListGapsSuspense"
 export { useListGapsSuspense } from "./hooks/useListGapsSuspense"
+export { listTradesQueryKey } from "./hooks/useListTrades"
+export { listTradesQueryOptions } from "./hooks/useListTrades"
+export { useListTrades } from "./hooks/useListTrades"
+export { listTradesSuspenseQueryKey } from "./hooks/useListTradesSuspense"
+export { listTradesSuspenseQueryOptions } from "./hooks/useListTradesSuspense"
+export { useListTradesSuspense } from "./hooks/useListTradesSuspense"
 export { listWishlistQueryKey } from "./hooks/useListWishlist"
 export { listWishlistQueryOptions } from "./hooks/useListWishlist"
 export { useListWishlist } from "./hooks/useListWishlist"
@@ -640,6 +659,12 @@ export {
   listGapsQueryResponseSchema,
 } from "./zod/listGapsSchema"
 export {
+  listTrades200Schema,
+  listTrades422Schema,
+  listTradesQueryParamsSchema,
+  listTradesQueryResponseSchema,
+} from "./zod/listTradesSchema"
+export {
   listWishlist200Schema,
   listWishlistQueryResponseSchema,
 } from "./zod/listWishlistSchema"
@@ -671,6 +696,7 @@ export {
 export { ownedSlotSchema } from "./zod/ownedSlotSchema"
 export { pageCollectionItemViewSchema } from "./zod/pageCollectionItemViewSchema"
 export { pageMarketCardViewSchema } from "./zod/pageMarketCardViewSchema"
+export { portfolioReturnSchema } from "./zod/portfolioReturnSchema"
 export { priceChangeSchema } from "./zod/priceChangeSchema"
 export { publicCollectionSchema } from "./zod/publicCollectionSchema"
 export { publicItemViewSchema } from "./zod/publicItemViewSchema"
@@ -726,6 +752,8 @@ export {
   speciesTriviaQueryResponseSchema,
 } from "./zod/speciesTriviaSchema"
 export { speciesViewSchema } from "./zod/speciesViewSchema"
+export { tradeCardSchema } from "./zod/tradeCardSchema"
+export { tradeMatchSchema } from "./zod/tradeMatchSchema"
 export { triviaViewSchema } from "./zod/triviaViewSchema"
 export { typeCountSchema } from "./zod/typeCountSchema"
 export { updateItemRequestSchema } from "./zod/updateItemRequestSchema"

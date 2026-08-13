@@ -8,5 +8,6 @@ auth_user = Table(
     "user",
     Base.metadata,
     Column("id", Text, primary_key=True),
+    Column("name", Text),
     schema="auth",
 )
