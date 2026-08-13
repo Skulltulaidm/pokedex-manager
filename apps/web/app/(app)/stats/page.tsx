@@ -60,8 +60,12 @@ export default function StatsPage() {
           <TabsTrigger value="deseos">Deseos</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="resumen" className="space-y-8">
+        <TabsContent value="resumen">
+          {/* The right column is a stack of lists and outruns anything short
+              beside it, so the long sections live on the left rather than
+              below, where they left a column of nothing. */}
           <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] xl:items-start">
+          <div className="space-y-8">
           <section>
             <p className="font-display text-[2.75rem] leading-none font-semibold tabular-nums">
               {data.total_cards}
@@ -99,17 +103,6 @@ export default function StatsPage() {
               </div>
             )}
           </section>
-
-          <div className="space-y-8">
-            <TopHoldings total={Number(data.value.total_usd)} />
-            <section>
-              <h2 className="font-display mb-3 text-lg font-semibold tracking-tight">
-                Actividad
-              </h2>
-              <ActivityFeed />
-            </section>
-          </div>
-          </div>
 
           <section>
             <h2 className="font-display text-lg font-semibold tracking-tight">
@@ -150,6 +143,18 @@ export default function StatsPage() {
               </ul>
             </section>
           )}
+          </div>
+
+          <div className="space-y-8">
+            <TopHoldings total={Number(data.value.total_usd)} />
+            <section>
+              <h2 className="font-display mb-3 text-lg font-semibold tracking-tight">
+                Actividad
+              </h2>
+              <ActivityFeed />
+            </section>
+          </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="deseos">
@@ -306,36 +311,72 @@ function Wishlist() {
     );
   }
 
+  // A want list is a shopping list, so it is priced and ordered like one.
+  const sorted = [...data].sort(
+    (a, b) => Number(b.card.price_usd ?? 0) - Number(a.card.price_usd ?? 0),
+  );
+  const priced = sorted.filter((item) => item.card.price_usd != null);
+  const total = priced.reduce((sum, item) => sum + Number(item.card.price_usd), 0);
+  const suggested = sorted.filter((item) => item.added_by === "agent").length;
+
   return (
-    <ul className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
-      {data.map((item) => (
-        <li key={item.id}>
-          <CardRow
-            name={item.card.name}
-            number={item.card.number}
-            printedTotal={item.card.card_set.printed_total}
-            setName={item.card.card_set.name}
-            imageUrl={item.card.image_small_url ?? null}
-            types={item.card.species?.types ?? []}
-            note={
-              <p className="text-muted-foreground/80 mt-1 text-xs">
-                {item.added_by === "agent" ? "Sugerida · " : ""}
-                {item.reason}
-              </p>
-            }
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={`Quitar ${item.card.name} de deseos`}
-              onClick={() => remove({ item_id: item.id })}
+    <>
+      <div className="slab mb-6 flex flex-wrap items-end justify-between gap-4 rounded-xl px-5 py-4">
+        <div>
+          <p className="text-muted-foreground/70 text-[10px] tracking-wide uppercase">
+            Comprarlas todas
+          </p>
+          <p className="font-display text-primary mt-1 text-2xl leading-none font-semibold tabular-nums">
+            {formatUsd(total, true)}
+          </p>
+        </div>
+        <p className="text-muted-foreground text-xs tabular-nums">
+          {data.length} {data.length === 1 ? "carta" : "cartas"}
+          {priced.length < data.length && ` · ${data.length - priced.length} sin precio`}
+          {suggested > 0 &&
+            ` · ${suggested} ${suggested === 1 ? "sugerida" : "sugeridas"} por el asistente`}
+        </p>
+      </div>
+
+      <ul className="grid gap-2.5 lg:grid-cols-2">
+        {sorted.map((item) => (
+          <li key={item.id}>
+            <CardRow
+              name={item.card.name}
+              number={item.card.number}
+              printedTotal={item.card.card_set.printed_total}
+              setName={item.card.card_set.name}
+              imageUrl={item.card.image_small_url ?? null}
+              types={item.card.species?.types ?? []}
+              note={
+                <p className="text-muted-foreground/80 mt-1 text-xs">
+                  {item.added_by === "agent" ? "Sugerida · " : ""}
+                  {item.reason}
+                </p>
+              }
             >
-              <Trash2 />
-            </Button>
-          </CardRow>
-        </li>
-      ))}
-    </ul>
+              <div className="flex shrink-0 items-center gap-1">
+                <span className="text-sm font-semibold tabular-nums">
+                  {item.card.price_usd == null ? (
+                    <span className="text-muted-foreground/40">—</span>
+                  ) : (
+                    formatUsd(item.card.price_usd)
+                  )}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Quitar ${item.card.name} de deseos`}
+                  onClick={() => remove({ item_id: item.id })}
+                >
+                  <Trash2 />
+                </Button>
+              </div>
+            </CardRow>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 

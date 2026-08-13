@@ -24,7 +24,7 @@ export function SetPositions() {
   const coverage = new Map(stats?.sets.map((set) => [set.set_id, set]) ?? []);
 
   return (
-    <ul className="grid gap-7 lg:grid-cols-2 lg:gap-x-10">
+    <ul className="grid gap-7">
       {sets.map((set) => {
         const total = Number(set.total_value);
         const missing = Number(set.missing_value);
