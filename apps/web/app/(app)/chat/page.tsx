@@ -181,7 +181,7 @@ export default function ChatPage() {
       </header>
 
       {empty ? (
-        <div className="flex flex-1 flex-col justify-end pb-4">
+        <div className="flex flex-1 flex-col justify-center pb-8">
           <h2 className="font-display mb-6 text-[26px] leading-tight font-semibold tracking-[-0.02em]">
             ¿Qué quieres saber
             <br />
