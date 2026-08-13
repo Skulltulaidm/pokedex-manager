@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Camera, Check, ImagePlus, RotateCcw } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { ScreenHeader } from "@/components/screen-header";
@@ -14,7 +14,8 @@ import { TypeDots } from "@/components/type-dot";
 import { ApiError, apiClient } from "@/lib/api-client";
 import { confirmScan } from "@/lib/api/clients/confirmScan";
 import { createScan } from "@/lib/api/clients/createScan";
-import type { CardCandidate, ScanResult } from "@/lib/api/types";
+import { useMarketSets } from "@/lib/api/hooks/useMarketSets";
+import type { CardCandidate, CardReading, ScanResult } from "@/lib/api/types";
 import { CONDITION_ORDER, conditionLabel } from "@/lib/labels";
 import { Spinner } from "@workspace/ui/components/spinner";
 import { cn } from "@workspace/ui/lib/utils";
@@ -26,10 +27,11 @@ const SIGNAL_LABELS: Record<string, string> = {
   hp: "PS",
 };
 
+const CAMERA_INPUT = "scan-camera";
+const LIBRARY_INPUT = "scan-library";
+
 export default function ScanPage() {
   const isMobile = useIsMobile();
-  const camera = useRef<HTMLInputElement>(null);
-  const library = useRef<HTMLInputElement>(null);
 
   const [preview, setPreview] = useState<string | null>(null);
   const [previewBroken, setPreviewBroken] = useState(false);
@@ -120,30 +122,15 @@ export default function ScanPage() {
         )}
       </ScreenHeader>
 
-      {/* capture opens the camera, which only exists on a phone. On a desktop it
-          leaves the primary button doing nothing. */}
-      {isMobile && (
-        <input
-          ref={camera}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="sr-only"
-          onChange={(event) => event.target.files?.[0] && upload(event.target.files[0])}
-        />
-      )}
-      <input
-        ref={library}
-        type="file"
-        accept="image/*"
-        className="sr-only"
-        onChange={(event) => event.target.files?.[0] && upload(event.target.files[0])}
-      />
-
       {!preview && (
         <div className="mx-auto max-w-md text-center">
-          <button
-            onClick={() => library.current?.click()}
+          {/* A label is what opens the picker. Firing .click() on a hidden input
+              from JavaScript is the same gesture only as long as the browser
+              agrees it is, and browsers disagree; a label needs no script at
+              all. Which is why each input sits beside the label that opens it,
+              so `peer` can put the focus ring on something visible. */}
+          <label
+            htmlFor={LIBRARY_INPUT}
             onDragOver={(event) => {
               event.preventDefault();
               setDragging(true);
@@ -151,7 +138,7 @@ export default function ScanPage() {
             onDragLeave={() => setDragging(false)}
             onDrop={onDrop}
             className={cn(
-              "mb-6 grid aspect-[63/88] max-h-[46svh] w-full place-items-center rounded-2xl border-2 border-dashed transition-colors",
+              "mb-6 grid aspect-[63/88] max-h-[46svh] w-full cursor-pointer place-items-center rounded-2xl border-2 border-dashed transition-colors",
               dragging
                 ? "border-foreground bg-accent"
                 : "border-edge bg-surface/60 hover:border-muted-foreground/40 hover:bg-accent/40",
@@ -166,27 +153,54 @@ export default function ScanPage() {
                 o arrástrala aquí
               </p>
             </div>
-          </button>
+          </label>
           <h2 className="font-display text-lg font-semibold">Fotografía la carta</h2>
           <p className="text-muted-foreground mx-auto mt-2 mb-6 max-w-xs text-sm">
             Encuadra la carta completa y con buena luz. El número y el total del
             set son lo que más ayuda a identificarla.
           </p>
           <div className="flex flex-col gap-2">
+            {/* capture opens the camera, which only exists on a phone. On a
+                desktop it leaves the primary button doing nothing. */}
             {isMobile && (
-              <Button size="lg" onClick={() => camera.current?.click()}>
-                <Camera />
-                Tomar foto
-              </Button>
+              <>
+                <input
+                  id={CAMERA_INPUT}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="peer/camera sr-only"
+                  onChange={(event) => event.target.files?.[0] && upload(event.target.files[0])}
+                />
+                <label
+                  htmlFor={CAMERA_INPUT}
+                  className={cn(
+                    buttonVariants({ size: "lg" }),
+                    "peer-focus-visible/camera:border-ring peer-focus-visible/camera:ring-ring/50 cursor-pointer peer-focus-visible/camera:ring-3",
+                  )}
+                >
+                  <Camera />
+                  Tomar foto
+                </label>
+              </>
             )}
-            <Button
-              variant={isMobile ? "outline" : "default"}
-              size="lg"
-              onClick={() => library.current?.click()}
+            <input
+              id={LIBRARY_INPUT}
+              type="file"
+              accept="image/*"
+              className="peer/library sr-only"
+              onChange={(event) => event.target.files?.[0] && upload(event.target.files[0])}
+            />
+            <label
+              htmlFor={LIBRARY_INPUT}
+              className={cn(
+                buttonVariants({ variant: isMobile ? "outline" : "default", size: "lg" }),
+                "peer-focus-visible/library:border-ring peer-focus-visible/library:ring-ring/50 cursor-pointer peer-focus-visible/library:ring-3",
+              )}
             >
               <ImagePlus />
               {isMobile ? "Elegir de la galería" : "Elegir una foto"}
-            </Button>
+            </label>
           </div>
           {saved.length > 0 && <SavedStrip saved={saved} />}
         </div>
@@ -283,7 +297,9 @@ export default function ScanPage() {
             </section>
           )}
 
-          {result && result.candidates.length === 0 && !busy && <NotFound />}
+          {result && result.candidates.length === 0 && !busy && (
+            <NotFound reading={result.reading} />
+          )}
         </div>
       )}
     </>
@@ -361,17 +377,53 @@ function Candidate({
   );
 }
 
-function NotFound() {
+/**
+ * Why the lookup came back empty, told apart by what the reading holds.
+ *
+ * A number and a set size mean the photo did its job, and blaming it sends the
+ * reader to retake a picture that was already fine. The catalog is the limit
+ * then, and saying which sets it holds is what makes that checkable.
+ */
+function NotFound({ reading }: { reading: CardReading }) {
+  const { data: sets } = useMarketSets({ client: { client: apiClient } });
+  const legible = Boolean(reading.collector_number && reading.set_total);
+
   return (
     <div className="ring-edge bg-surface/60 mt-8 rounded-2xl px-6 py-12 text-center ring-1">
-      <h2 className="font-display text-lg font-semibold">No pude identificarla</h2>
-      <p className="text-muted-foreground mx-auto mt-2 max-w-sm text-sm">
-        Puede que la foto no deje ver el número, o que la carta todavía no esté en
-        el catálogo. Búscala por nombre y la registramos igual.
-      </p>
+      <h2 className="font-display text-lg font-semibold">
+        {legible ? "Esa carta no está en el catálogo" : "No pude identificarla"}
+      </h2>
+
+      {legible ? (
+        <div className="text-muted-foreground mx-auto mt-2 max-w-md space-y-2 text-sm">
+          <p>
+            Leí <span className="text-foreground font-mono">{reading.collector_number}</span>
+            <span className="text-muted-foreground/50">/{reading.set_total}</span> sin
+            problema, así que la foto está bien. Lo que falta es el set: la app solo
+            identifica cartas de los sets que tiene sincronizados.
+          </p>
+          {sets && sets.length > 0 && (
+            <p className="text-muted-foreground/70 text-xs">
+              Hoy tiene {sets.map((set) => set.set_name).join(" · ")}.
+            </p>
+          )}
+        </div>
+      ) : (
+        <p className="text-muted-foreground mx-auto mt-2 max-w-sm text-sm">
+          No se leyó el número ni el tamaño del set, que es lo que la identifica.
+          Probá con más luz, la carta completa en el encuadre y sin reflejos.
+        </p>
+      )}
+
       <Link href="/collection/add" className="mt-5 inline-block">
         <Button variant="outline">Buscar por nombre</Button>
       </Link>
+      {legible && (
+        <p className="text-muted-foreground/50 mx-auto mt-3 max-w-xs text-xs">
+          Ojo: buscando por nombre vas a encontrar la misma especie en otro set,
+          que no es la carta que tenés en la mano.
+        </p>
+      )}
     </div>
   );
 }
