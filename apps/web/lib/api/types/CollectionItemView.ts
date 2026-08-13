@@ -33,6 +33,7 @@ export type CollectionItemView = {
   grade: number | null
   notes: string | null
   acquired_at: string | null
+  unit_cost_usd: string | null
   /**
    * @type string, date-time
    */

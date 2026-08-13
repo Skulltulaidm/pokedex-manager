@@ -75,6 +75,22 @@ class SetMarketView(BaseModel):
     total_value: Decimal
 
 
+class PortfolioReturn(BaseModel):
+    """What the holdings cost against what they are worth now.
+
+    Measured only over the copies with a recorded cost, and it says how many
+    those are: a return computed over half a collection would otherwise read as
+    a return over all of it.
+    """
+
+    cost_basis: Decimal
+    market_value: Decimal
+    absolute: Decimal
+    percent: float
+    positions: int
+    positions_without_cost: int
+
+
 class MarketSummary(BaseModel):
     total_cards: int
     owned_cards: int
@@ -83,3 +99,4 @@ class MarketSummary(BaseModel):
     missing_value: Decimal
     types: list[MarketTypeCount]
     change: PriceChange | None = None
+    performance: PortfolioReturn | None = None

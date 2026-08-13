@@ -25,6 +25,17 @@
     "notes": {
       "anyOf": [{ "type": "string" }, { "type": "null" }],
       "title": "Notes"
+    },
+    "unit_cost_usd": {
+      "anyOf": [
+        { "type": "number", "minimum": 0 },
+        {
+          "type": "string",
+          "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,8}|(?=[\\d.]{1,11}0*$)\\d{0,8}\\.\\d{0,2}0*$)"
+        },
+        { "type": "null" }
+      ],
+      "title": "Unit Cost Usd"
     }
   },
   "type": "object",

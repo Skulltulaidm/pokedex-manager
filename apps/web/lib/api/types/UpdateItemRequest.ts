@@ -12,4 +12,5 @@ export type UpdateItemRequest = {
   quantity?: number | null
   condition?: CardCondition | null
   notes?: string | null
+  unit_cost_usd?: number | string | null
 }

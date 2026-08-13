@@ -37,4 +37,5 @@ export type AddCardRequest = {
   is_graded?: boolean
   grade?: number | null
   notes?: string | null
+  unit_cost_usd?: number | string | null
 }

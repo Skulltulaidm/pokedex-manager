@@ -29,6 +29,13 @@
       "anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
       "title": "Acquired At"
     },
+    "unit_cost_usd": {
+      "anyOf": [
+        { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+        { "type": "null" }
+      ],
+      "title": "Unit Cost Usd"
+    },
     "created_at": {
       "type": "string",
       "format": "date-time",
@@ -176,6 +183,7 @@
     "grade",
     "notes",
     "acquired_at",
+    "unit_cost_usd",
     "created_at",
     "card"
   ],

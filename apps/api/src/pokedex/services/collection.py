@@ -1,8 +1,9 @@
 from collections.abc import Sequence
+from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import ColumnElement, Select, case, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -54,6 +55,25 @@ def _apply_filters(
     return statement
 
 
+def _blended_cost(incoming: Any) -> ColumnElement[Decimal | None]:
+    """Cost per copy after copies merge into a group.
+
+    Averaging by quantity is what a single cost per group can express; keeping
+    each purchase apart would need a row per lot. The approximation only shows
+    up where one side has no cost at all: rather than count those copies as free
+    and drag the average down, the known cost carries the whole group.
+    """
+    return case(
+        (incoming.unit_cost_usd.is_(None), CollectionItem.unit_cost_usd),
+        (CollectionItem.unit_cost_usd.is_(None), incoming.unit_cost_usd),
+        else_=(
+            CollectionItem.unit_cost_usd * CollectionItem.quantity
+            + incoming.unit_cost_usd * incoming.quantity
+        )
+        / (CollectionItem.quantity + incoming.quantity),
+    )
+
+
 async def add_card(
     db: AsyncSession, user_id: str, request: AddCardRequest
 ) -> CollectionItem:
@@ -71,6 +91,7 @@ async def add_card(
         set_={
             "quantity": CollectionItem.quantity + insertion.excluded.quantity,
             "notes": func.coalesce(insertion.excluded.notes, CollectionItem.notes),
+            "unit_cost_usd": _blended_cost(insertion.excluded),
             "updated_at": func.now(),
         },
     ).returning(CollectionItem)

@@ -1,9 +1,19 @@
 from collections.abc import Sequence
 from datetime import date, timedelta
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import BigInteger, ColumnElement, Select, cast, func, select
+from sqlalchemy import (
+    BigInteger,
+    ColumnElement,
+    ScalarSelect,
+    Select,
+    SQLColumnExpression,
+    cast,
+    func,
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -13,6 +23,7 @@ from pokedex.schemas.market import (
     MarketFilters,
     MarketSummary,
     MarketTypeCount,
+    PortfolioReturn,
     PriceChange,
     SetMarketView,
 )
@@ -40,7 +51,7 @@ def _owned_total(user_id: str) -> ColumnElement[int]:
     )
 
 
-def _first_item(user_id: str) -> ColumnElement[UUID | None]:
+def _first_item(user_id: str) -> ScalarSelect[UUID]:
     """The oldest holding of each card, for the grid to link to."""
     return (
         select(CollectionItem.id)
@@ -55,7 +66,9 @@ def _first_item(user_id: str) -> ColumnElement[UUID | None]:
     )
 
 
-def _apply_filters[T](statement: Select[T], filters: MarketFilters, owned: ColumnElement[int]) -> Select[T]:
+def _apply_filters[T: tuple[Any, ...]](
+    statement: Select[T], filters: MarketFilters, owned: ColumnElement[int]
+) -> Select[T]:
     if filters.type or filters.generation is not None:
         statement = statement.join(Species, Species.id == Card.species_id)
         if filters.type:
@@ -76,7 +89,7 @@ def _apply_filters[T](statement: Select[T], filters: MarketFilters, owned: Colum
     return statement
 
 
-def _set_order() -> tuple[ColumnElement[object], ...]:
+def _set_order() -> tuple[SQLColumnExpression[Any], ...]:
     """Set order, numerically.
 
     `number_prefix` is text, so ordering by it directly runs 1, 10, 100, 11. The
@@ -91,7 +104,9 @@ def _set_order() -> tuple[ColumnElement[object], ...]:
     )
 
 
-def _order[T](statement: Select[T], filters: MarketFilters, owned: ColumnElement[int]) -> Select[T]:
+def _order[T: tuple[Any, ...]](
+    statement: Select[T], filters: MarketFilters, owned: ColumnElement[int]
+) -> Select[T]:
     set_order = _set_order()
 
     if filters.sort == "price":
@@ -357,6 +372,48 @@ async def _types(db: AsyncSession, user_id: str) -> list[MarketTypeCount]:
     ]
 
 
+async def portfolio_return(db: AsyncSession, user_id: str) -> PortfolioReturn | None:
+    """Held value against what it cost.
+
+    Both sides are summed over the same copies — the ones carrying a cost — so
+    an unpriced or uncosted holding cannot land on only one side of the
+    subtraction and invent a gain.
+    """
+    costed = CollectionItem.unit_cost_usd.isnot(None)
+    quantity = CollectionItem.quantity
+
+    cost, value, positions, uncosted = (
+        await db.execute(
+            select(
+                func.coalesce(
+                    func.sum(CollectionItem.unit_cost_usd * quantity).filter(costed), 0
+                ),
+                func.coalesce(
+                    func.sum(func.coalesce(Card.price_usd, 0) * quantity).filter(costed), 0
+                ),
+                func.count().filter(costed),
+                func.count().filter(CollectionItem.unit_cost_usd.is_(None)),
+            )
+            .select_from(CollectionItem)
+            .join(Card, Card.id == CollectionItem.card_id)
+            .where(CollectionItem.user_id == user_id)
+        )
+    ).one()
+
+    if not positions or cost <= 0:
+        return None
+
+    cost, value = Decimal(cost), Decimal(value)
+    return PortfolioReturn(
+        cost_basis=cost,
+        market_value=value,
+        absolute=value - cost,
+        percent=float((value - cost) / cost * 100),
+        positions=positions,
+        positions_without_cost=uncosted,
+    )
+
+
 async def summary(db: AsyncSession, user_id: str) -> MarketSummary:
     """What the catalog is worth, split by what the reader already holds."""
     owned = _owned_total(user_id)
@@ -382,4 +439,5 @@ async def summary(db: AsyncSession, user_id: str) -> MarketSummary:
         missing_value=Decimal(missing_value),
         types=await _types(db, user_id),
         change=await portfolio_change(db, user_id),
+        performance=await portfolio_return(db, user_id),
     )

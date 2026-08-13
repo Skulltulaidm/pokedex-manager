@@ -60,6 +60,7 @@ class CollectionItemView(BaseModel):
     grade: float | None
     notes: str | None
     acquired_at: date | None
+    unit_cost_usd: Decimal | None
     created_at: datetime
     card: CardView
 

@@ -4,6 +4,7 @@
  */
 
 import type { MarketTypeCount } from "./MarketTypeCount"
+import type { PortfolioReturn } from "./PortfolioReturn"
 import type { PriceChange } from "./PriceChange"
 
 /**
@@ -38,6 +39,7 @@ export type MarketSummary = {
    */
   types: MarketTypeCount[]
   change?: PriceChange | null
+  performance?: PortfolioReturn | null
 }
 
 /**

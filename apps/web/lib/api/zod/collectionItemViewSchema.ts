@@ -18,6 +18,10 @@ export const collectionItemViewSchema = z.object({
   grade: z.union([z.number(), z.null()]),
   notes: z.union([z.string(), z.null()]),
   acquired_at: z.union([z.iso.date(), z.null()]),
+  unit_cost_usd: z.union([
+    z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    z.null(),
+  ]),
   created_at: z.iso.datetime(),
   get card() {
     return cardViewSchema.describe(

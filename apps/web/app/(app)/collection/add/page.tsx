@@ -13,6 +13,7 @@ import { useAddCard } from "@/lib/api/hooks/useAddCard";
 import { useGetCard } from "@/lib/api/hooks/useGetCard";
 import { useSearchCards } from "@/lib/api/hooks/useSearchCards";
 import type { CardView } from "@/lib/api/types/CardView";
+import { formatUsd } from "@/lib/format";
 import { CONDITION_ORDER, conditionLabel } from "@/lib/labels";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
@@ -164,6 +165,7 @@ function ConfirmForm({ card, onBack }: { card: CardView; onBack: () => void }) {
   const [condition, setCondition] = useState("near_mint");
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
+  const [paid, setPaid] = useState("");
 
   const { mutate, isPending } = useAddCard({
     client: { client: apiClient },
@@ -238,6 +240,33 @@ function ConfirmForm({ card, onBack }: { card: CardView; onBack: () => void }) {
         />
       </div>
 
+      {/* Left empty rather than prefilled with today's price: a guessed cost
+          would read as a real one and show a return of exactly zero. */}
+      <div className="space-y-1.5">
+        <Label htmlFor="paid">Cuánto pagaste por cada una (opcional)</Label>
+        <InputGroup className="h-11 w-44">
+          <InputGroupAddon>
+            <span className="text-muted-foreground">$</span>
+          </InputGroupAddon>
+          <InputGroupInput
+            id="paid"
+            type="number"
+            min={0}
+            step="0.01"
+            inputMode="decimal"
+            placeholder="0.00"
+            value={paid}
+            onChange={(event) => setPaid(event.target.value)}
+            className="font-mono"
+          />
+        </InputGroup>
+        <p className="text-muted-foreground text-xs">
+          {card.price_usd
+            ? `Hoy se cotiza en ${formatUsd(Number(card.price_usd))}. Sin este dato la carta queda fuera de tu rendimiento.`
+            : "Sin este dato la carta queda fuera de tu rendimiento."}
+        </p>
+      </div>
+
       <div className="space-y-1.5">
         <Label htmlFor="notes">Nota (opcional)</Label>
         <Input
@@ -262,6 +291,7 @@ function ConfirmForm({ card, onBack }: { card: CardView; onBack: () => void }) {
                 condition: condition as never,
                 quantity,
                 notes: notes.trim() || null,
+                unit_cost_usd: paid.trim() ? Number(paid) : null,
               },
             })
           }

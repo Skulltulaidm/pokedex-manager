@@ -69,6 +69,48 @@
         },
         { "type": "null" }
       ]
+    },
+    "performance": {
+      "anyOf": [
+        {
+          "properties": {
+            "cost_basis": {
+              "type": "string",
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "title": "Cost Basis"
+            },
+            "market_value": {
+              "type": "string",
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "title": "Market Value"
+            },
+            "absolute": {
+              "type": "string",
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "title": "Absolute"
+            },
+            "percent": { "type": "number", "title": "Percent" },
+            "positions": { "type": "integer", "title": "Positions" },
+            "positions_without_cost": {
+              "type": "integer",
+              "title": "Positions Without Cost"
+            }
+          },
+          "type": "object",
+          "required": [
+            "cost_basis",
+            "market_value",
+            "absolute",
+            "percent",
+            "positions",
+            "positions_without_cost"
+          ],
+          "title": "PortfolioReturn",
+          "description": "What the holdings cost against what they are worth now.\n\nMeasured only over the copies with a recorded cost, and it says how many\nthose are: a return computed over half a collection would otherwise read as\na return over all of it.",
+          "x-readme-ref-name": "PortfolioReturn"
+        },
+        { "type": "null" }
+      ]
     }
   },
   "type": "object",

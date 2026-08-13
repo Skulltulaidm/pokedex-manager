@@ -310,3 +310,67 @@ async def test_sorting_by_price_ranks_by_position_not_unit_price(
 
     assert values == sorted(values, reverse=True)
     assert items[0].card.name == "Zapdos"
+
+
+async def test_a_recorded_cost_survives_the_round_trip(
+    seeded: AsyncSession, user_id: str
+) -> None:
+    item = await collection.add_card(
+        seeded,
+        user_id,
+        AddCardRequest(card_id="base1-4", unit_cost_usd=Decimal("120.00")),
+    )
+
+    assert item.unit_cost_usd == Decimal("120.00")
+
+
+async def test_merging_copies_averages_their_cost_by_quantity(
+    seeded: AsyncSession, user_id: str
+) -> None:
+    """One copy at 100 and three at 200 average 175, not 150."""
+    await collection.add_card(
+        seeded,
+        user_id,
+        AddCardRequest(card_id="base1-4", unit_cost_usd=Decimal("100.00")),
+    )
+    item = await collection.add_card(
+        seeded,
+        user_id,
+        AddCardRequest(
+            card_id="base1-4", quantity=3, unit_cost_usd=Decimal("200.00")
+        ),
+    )
+
+    assert item.quantity == 4
+    assert item.unit_cost_usd == Decimal("175.00")
+
+
+async def test_adding_copies_without_a_cost_leaves_the_average_alone(
+    seeded: AsyncSession, user_id: str
+) -> None:
+    """A gift does not get counted as a purchase at zero."""
+    await collection.add_card(
+        seeded,
+        user_id,
+        AddCardRequest(card_id="base1-4", unit_cost_usd=Decimal("100.00")),
+    )
+    item = await collection.add_card(
+        seeded, user_id, AddCardRequest(card_id="base1-4")
+    )
+
+    assert item.quantity == 2
+    assert item.unit_cost_usd == Decimal("100.00")
+
+
+async def test_a_first_cost_applies_to_a_group_that_had_none(
+    seeded: AsyncSession, user_id: str
+) -> None:
+    """Nothing better is known about what the earlier copies cost."""
+    await collection.add_card(seeded, user_id, AddCardRequest(card_id="base1-4"))
+    item = await collection.add_card(
+        seeded,
+        user_id,
+        AddCardRequest(card_id="base1-4", unit_cost_usd=Decimal("50.00")),
+    )
+
+    assert item.unit_cost_usd == Decimal("50.00")

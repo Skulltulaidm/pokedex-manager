@@ -1,5 +1,6 @@
 import enum
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
@@ -96,6 +97,9 @@ class CollectionItem(Base):
     quantity: Mapped[int] = mapped_column(default=1)
     notes: Mapped[str | None] = mapped_column(Text)
     acquired_at: Mapped[date | None]
+    # What one copy cost. Held per group rather than per copy, so copies bought
+    # at different prices average out instead of staying separate lots.
+    unit_cost_usd: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
 

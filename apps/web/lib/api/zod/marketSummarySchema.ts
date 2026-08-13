@@ -4,6 +4,7 @@
  */
 
 import { marketTypeCountSchema } from "./marketTypeCountSchema"
+import { portfolioReturnSchema } from "./portfolioReturnSchema"
 import { priceChangeSchema } from "./priceChangeSchema"
 import { z } from "zod/v4"
 
@@ -22,6 +23,9 @@ export const marketSummarySchema = z.object({
   },
   get change() {
     return z.union([priceChangeSchema, z.null()]).optional()
+  },
+  get performance() {
+    return z.union([portfolioReturnSchema, z.null()]).optional()
   },
 })
 

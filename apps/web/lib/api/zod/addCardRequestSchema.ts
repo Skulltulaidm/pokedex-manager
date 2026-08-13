@@ -16,4 +16,15 @@ export const addCardRequestSchema = z.object({
   is_graded: z.optional(z.boolean().default(false)),
   grade: z.optional(z.union([z.number(), z.null()])),
   notes: z.optional(z.union([z.string(), z.null()])),
+  unit_cost_usd: z.optional(
+    z.union([
+      z.number(),
+      z
+        .string()
+        .regex(
+          /^(?!^[-+.]*$)[+-]?0*(?:\d{0,8}|(?=[\d.]{1,11}0*$)\d{0,8}\.\d{0,2}0*$)/
+        ),
+      z.null(),
+    ])
+  ),
 })

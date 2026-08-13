@@ -9,6 +9,7 @@ import { BinderMark } from "@/components/binder-mark";
 import { CardRow } from "@/components/card-row";
 import { TypeSpectrum } from "@/components/coverage-strip";
 import { PriceDelta } from "@/components/price-delta";
+import { ReturnSummary } from "@/components/return-summary";
 import { ScreenHeader } from "@/components/screen-header";
 import { SetPositions } from "@/components/set-positions";
 import { typeColor, typeLabel } from "@/components/type-dot";
@@ -212,6 +213,8 @@ function Value({ value }: { value: CollectionStats["value"] }) {
           />
         </div>
       </div>
+
+      <ReturnSummary performance={summary?.performance} className="mt-5" />
 
       <p className="text-muted-foreground/70 mt-4 text-xs leading-relaxed">
         Orientativo. Es el precio de mercado de TCGplayer para cada carta, no una

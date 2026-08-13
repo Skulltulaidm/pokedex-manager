@@ -386,3 +386,65 @@ async def test_type_facets_count_the_catalog_and_the_part_held(
     assert fire.owned >= 1
     assert water.total >= 1
     assert all(entry.owned <= entry.total for entry in result.types)
+
+
+async def test_return_is_value_against_what_was_paid(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    """Two Charizard at 40 are now worth 100 each: 80 paid, 200 held."""
+    await collection.add_card(
+        stocked,
+        user_id,
+        AddCardRequest(
+            card_id=f"{SET_ID}-63", quantity=2, unit_cost_usd=Decimal("40.00")
+        ),
+    )
+
+    performance = await market.portfolio_return(stocked, user_id)
+
+    assert performance is not None
+    assert performance.cost_basis == Decimal("80.00")
+    assert performance.market_value == Decimal("20.00")
+    assert performance.absolute == Decimal("-60.00")
+    assert performance.percent == pytest.approx(-75.0)
+
+
+async def test_holdings_without_a_cost_stay_out_of_both_sides(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    """The fixture's two uncosted Charizard are worth 200, and must not appear
+    as a gain against a cost basis they never contributed to."""
+    await collection.add_card(
+        stocked,
+        user_id,
+        AddCardRequest(card_id=f"{SET_ID}-63", unit_cost_usd=Decimal("4.00")),
+    )
+
+    performance = await market.portfolio_return(stocked, user_id)
+
+    assert performance is not None
+    assert performance.cost_basis == Decimal("4.00")
+    assert performance.market_value == Decimal("10.00")
+    assert performance.positions == 1
+    assert performance.positions_without_cost == 1
+
+
+async def test_no_recorded_cost_yields_no_return_rather_than_zero(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    assert await market.portfolio_return(stocked, user_id) is None
+
+
+async def test_the_summary_carries_the_return(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    await collection.add_card(
+        stocked,
+        user_id,
+        AddCardRequest(card_id=f"{SET_ID}-63", unit_cost_usd=Decimal("2.00")),
+    )
+
+    result = await market.summary(stocked, user_id)
+
+    assert result.performance is not None
+    assert result.performance.absolute == Decimal("8.00")

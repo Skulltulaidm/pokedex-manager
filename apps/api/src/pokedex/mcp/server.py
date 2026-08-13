@@ -119,6 +119,12 @@ async def market_summary() -> dict[str, Any]:
     Every amount is in US dollars. Price movement is present only once the
     catalog has been synced on more than one day; a null change means unknown,
     not flat.
+
+    `performance` compares what the holdings cost against what they are worth,
+    and covers only the copies whose purchase price the user recorded —
+    `positions_without_cost` is how many are missing one. It is null when no
+    purchase price has been recorded at all, which is the moment to ask for one
+    rather than to report a return of zero.
     """
     user_id = current_user_id()
     async with SessionFactory() as db:
