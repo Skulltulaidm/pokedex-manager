@@ -62,7 +62,23 @@ def test_an_oversized_upload_is_rejected() -> None:
 def test_sniff_recognises_the_formats_a_phone_produces() -> None:
     assert sniff(photo(10, 10, "JPEG")) == "jpeg"
     assert sniff(photo(10, 10, "PNG")) == "png"
+    assert sniff(photo(10, 10, "HEIF")) == "heic"
     assert sniff(b"not an image") is None
+
+
+def test_sniff_finds_the_heic_brand_past_the_box_header() -> None:
+    """HEIC states its brand at byte 4, after the box length, not at byte 0."""
+    assert sniff(b"\x00\x00\x00\x18ftypheic\x00\x00\x00\x00") == "heic"
+    assert sniff(b"\x00\x00\x00\x18ftypqt  \x00\x00\x00\x00") is None
+
+
+def test_a_heic_photo_is_accepted_and_stored_as_jpeg() -> None:
+    """The default camera format on an iPhone, and on macOS Photos exports."""
+    prepared = prepare(photo(900, 1200, "HEIF"))
+
+    with Image.open(io.BytesIO(prepared)) as image:
+        assert image.format == "JPEG"
+        assert image.size == (900, 1200)
 
 
 def test_a_large_photo_is_downscaled() -> None:

@@ -1,6 +1,10 @@
 import io
 
 from PIL import Image, ImageOps, UnidentifiedImageError
+from pillow_heif import register_heif_opener
+
+# Pillow has no HEIC decoder of its own, and an iPhone shoots HEIC by default.
+register_heif_opener()
 
 # Checked against the file's own bytes: extension and Content-Type are both
 # supplied by the caller.
@@ -11,6 +15,10 @@ MAGIC = {
     b"II*\x00": "tiff",
     b"MM\x00*": "tiff",
 }
+
+# HEIC is an ISO-BMFF container: the first box states its own length, so the
+# brand that identifies the format sits at byte 4 rather than at the start.
+ISO_BMFF_BRANDS = {b"heic", b"heix", b"hevc", b"hevx", b"heif", b"mif1", b"msf1"}
 
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
@@ -24,6 +32,9 @@ class InvalidImageError(ValueError):
 
 
 def sniff(data: bytes) -> str | None:
+    if data[4:8] == b"ftyp" and data[8:12] in ISO_BMFF_BRANDS:
+        return "heic"
+
     return next((kind for magic, kind in MAGIC.items() if data.startswith(magic)), None)
 
 

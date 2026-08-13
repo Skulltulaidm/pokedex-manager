@@ -11,7 +11,7 @@ import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 import { ScrollRow } from "@/components/scroll-row";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
 import { TypeDots } from "@/components/type-dot";
-import { apiClient } from "@/lib/api-client";
+import { ApiError, apiClient } from "@/lib/api-client";
 import { confirmScan } from "@/lib/api/clients/confirmScan";
 import { createScan } from "@/lib/api/clients/createScan";
 import type { CardCandidate, ScanResult } from "@/lib/api/types";
@@ -32,6 +32,7 @@ export default function ScanPage() {
   const library = useRef<HTMLInputElement>(null);
 
   const [preview, setPreview] = useState<string | null>(null);
+  const [previewBroken, setPreviewBroken] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
@@ -42,13 +43,21 @@ export default function ScanPage() {
 
   async function upload(file: File) {
     setPreview(URL.createObjectURL(file));
+    setPreviewBroken(false);
     setResult(null);
     setBusy(true);
 
     try {
       setResult(await createScan({ image: file }, { client: apiClient }));
-    } catch {
-      toast.error("No se pudo leer la foto. Intenta con otra.");
+    } catch (error) {
+      // 422 is the only status whose detail is written for whoever is looking
+      // at the screen: which format was refused, or how far over the size it is.
+      const rejected = error instanceof ApiError && error.status === 422;
+      toast.error(
+        rejected && error.detail
+          ? error.detail
+          : "No se pudo leer la foto. Intenta con otra.",
+      );
       setPreview(null);
     } finally {
       setBusy(false);
@@ -186,8 +195,20 @@ export default function ScanPage() {
       {preview && (
         <div className="mx-auto max-w-2xl">
           <div className="flex gap-4">
-            <div className="ring-edge relative aspect-[63/88] w-28 shrink-0 overflow-hidden rounded-xl ring-1">
-              <Image src={preview} alt="Foto que tomaste" fill className="object-cover" />
+            {/* A HEIC straight off a phone is readable by the API but not
+                paintable by the browser, so the thumbnail degrades to an icon. */}
+            <div className="ring-edge bg-surface/60 relative grid aspect-[63/88] w-28 shrink-0 place-items-center overflow-hidden rounded-xl ring-1">
+              {previewBroken ? (
+                <ImagePlus className="text-muted-foreground/40 size-7" strokeWidth={1.25} />
+              ) : (
+                <Image
+                  src={preview}
+                  alt="Foto que tomaste"
+                  fill
+                  className="object-cover"
+                  onError={() => setPreviewBroken(true)}
+                />
+              )}
             </div>
 
             <div className="min-w-0 flex-1">
