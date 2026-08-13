@@ -15,6 +15,12 @@ from pokedex.db.models.conversation import (
 )
 from pokedex.db.models.external import auth_user
 from pokedex.db.models.share import ShareLink
+from pokedex.db.models.trade import (
+    OfferSide,
+    OfferStatus,
+    TradeOffer,
+    TradeOfferCard,
+)
 from pokedex.db.models.trivia import SpeciesTrivia
 
 __all__ = [
@@ -26,11 +32,15 @@ __all__ = [
     "Conversation",
     "Message",
     "MessageRole",
+    "OfferSide",
+    "OfferStatus",
     "Scan",
     "ScanStatus",
     "ShareLink",
     "Species",
     "SpeciesTrivia",
+    "TradeOffer",
+    "TradeOfferCard",
     "UserPreference",
     "WishlistItem",
     "WishlistSource",

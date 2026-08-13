@@ -1,7 +1,11 @@
+from datetime import datetime
 from decimal import Decimal
+from typing import Literal
+from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+from pokedex.db.models import OfferStatus
 from pokedex.schemas.catalog import CardView
 
 
@@ -33,3 +37,47 @@ class TradeMatch(BaseModel):
     get_value: Decimal
     balance: Decimal
     unpriced: int
+
+
+class OfferCardView(BaseModel):
+    """A card named in an offer.
+
+    No copy count, unlike a match: a match reports what is available to trade,
+    an offer names which cards are on the table.
+    """
+
+    card: CardView
+    price_usd: Decimal | None
+
+
+class CreateOfferRequest(BaseModel):
+    to_user_id: str
+    offered: list[str] = Field(min_length=1)
+    requested: list[str] = Field(min_length=1)
+    message: str | None = Field(default=None, max_length=280)
+
+
+class TradeOfferView(BaseModel):
+    """An offer told from the reader's side.
+
+    `you_give` and `you_get` swap meaning depending on who is looking, so the
+    service resolves them per reader rather than storing them that way.
+    """
+
+    id: UUID
+    status: OfferStatus
+    direction: Literal["sent", "received"]
+    partner_id: str
+    partner_name: str | None
+    you_give: list[OfferCardView]
+    you_get: list[OfferCardView]
+    give_value: Decimal
+    get_value: Decimal
+    balance: Decimal
+    message: str | None
+    created_at: datetime
+    responded_at: datetime | None
+
+
+class RespondOfferRequest(BaseModel):
+    accept: bool

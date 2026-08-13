@@ -7,6 +7,7 @@ export type { CollectionActivitySuspenseQueryKey } from "./hooks/useCollectionAc
 export type { CollectionStatsQueryKey } from "./hooks/useCollectionStats"
 export type { CollectionStatsSuspenseQueryKey } from "./hooks/useCollectionStatsSuspense"
 export type { ConfirmScanMutationKey } from "./hooks/useConfirmScan"
+export type { CreateOfferMutationKey } from "./hooks/useCreateOffer"
 export type { CreateScanMutationKey } from "./hooks/useCreateScan"
 export type { CreateShareLinkMutationKey } from "./hooks/useCreateShareLink"
 export type { ExportCollectionQueryKey } from "./hooks/useExportCollection"
@@ -29,6 +30,8 @@ export type { ListConversationsQueryKey } from "./hooks/useListConversations"
 export type { ListConversationsSuspenseQueryKey } from "./hooks/useListConversationsSuspense"
 export type { ListGapsQueryKey } from "./hooks/useListGaps"
 export type { ListGapsSuspenseQueryKey } from "./hooks/useListGapsSuspense"
+export type { ListOffersQueryKey } from "./hooks/useListOffers"
+export type { ListOffersSuspenseQueryKey } from "./hooks/useListOffersSuspense"
 export type { ListTradesQueryKey } from "./hooks/useListTrades"
 export type { ListTradesSuspenseQueryKey } from "./hooks/useListTradesSuspense"
 export type { ListWishlistQueryKey } from "./hooks/useListWishlist"
@@ -47,6 +50,7 @@ export type { ReadSharedCollectionQueryKey } from "./hooks/useReadSharedCollecti
 export type { ReadSharedCollectionSuspenseQueryKey } from "./hooks/useReadSharedCollectionSuspense"
 export type { RemoveFromWishlistMutationKey } from "./hooks/useRemoveFromWishlist"
 export type { RemoveItemMutationKey } from "./hooks/useRemoveItem"
+export type { RespondToOfferMutationKey } from "./hooks/useRespondToOffer"
 export type { RevokeShareLinkMutationKey } from "./hooks/useRevokeShareLink"
 export type { SearchCardsQueryKey } from "./hooks/useSearchCards"
 export type { SearchCardsSuspenseQueryKey } from "./hooks/useSearchCardsSuspense"
@@ -56,6 +60,7 @@ export type { SendMessageMutationKey } from "./hooks/useSendMessage"
 export type { SpeciesTriviaQueryKey } from "./hooks/useSpeciesTrivia"
 export type { SpeciesTriviaSuspenseQueryKey } from "./hooks/useSpeciesTriviaSuspense"
 export type { UpdateItemMutationKey } from "./hooks/useUpdateItem"
+export type { WithdrawOfferMutationKey } from "./hooks/useWithdrawOffer"
 export type {
   ActivityEntry,
   ActivityEntryKindEnumKey,
@@ -118,6 +123,14 @@ export type {
 } from "./types/ConfirmScan"
 export type { ConversationDetail } from "./types/ConversationDetail"
 export type { ConversationView } from "./types/ConversationView"
+export type {
+  CreateOffer201,
+  CreateOffer422,
+  CreateOfferMutation,
+  CreateOfferMutationRequest,
+  CreateOfferMutationResponse,
+} from "./types/CreateOffer"
+export type { CreateOfferRequest } from "./types/CreateOfferRequest"
 export type {
   CreateScan201,
   CreateScan422,
@@ -199,6 +212,13 @@ export type {
   ListGapsQueryResponse,
 } from "./types/ListGaps"
 export type {
+  ListOffers200,
+  ListOffers422,
+  ListOffersQuery,
+  ListOffersQueryParams,
+  ListOffersQueryResponse,
+} from "./types/ListOffers"
+export type {
   ListTrades200,
   ListTrades422,
   ListTradesQuery,
@@ -236,6 +256,8 @@ export type { Me200, MeQuery, MeQueryResponse } from "./types/Me"
 export type { MeResponse } from "./types/MeResponse"
 export type { MessageRole, MessageRoleEnumKey } from "./types/MessageRole"
 export type { MessageView } from "./types/MessageView"
+export type { OfferCardView } from "./types/OfferCardView"
+export type { OfferStatus, OfferStatusEnumKey } from "./types/OfferStatus"
 export type {
   OwnedCardIds200,
   OwnedCardIdsQuery,
@@ -269,6 +291,15 @@ export type {
   RemoveItemMutationResponse,
   RemoveItemPathParams,
 } from "./types/RemoveItem"
+export type { RespondOfferRequest } from "./types/RespondOfferRequest"
+export type {
+  RespondToOffer200,
+  RespondToOffer422,
+  RespondToOfferMutation,
+  RespondToOfferMutationRequest,
+  RespondToOfferMutationResponse,
+  RespondToOfferPathParams,
+} from "./types/RespondToOffer"
 export type {
   RevokeShareLink204,
   RevokeShareLinkMutation,
@@ -310,6 +341,10 @@ export type {
 export type { SpeciesView } from "./types/SpeciesView"
 export type { TradeCard } from "./types/TradeCard"
 export type { TradeMatch } from "./types/TradeMatch"
+export type {
+  TradeOfferView,
+  TradeOfferViewDirectionEnumKey,
+} from "./types/TradeOfferView"
 export type { TriviaView } from "./types/TriviaView"
 export type { TypeCount } from "./types/TypeCount"
 export type {
@@ -327,12 +362,20 @@ export type {
   WishlistSource,
   WishlistSourceEnumKey,
 } from "./types/WishlistSource"
+export type {
+  WithdrawOffer200,
+  WithdrawOffer422,
+  WithdrawOfferMutation,
+  WithdrawOfferMutationResponse,
+  WithdrawOfferPathParams,
+} from "./types/WithdrawOffer"
 export { addCard } from "./clients/addCard"
 export { addToWishlist } from "./clients/addToWishlist"
 export { cardMarketContext } from "./clients/cardMarketContext"
 export { collectionActivity } from "./clients/collectionActivity"
 export { collectionStats } from "./clients/collectionStats"
 export { confirmScan } from "./clients/confirmScan"
+export { createOffer } from "./clients/createOffer"
 export { createScan } from "./clients/createScan"
 export { createShareLink } from "./clients/createShareLink"
 export { exportCollection } from "./clients/exportCollection"
@@ -345,6 +388,7 @@ export { health } from "./clients/health"
 export { listCollection } from "./clients/listCollection"
 export { listConversations } from "./clients/listConversations"
 export { listGaps } from "./clients/listGaps"
+export { listOffers } from "./clients/listOffers"
 export { listTrades } from "./clients/listTrades"
 export { listWishlist } from "./clients/listWishlist"
 export { marketCards } from "./clients/marketCards"
@@ -355,12 +399,14 @@ export { ownedCardIds } from "./clients/ownedCardIds"
 export { readSharedCollection } from "./clients/readSharedCollection"
 export { removeFromWishlist } from "./clients/removeFromWishlist"
 export { removeItem } from "./clients/removeItem"
+export { respondToOffer } from "./clients/respondToOffer"
 export { revokeShareLink } from "./clients/revokeShareLink"
 export { searchCards } from "./clients/searchCards"
 export { searchSpecies } from "./clients/searchSpecies"
 export { sendMessage } from "./clients/sendMessage"
 export { speciesTrivia } from "./clients/speciesTrivia"
 export { updateItem } from "./clients/updateItem"
+export { withdrawOffer } from "./clients/withdrawOffer"
 export { addCardMutationKey } from "./hooks/useAddCard"
 export { addCardMutationOptions } from "./hooks/useAddCard"
 export { useAddCard } from "./hooks/useAddCard"
@@ -388,6 +434,9 @@ export { useCollectionStatsSuspense } from "./hooks/useCollectionStatsSuspense"
 export { confirmScanMutationKey } from "./hooks/useConfirmScan"
 export { confirmScanMutationOptions } from "./hooks/useConfirmScan"
 export { useConfirmScan } from "./hooks/useConfirmScan"
+export { createOfferMutationKey } from "./hooks/useCreateOffer"
+export { createOfferMutationOptions } from "./hooks/useCreateOffer"
+export { useCreateOffer } from "./hooks/useCreateOffer"
 export { createScanMutationKey } from "./hooks/useCreateScan"
 export { createScanMutationOptions } from "./hooks/useCreateScan"
 export { useCreateScan } from "./hooks/useCreateScan"
@@ -454,6 +503,12 @@ export { useListGaps } from "./hooks/useListGaps"
 export { listGapsSuspenseQueryKey } from "./hooks/useListGapsSuspense"
 export { listGapsSuspenseQueryOptions } from "./hooks/useListGapsSuspense"
 export { useListGapsSuspense } from "./hooks/useListGapsSuspense"
+export { listOffersQueryKey } from "./hooks/useListOffers"
+export { listOffersQueryOptions } from "./hooks/useListOffers"
+export { useListOffers } from "./hooks/useListOffers"
+export { listOffersSuspenseQueryKey } from "./hooks/useListOffersSuspense"
+export { listOffersSuspenseQueryOptions } from "./hooks/useListOffersSuspense"
+export { useListOffersSuspense } from "./hooks/useListOffersSuspense"
 export { listTradesQueryKey } from "./hooks/useListTrades"
 export { listTradesQueryOptions } from "./hooks/useListTrades"
 export { useListTrades } from "./hooks/useListTrades"
@@ -508,6 +563,9 @@ export { useRemoveFromWishlist } from "./hooks/useRemoveFromWishlist"
 export { removeItemMutationKey } from "./hooks/useRemoveItem"
 export { removeItemMutationOptions } from "./hooks/useRemoveItem"
 export { useRemoveItem } from "./hooks/useRemoveItem"
+export { respondToOfferMutationKey } from "./hooks/useRespondToOffer"
+export { respondToOfferMutationOptions } from "./hooks/useRespondToOffer"
+export { useRespondToOffer } from "./hooks/useRespondToOffer"
 export { revokeShareLinkMutationKey } from "./hooks/useRevokeShareLink"
 export { revokeShareLinkMutationOptions } from "./hooks/useRevokeShareLink"
 export { useRevokeShareLink } from "./hooks/useRevokeShareLink"
@@ -535,6 +593,9 @@ export { useSpeciesTriviaSuspense } from "./hooks/useSpeciesTriviaSuspense"
 export { updateItemMutationKey } from "./hooks/useUpdateItem"
 export { updateItemMutationOptions } from "./hooks/useUpdateItem"
 export { useUpdateItem } from "./hooks/useUpdateItem"
+export { useWithdrawOffer } from "./hooks/useWithdrawOffer"
+export { withdrawOfferMutationKey } from "./hooks/useWithdrawOffer"
+export { withdrawOfferMutationOptions } from "./hooks/useWithdrawOffer"
 export { activityEntryKindEnum } from "./types/ActivityEntry"
 export { cardConditionEnum } from "./types/CardCondition"
 export { cardReadingConfidenceEnum } from "./types/CardReading"
@@ -544,7 +605,9 @@ export { listCollectionQueryParamsSortEnum } from "./types/ListCollection"
 export { marketCardsQueryParamsOwnedEnum } from "./types/MarketCards"
 export { marketCardsQueryParamsSortEnum } from "./types/MarketCards"
 export { messageRoleEnum } from "./types/MessageRole"
+export { offerStatusEnum } from "./types/OfferStatus"
 export { scanResultStatusEnum } from "./types/ScanResult"
+export { tradeOfferViewDirectionEnum } from "./types/TradeOfferView"
 export { wishlistSourceEnum } from "./types/WishlistSource"
 export { HTTPValidationErrorSchema } from "./zod/HTTPValidationErrorSchema"
 export { activityEntrySchema } from "./zod/activityEntrySchema"
@@ -596,6 +659,13 @@ export {
 } from "./zod/confirmScanSchema"
 export { conversationDetailSchema } from "./zod/conversationDetailSchema"
 export { conversationViewSchema } from "./zod/conversationViewSchema"
+export { createOfferRequestSchema } from "./zod/createOfferRequestSchema"
+export {
+  createOffer201Schema,
+  createOffer422Schema,
+  createOfferMutationRequestSchema,
+  createOfferMutationResponseSchema,
+} from "./zod/createOfferSchema"
 export {
   createScan201Schema,
   createScan422Schema,
@@ -659,6 +729,12 @@ export {
   listGapsQueryResponseSchema,
 } from "./zod/listGapsSchema"
 export {
+  listOffers200Schema,
+  listOffers422Schema,
+  listOffersQueryParamsSchema,
+  listOffersQueryResponseSchema,
+} from "./zod/listOffersSchema"
+export {
   listTrades200Schema,
   listTrades422Schema,
   listTradesQueryParamsSchema,
@@ -689,6 +765,8 @@ export { meResponseSchema } from "./zod/meResponseSchema"
 export { me200Schema, meQueryResponseSchema } from "./zod/meSchema"
 export { messageRoleSchema } from "./zod/messageRoleSchema"
 export { messageViewSchema } from "./zod/messageViewSchema"
+export { offerCardViewSchema } from "./zod/offerCardViewSchema"
+export { offerStatusSchema } from "./zod/offerStatusSchema"
 export {
   ownedCardIds200Schema,
   ownedCardIdsQueryResponseSchema,
@@ -718,6 +796,14 @@ export {
   removeItemMutationResponseSchema,
   removeItemPathParamsSchema,
 } from "./zod/removeItemSchema"
+export { respondOfferRequestSchema } from "./zod/respondOfferRequestSchema"
+export {
+  respondToOffer200Schema,
+  respondToOffer422Schema,
+  respondToOfferMutationRequestSchema,
+  respondToOfferMutationResponseSchema,
+  respondToOfferPathParamsSchema,
+} from "./zod/respondToOfferSchema"
 export {
   revokeShareLink204Schema,
   revokeShareLinkMutationResponseSchema,
@@ -754,6 +840,7 @@ export {
 export { speciesViewSchema } from "./zod/speciesViewSchema"
 export { tradeCardSchema } from "./zod/tradeCardSchema"
 export { tradeMatchSchema } from "./zod/tradeMatchSchema"
+export { tradeOfferViewSchema } from "./zod/tradeOfferViewSchema"
 export { triviaViewSchema } from "./zod/triviaViewSchema"
 export { typeCountSchema } from "./zod/typeCountSchema"
 export { updateItemRequestSchema } from "./zod/updateItemRequestSchema"
@@ -767,3 +854,9 @@ export {
 export { validationErrorSchema } from "./zod/validationErrorSchema"
 export { wishlistItemViewSchema } from "./zod/wishlistItemViewSchema"
 export { wishlistSourceSchema } from "./zod/wishlistSourceSchema"
+export {
+  withdrawOffer200Schema,
+  withdrawOffer422Schema,
+  withdrawOfferMutationResponseSchema,
+  withdrawOfferPathParamsSchema,
+} from "./zod/withdrawOfferSchema"

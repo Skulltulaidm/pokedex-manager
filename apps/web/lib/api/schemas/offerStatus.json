@@ -1,0 +1,6 @@
+{
+  "type": "string",
+  "enum": ["pending", "accepted", "declined", "withdrawn"],
+  "title": "OfferStatus",
+  "x-readme-ref-name": "OfferStatus"
+}

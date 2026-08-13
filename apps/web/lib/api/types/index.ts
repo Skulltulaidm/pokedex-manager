@@ -58,6 +58,14 @@ export type {
 export type { ConversationDetail } from "./ConversationDetail"
 export type { ConversationView } from "./ConversationView"
 export type {
+  CreateOffer201,
+  CreateOffer422,
+  CreateOfferMutation,
+  CreateOfferMutationRequest,
+  CreateOfferMutationResponse,
+} from "./CreateOffer"
+export type { CreateOfferRequest } from "./CreateOfferRequest"
+export type {
   CreateScan201,
   CreateScan422,
   CreateScanMutation,
@@ -134,6 +142,13 @@ export type {
   ListGapsQueryResponse,
 } from "./ListGaps"
 export type {
+  ListOffers200,
+  ListOffers422,
+  ListOffersQuery,
+  ListOffersQueryParams,
+  ListOffersQueryResponse,
+} from "./ListOffers"
+export type {
   ListTrades200,
   ListTrades422,
   ListTradesQuery,
@@ -171,6 +186,8 @@ export type { Me200, MeQuery, MeQueryResponse } from "./Me"
 export type { MeResponse } from "./MeResponse"
 export type { MessageRole, MessageRoleEnumKey } from "./MessageRole"
 export type { MessageView } from "./MessageView"
+export type { OfferCardView } from "./OfferCardView"
+export type { OfferStatus, OfferStatusEnumKey } from "./OfferStatus"
 export type {
   OwnedCardIds200,
   OwnedCardIdsQuery,
@@ -204,6 +221,15 @@ export type {
   RemoveItemMutationResponse,
   RemoveItemPathParams,
 } from "./RemoveItem"
+export type { RespondOfferRequest } from "./RespondOfferRequest"
+export type {
+  RespondToOffer200,
+  RespondToOffer422,
+  RespondToOfferMutation,
+  RespondToOfferMutationRequest,
+  RespondToOfferMutationResponse,
+  RespondToOfferPathParams,
+} from "./RespondToOffer"
 export type {
   RevokeShareLink204,
   RevokeShareLinkMutation,
@@ -245,6 +271,10 @@ export type {
 export type { SpeciesView } from "./SpeciesView"
 export type { TradeCard } from "./TradeCard"
 export type { TradeMatch } from "./TradeMatch"
+export type {
+  TradeOfferView,
+  TradeOfferViewDirectionEnumKey,
+} from "./TradeOfferView"
 export type { TriviaView } from "./TriviaView"
 export type { TypeCount } from "./TypeCount"
 export type {
@@ -259,6 +289,13 @@ export type { UpdateItemRequest } from "./UpdateItemRequest"
 export type { ValidationError } from "./ValidationError"
 export type { WishlistItemView } from "./WishlistItemView"
 export type { WishlistSource, WishlistSourceEnumKey } from "./WishlistSource"
+export type {
+  WithdrawOffer200,
+  WithdrawOffer422,
+  WithdrawOfferMutation,
+  WithdrawOfferMutationResponse,
+  WithdrawOfferPathParams,
+} from "./WithdrawOffer"
 export { activityEntryKindEnum } from "./ActivityEntry"
 export { cardConditionEnum } from "./CardCondition"
 export { cardReadingConfidenceEnum } from "./CardReading"
@@ -268,5 +305,7 @@ export { listCollectionQueryParamsSortEnum } from "./ListCollection"
 export { marketCardsQueryParamsOwnedEnum } from "./MarketCards"
 export { marketCardsQueryParamsSortEnum } from "./MarketCards"
 export { messageRoleEnum } from "./MessageRole"
+export { offerStatusEnum } from "./OfferStatus"
 export { scanResultStatusEnum } from "./ScanResult"
+export { tradeOfferViewDirectionEnum } from "./TradeOfferView"
 export { wishlistSourceEnum } from "./WishlistSource"

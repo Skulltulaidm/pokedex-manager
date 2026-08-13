@@ -1,0 +1,7 @@
+{
+  "properties": { "accept": { "type": "boolean", "title": "Accept" } },
+  "type": "object",
+  "required": ["accept"],
+  "title": "RespondOfferRequest",
+  "x-readme-ref-name": "RespondOfferRequest"
+}

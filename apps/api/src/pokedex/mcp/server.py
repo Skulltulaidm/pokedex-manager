@@ -193,6 +193,33 @@ async def find_trades(limit: int = 10) -> dict[str, Any]:
 
 
 @server.tool()
+async def my_trade_offers() -> dict[str, Any]:
+    """Swap offers the user is part of, sent and received.
+
+    `direction` says which. A received offer that is still `pending` is waiting
+    on the user and is worth raising unprompted; a sent one is waiting on
+    somebody else and is not.
+
+    `balance` is in the user's favour when positive. An accepted offer means the
+    two of them agreed, not that any card moved: collections only change when
+    the person holding the card says so, so never report a trade as done or
+    tell the user their collection already reflects it.
+
+    You cannot create, accept or decline anything here. Proposing a swap puts a
+    claim in front of another collector, and that is the user's to make.
+    """
+    user_id = current_user_id()
+    async with SessionFactory() as db:
+        offers = await trade.list_offers(db, user_id)
+
+    return {
+        "currency": "USD",
+        "count": len(offers),
+        "offers": [offer.model_dump(mode="json") for offer in offers],
+    }
+
+
+@server.tool()
 async def find_gaps(set_id: str | None = None, limit: int = 20) -> dict[str, Any]:
     """Cards the user is missing from sets they have already started.
 
