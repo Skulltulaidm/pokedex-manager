@@ -4,6 +4,7 @@ from pokedex.api.v1 import (
     catalog,
     chat,
     collection,
+    preferences,
     probe,
     scan,
     share,
@@ -14,6 +15,7 @@ from pokedex.api.v1 import (
 
 router = APIRouter(prefix="/api/v1")
 router.include_router(probe.router)
+router.include_router(preferences.router)
 router.include_router(catalog.router)
 router.include_router(chat.router)
 router.include_router(collection.router)
