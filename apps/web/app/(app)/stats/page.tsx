@@ -51,6 +51,16 @@ const TABS = [
 
 const LIST_PER_PAGE = 18;
 
+// A want list keeps entries for cards already bought, so which of the two you
+// are looking at is the only filter it needs.
+const WISH_FILTERS = [
+  { value: "all", label: "Todas" },
+  { value: "missing", label: "Te faltan" },
+  { value: "owned", label: "Ya tienes" },
+] as const;
+
+type Held = (typeof WISH_FILTERS)[number]["value"];
+
 export default function StatsPage() {
   return (
     <Suspense fallback={<StatsSkeleton />}>
@@ -169,7 +179,7 @@ function Stats() {
                     </span>
                     <span className="bg-muted h-2.5 flex-1 overflow-hidden rounded-full">
                       <span
-                        className="bg-foreground block h-full rounded-full"
+                        className="bg-primary block h-full rounded-full"
                         style={{
                           width: `${Math.max(3, (entry.count / data.total_groups) * 100)}%`,
                         }}
@@ -263,7 +273,7 @@ function Value({ value }: { value: CollectionStats["value"] }) {
         </div>
         <div className="bg-muted h-1.5 overflow-hidden rounded-full">
           <div
-            className="bg-foreground h-full rounded-full transition-[width] duration-700"
+            className="bg-primary h-full rounded-full transition-[width] duration-700"
             style={{ width: `${coverage}%` }}
           />
         </div>
@@ -501,10 +511,12 @@ function ListDialog({
 }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [held, setHeld] = useState<Held>("all");
 
   useEffect(() => {
     setPage(1);
     setSearch("");
+    setHeld("all");
   }, [which]);
 
   const { data: holdings, isPending: holdingsPending } = useListCollection(
@@ -521,9 +533,15 @@ function ListDialog({
     query: { enabled: which === "wishes" },
   });
 
-  const matchingWishes = (wishes ?? []).filter((wish) =>
-    wish.card.name.toLowerCase().includes(search.trim().toLowerCase()),
-  );
+  const matchingWishes = (wishes ?? [])
+    .filter((wish) => wish.card.name.toLowerCase().includes(search.trim().toLowerCase()))
+    .filter((wish) =>
+      held === "all"
+        ? true
+        : held === "owned"
+          ? (wish.owned ?? 0) > 0
+          : (wish.owned ?? 0) === 0,
+    );
 
   const total = which === "holdings" ? (holdings?.total ?? 0) : matchingWishes.length;
   const lastPage = Math.max(1, Math.ceil(total / LIST_PER_PAGE));
@@ -567,7 +585,7 @@ function ListDialog({
       loading={which !== null && (wishing ? wishesPending : holdingsPending)}
       empty={
         <p className="text-muted-foreground py-12 text-center text-sm">
-          {search
+          {search || held !== "all"
             ? "Ninguna carta coincide."
             : wishing
               ? "Tu lista de deseos está vacía."
@@ -583,6 +601,12 @@ function ListDialog({
           }}
           placeholder={wishing ? "Buscar en tus deseos…" : "Buscar en tus cartas…"}
           searchLabel={wishing ? "Buscar en tus deseos" : "Buscar en tus cartas"}
+          filters={wishing ? WISH_FILTERS : undefined}
+          filter={held}
+          onFilter={(value) => {
+            setHeld(value);
+            setPage(1);
+          }}
           page={page}
           lastPage={lastPage}
           onPage={setPage}

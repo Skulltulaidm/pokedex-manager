@@ -13,7 +13,19 @@ export type NewsFeed = {
   /**
    * @type array
    */
-  entries: NewsEntry[];
+  items: NewsEntry[];
+  /**
+   * @type integer
+   */
+  total: number;
+  /**
+   * @type integer
+   */
+  limit: number;
+  /**
+   * @type integer
+   */
+  offset: number;
   /**
    * @type integer
    */
@@ -22,12 +34,23 @@ export type NewsFeed = {
 
 export type NewsFeedQueryParams = {
   /**
+   * @default false
+   * @type boolean | undefined
+   */
+  actionable?: boolean;
+  /**
    * @minLength 1
    * @maxLength 50
    * @default 20
    * @type integer | undefined
    */
   limit?: number;
+  /**
+   * @minLength 0
+   * @default 0
+   * @type integer | undefined
+   */
+  offset?: number;
 };
 
 /**

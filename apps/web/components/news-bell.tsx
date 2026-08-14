@@ -1,24 +1,27 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight, Bell, Handshake } from "lucide-react";
-import Image from "next/image";
+import { ArrowRight, Bell } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+import { NewsThumb } from "@/components/news-thumb";
 import { RowsSkeleton } from "@/components/pokeball";
 import { apiClient } from "@/lib/api-client";
 import { useNewsFeed } from "@/lib/api/hooks/useNewsFeed";
 import type { NewsEntry } from "@/lib/api/types";
+import { formatAgo, formatMoment } from "@/lib/format";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
 } from "@workspace/ui/components/dialog";
-import { cn } from "@workspace/ui/lib/utils";
+
+const PREVIEW = 6;
 
 /**
- * What happened while you were not looking.
+ * The last few things that happened, and the way to the rest.
  *
  * The badge counts only what is waiting on the reader: a card that changed
  * price is worth knowing, an offer nobody has answered is worth doing, and a
@@ -26,9 +29,17 @@ import { cn } from "@workspace/ui/lib/utils";
  */
 export function NewsBell() {
   const [open, setOpen] = useState(false);
-  const { data, isPending } = useNewsFeed({}, { client: { client: apiClient } });
+  const pathname = usePathname();
+  const { data, isPending } = useNewsFeed(
+    { limit: PREVIEW },
+    { client: { client: apiClient } },
+  );
 
+  if (pathname === "/notifications") return null;
+
+  const entries = data?.items ?? [];
   const waiting = data?.waiting ?? 0;
+  const rest = (data?.total ?? 0) - entries.length;
 
   return (
     <>
@@ -57,20 +68,32 @@ export function NewsBell() {
           <div className="max-h-[62svh] overflow-y-auto px-5 py-3">
             {isPending && <RowsSkeleton count={3} />}
 
-            {!isPending && data?.entries.length === 0 && (
+            {!isPending && entries.length === 0 && (
               <p className="text-muted-foreground py-10 text-center text-sm">
                 Nada nuevo esta semana.
               </p>
             )}
 
             <ul className="divide-edge divide-y">
-              {data?.entries.map((entry, index) => (
+              {entries.map((entry, index) => (
                 <li key={`${entry.kind}-${entry.at}-${index}`}>
                   <Entry entry={entry} onFollow={() => setOpen(false)} />
                 </li>
               ))}
             </ul>
           </div>
+
+          <Link
+            href="/notifications"
+            onClick={() => setOpen(false)}
+            className="border-edge hover:bg-secondary/60 flex items-center justify-center gap-1.5 border-t px-5 py-3 text-sm font-medium transition-colors"
+          >
+            Ver todas
+            {rest > 0 && (
+              <span className="text-muted-foreground tabular-nums">y {rest} más</span>
+            )}
+            <ArrowRight className="size-3.5" />
+          </Link>
         </DialogContent>
       </Dialog>
     </>
@@ -78,25 +101,9 @@ export function NewsBell() {
 }
 
 function Entry({ entry, onFollow }: { entry: NewsEntry; onFollow: () => void }) {
-  const cheaper = entry.kind === "wish_cheaper";
   const body = (
     <div className="flex items-center gap-3 py-3">
-      <span
-        className={cn(
-          "ring-edge grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg ring-1",
-          entry.image_url ? "relative" : "bg-secondary",
-        )}
-      >
-        {entry.image_url ? (
-          <Image src={entry.image_url} alt="" fill sizes="32px" className="object-cover" />
-        ) : entry.kind.startsWith("offer") ? (
-          <Handshake className="size-4" />
-        ) : cheaper ? (
-          <ArrowDownRight className="size-4" />
-        ) : (
-          <ArrowUpRight className="size-4" />
-        )}
-      </span>
+      <NewsThumb entry={entry} />
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{entry.title}</p>
@@ -105,7 +112,14 @@ function Entry({ entry, onFollow }: { entry: NewsEntry; onFollow: () => void }) 
         )}
       </div>
 
-      {entry.actionable && <span className="bg-primary size-1.5 shrink-0 rounded-full" />}
+      <time
+        dateTime={entry.at}
+        title={formatMoment(entry.at)}
+        className="text-muted-foreground/70 shrink-0 text-[11px] tabular-nums"
+      >
+        {formatAgo(entry.at)}
+      </time>
+      {!entry.seen && <span className="bg-primary size-1.5 shrink-0 rounded-full" />}
     </div>
   );
 

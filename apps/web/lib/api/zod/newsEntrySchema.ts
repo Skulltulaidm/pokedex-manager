@@ -13,6 +13,8 @@ export const newsEntrySchema = z
     kind: z.enum([
       "offer_waiting",
       "offer_answered",
+      "trade_closed",
+      "listing_taken",
       "wish_cheaper",
       "wish_dearer",
     ]),
@@ -28,5 +30,6 @@ export const newsEntrySchema = z
     ),
     href: z.optional(z.union([z.string(), z.null()])),
     actionable: z.optional(z.boolean().default(false)),
+    seen: z.optional(z.boolean().default(false)),
   })
   .describe("Something that happened, told from the reader's side.");

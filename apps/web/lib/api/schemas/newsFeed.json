@@ -1,0 +1,79 @@
+{
+  "properties": {
+    "items": {
+      "items": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "offer_waiting",
+              "offer_answered",
+              "trade_closed",
+              "listing_taken",
+              "wish_cheaper",
+              "wish_dearer"
+            ],
+            "title": "Kind"
+          },
+          "at": { "type": "string", "format": "date-time", "title": "At" },
+          "title": { "type": "string", "title": "Title" },
+          "detail": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Detail"
+          },
+          "partner_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Partner Id"
+          },
+          "card_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Card Id"
+          },
+          "card_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Card Name"
+          },
+          "image_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Image Url"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Amount"
+          },
+          "href": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Href"
+          },
+          "actionable": {
+            "type": "boolean",
+            "title": "Actionable",
+            "default": false
+          },
+          "seen": { "type": "boolean", "title": "Seen", "default": false }
+        },
+        "type": "object",
+        "required": ["kind", "at", "title"],
+        "title": "NewsEntry",
+        "description": "Something that happened, told from the reader's side.",
+        "x-readme-ref-name": "NewsEntry"
+      },
+      "type": "array",
+      "title": "Items"
+    },
+    "total": { "type": "integer", "title": "Total" },
+    "limit": { "type": "integer", "title": "Limit" },
+    "offset": { "type": "integer", "title": "Offset" },
+    "waiting": { "type": "integer", "title": "Waiting" }
+  },
+  "type": "object",
+  "required": ["items", "total", "limit", "offset", "waiting"],
+  "title": "NewsFeed",
+  "x-readme-ref-name": "NewsFeed"
+}

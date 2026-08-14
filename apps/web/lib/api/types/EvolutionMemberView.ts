@@ -5,7 +5,7 @@
 
 /**
  * EvolutionMemberView
- * @description One species of an evolution family, as its own Pokedex entry.
+ * @description One species of an evolution family, as the card that stands for it.\n\nThe sprite stays for the members the catalog prints no card of, which is the\nonly case the line has nothing to show.
  */
 export type EvolutionMemberView = {
   /**
@@ -21,6 +21,10 @@ export type EvolutionMemberView = {
    */
   types: string[]
   sprite_url: string | null
+  card_id: string | null
+  card_name: string | null
+  card_image_url: string | null
+  card_category: string | null
   /**
    * @type boolean
    */

@@ -29,6 +29,11 @@ export type CardMarketContext = {
    * @type string
    */
   set_value: string
+  /**
+   * @type integer
+   */
+  owned: number
+  item_id: string | null
   change?: PriceChange | null
 }
 

@@ -8,18 +8,23 @@ import { newsEntrySchema } from "./newsEntrySchema";
 import { z } from "zod/v4";
 
 export const newsFeedSchema = z.object({
-  get entries() {
+  get items() {
     return z.array(
       newsEntrySchema.describe(
         "Something that happened, told from the reader's side.",
       ),
     );
   },
+  total: z.int(),
+  limit: z.int(),
+  offset: z.int(),
   waiting: z.int(),
 });
 
 export const newsFeedQueryParamsSchema = z.object({
+  actionable: z.boolean().default(false),
   limit: z.coerce.number().int().min(1).max(50).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 /**

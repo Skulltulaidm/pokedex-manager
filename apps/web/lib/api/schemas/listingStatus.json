@@ -1,0 +1,6 @@
+{
+  "type": "string",
+  "enum": ["open", "taken", "cancelled"],
+  "title": "ListingStatus",
+  "x-readme-ref-name": "ListingStatus"
+}

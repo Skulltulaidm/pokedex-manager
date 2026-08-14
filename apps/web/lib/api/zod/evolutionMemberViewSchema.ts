@@ -6,7 +6,7 @@
 import { z } from "zod/v4"
 
 /**
- * @description One species of an evolution family, as its own Pokedex entry.
+ * @description One species of an evolution family, as the card that stands for it.\n\nThe sprite stays for the members the catalog prints no card of, which is the\nonly case the line has nothing to show.
  */
 export const evolutionMemberViewSchema = z
   .object({
@@ -14,7 +14,13 @@ export const evolutionMemberViewSchema = z
     name: z.string(),
     types: z.array(z.string()),
     sprite_url: z.union([z.string(), z.null()]),
+    card_id: z.union([z.string(), z.null()]),
+    card_name: z.union([z.string(), z.null()]),
+    card_image_url: z.union([z.string(), z.null()]),
+    card_category: z.union([z.string(), z.null()]),
     owned: z.boolean(),
     is_current: z.boolean(),
   })
-  .describe("One species of an evolution family, as its own Pokedex entry.")
+  .describe(
+    "One species of an evolution family, as the card that stands for it.\n\nThe sprite stays for the members the catalog prints no card of, which is the\nonly case the line has nothing to show."
+  )

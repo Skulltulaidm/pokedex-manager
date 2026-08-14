@@ -6,6 +6,8 @@
 export const newsEntryKindEnum = {
   offer_waiting: "offer_waiting",
   offer_answered: "offer_answered",
+  trade_closed: "trade_closed",
+  listing_taken: "listing_taken",
   wish_cheaper: "wish_cheaper",
   wish_dearer: "wish_dearer",
 } as const;
@@ -42,4 +44,9 @@ export type NewsEntry = {
    * @type boolean | undefined
    */
   actionable?: boolean;
+  /**
+   * @default false
+   * @type boolean | undefined
+   */
+  seen?: boolean;
 };

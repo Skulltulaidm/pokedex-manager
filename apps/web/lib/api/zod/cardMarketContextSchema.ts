@@ -17,6 +17,8 @@ export const cardMarketContextSchema = z
     cards_in_set: z.int(),
     owned_in_set: z.int(),
     set_value: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    owned: z.int(),
+    item_id: z.union([z.uuid(), z.null()]),
     get change() {
       return z.union([priceChangeSchema, z.null()]).optional()
     },

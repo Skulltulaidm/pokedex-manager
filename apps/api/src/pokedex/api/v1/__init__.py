@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from pokedex.api.v1 import (
+    advice,
     catalog,
     chat,
     collection,
@@ -17,6 +18,7 @@ from pokedex.api.v1 import (
 router = APIRouter(prefix="/api/v1")
 router.include_router(probe.router)
 router.include_router(preferences.router)
+router.include_router(advice.router)
 router.include_router(catalog.router)
 router.include_router(chat.router)
 router.include_router(collection.router)
