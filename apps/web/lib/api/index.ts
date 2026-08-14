@@ -67,6 +67,8 @@ export type { SearchCardsSuspenseQueryKey } from "./hooks/useSearchCardsSuspense
 export type { SearchSpeciesQueryKey } from "./hooks/useSearchSpecies"
 export type { SearchSpeciesSuspenseQueryKey } from "./hooks/useSearchSpeciesSuspense"
 export type { SendMessageMutationKey } from "./hooks/useSendMessage"
+export type { SpeciesEvolutionsQueryKey } from "./hooks/useSpeciesEvolutions"
+export type { SpeciesEvolutionsSuspenseQueryKey } from "./hooks/useSpeciesEvolutionsSuspense"
 export type { SpeciesTriviaQueryKey } from "./hooks/useSpeciesTrivia"
 export type { SpeciesTriviaSuspenseQueryKey } from "./hooks/useSpeciesTriviaSuspense"
 export type { UpdateItemMutationKey } from "./hooks/useUpdateItem"
@@ -164,6 +166,7 @@ export type {
   CreateShareLinkMutation,
   CreateShareLinkMutationResponse,
 } from "./types/CreateShareLink"
+export type { EvolutionMemberView } from "./types/EvolutionMemberView"
 export type {
   ExportCollection200,
   ExportCollection422,
@@ -396,6 +399,13 @@ export type { SetMarketView } from "./types/SetMarketView"
 export type { ShareLinkView } from "./types/ShareLinkView"
 export type { SpareCard } from "./types/SpareCard"
 export type {
+  SpeciesEvolutions200,
+  SpeciesEvolutions422,
+  SpeciesEvolutionsPathParams,
+  SpeciesEvolutionsQuery,
+  SpeciesEvolutionsQueryResponse,
+} from "./types/SpeciesEvolutions"
+export type {
   SpeciesTrivia200,
   SpeciesTrivia422,
   SpeciesTriviaPathParams,
@@ -474,6 +484,7 @@ export { revokeShareLink } from "./clients/revokeShareLink"
 export { searchCards } from "./clients/searchCards"
 export { searchSpecies } from "./clients/searchSpecies"
 export { sendMessage } from "./clients/sendMessage"
+export { speciesEvolutions } from "./clients/speciesEvolutions"
 export { speciesTrivia } from "./clients/speciesTrivia"
 export { updateItem } from "./clients/updateItem"
 export { withdrawOffer } from "./clients/withdrawOffer"
@@ -684,6 +695,12 @@ export { useSearchSpeciesSuspense } from "./hooks/useSearchSpeciesSuspense"
 export { sendMessageMutationKey } from "./hooks/useSendMessage"
 export { sendMessageMutationOptions } from "./hooks/useSendMessage"
 export { useSendMessage } from "./hooks/useSendMessage"
+export { speciesEvolutionsQueryKey } from "./hooks/useSpeciesEvolutions"
+export { speciesEvolutionsQueryOptions } from "./hooks/useSpeciesEvolutions"
+export { useSpeciesEvolutions } from "./hooks/useSpeciesEvolutions"
+export { speciesEvolutionsSuspenseQueryKey } from "./hooks/useSpeciesEvolutionsSuspense"
+export { speciesEvolutionsSuspenseQueryOptions } from "./hooks/useSpeciesEvolutionsSuspense"
+export { useSpeciesEvolutionsSuspense } from "./hooks/useSpeciesEvolutionsSuspense"
 export { speciesTriviaQueryKey } from "./hooks/useSpeciesTrivia"
 export { speciesTriviaQueryOptions } from "./hooks/useSpeciesTrivia"
 export { useSpeciesTrivia } from "./hooks/useSpeciesTrivia"
@@ -979,6 +996,12 @@ export { setGapSchema } from "./zod/setGapSchema"
 export { setMarketViewSchema } from "./zod/setMarketViewSchema"
 export { shareLinkViewSchema } from "./zod/shareLinkViewSchema"
 export { spareCardSchema } from "./zod/spareCardSchema"
+export {
+  speciesEvolutions200Schema,
+  speciesEvolutions422Schema,
+  speciesEvolutionsPathParamsSchema,
+  speciesEvolutionsQueryResponseSchema,
+} from "./zod/speciesEvolutionsSchema"
 export {
   speciesTrivia200Schema,
   speciesTrivia422Schema,

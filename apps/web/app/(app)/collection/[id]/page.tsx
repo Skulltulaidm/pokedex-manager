@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CardSkeleton, PanelSkeleton } from "@/components/pokeball";
 import { CardImage } from "@/components/card-image";
+import { EvolutionLine } from "@/components/evolution-line";
 import { InfoTile } from "@/components/info-tile";
 import { MarketPosition } from "@/components/market-position";
 import { SpeciesStrip } from "@/components/species-strip";
@@ -187,6 +188,8 @@ export default function ItemDetailPage() {
           </div>
         </Section>
       )}
+
+      {card.species && <EvolutionLine speciesId={card.species.id} />}
 
       <div className="grid gap-6 xl:grid-cols-2 xl:items-start">
       {card.species && (

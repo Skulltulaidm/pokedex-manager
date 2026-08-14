@@ -5,7 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from pokedex.api.deps import CurrentUser, DbSession
 from pokedex.api.route import CommittingRoute
-from pokedex.schemas.catalog import CardView, SpeciesView, TriviaView
+from pokedex.schemas.catalog import (
+    CardView,
+    EvolutionMemberView,
+    SpeciesView,
+    TriviaView,
+)
 from pokedex.schemas.common import Page
 from pokedex.schemas.market import (
     CardMarketContext,
@@ -116,6 +121,29 @@ async def species_trivia(species_id: int, user: CurrentUser, db: DbSession) -> A
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Species not found")
 
     return await trivia.get_or_create(db, species)
+
+
+@router.get("/species/{species_id}/evolutions", response_model=list[EvolutionMemberView])
+async def species_evolutions(
+    species_id: int, user: CurrentUser, db: DbSession
+) -> list[EvolutionMemberView]:
+    """The evolution family this species belongs to, in dex order.
+
+    Empty for a species with no family, so the caller renders nothing rather
+    than a panel that only says a Pokemon evolves into no one.
+    """
+    family = await catalog.evolution_family(db, species_id, user.id)
+    return [
+        EvolutionMemberView(
+            id=member.id,
+            name=member.name,
+            types=member.types,
+            sprite_url=member.sprite_url,
+            owned=owned,
+            is_current=member.id == species_id,
+        )
+        for member, owned in family
+    ]
 
 
 @router.get("/owned-ids", response_model=list[str])

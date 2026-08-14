@@ -89,6 +89,7 @@ export type {
   CreateShareLinkMutation,
   CreateShareLinkMutationResponse,
 } from "./CreateShareLink"
+export type { EvolutionMemberView } from "./EvolutionMemberView"
 export type {
   ExportCollection200,
   ExportCollection422,
@@ -340,6 +341,13 @@ export type {
   SimulateTradeMutationResponse,
 } from "./SimulateTrade"
 export type { SpareCard } from "./SpareCard"
+export type {
+  SpeciesEvolutions200,
+  SpeciesEvolutions422,
+  SpeciesEvolutionsPathParams,
+  SpeciesEvolutionsQuery,
+  SpeciesEvolutionsQueryResponse,
+} from "./SpeciesEvolutions"
 export type {
   SpeciesTrivia200,
   SpeciesTrivia422,

@@ -19,6 +19,17 @@ class SpeciesView(BaseModel):
     sprite_url: str | None
 
 
+class EvolutionMemberView(BaseModel):
+    """One species of an evolution family, as its own Pokedex entry."""
+
+    id: int
+    name: str
+    types: list[str]
+    sprite_url: str | None
+    owned: bool
+    is_current: bool
+
+
 class CardSetView(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

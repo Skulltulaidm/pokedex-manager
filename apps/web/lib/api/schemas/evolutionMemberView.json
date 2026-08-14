@@ -1,0 +1,22 @@
+{
+  "properties": {
+    "id": { "type": "integer", "title": "Id" },
+    "name": { "type": "string", "title": "Name" },
+    "types": {
+      "items": { "type": "string" },
+      "type": "array",
+      "title": "Types"
+    },
+    "sprite_url": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Sprite Url"
+    },
+    "owned": { "type": "boolean", "title": "Owned" },
+    "is_current": { "type": "boolean", "title": "Is Current" }
+  },
+  "type": "object",
+  "required": ["id", "name", "types", "sprite_url", "owned", "is_current"],
+  "title": "EvolutionMemberView",
+  "description": "One species of an evolution family, as its own Pokedex entry.",
+  "x-readme-ref-name": "EvolutionMemberView"
+}

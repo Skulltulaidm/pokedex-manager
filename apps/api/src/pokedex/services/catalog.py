@@ -6,7 +6,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from pokedex.db.models import Card, CardPrice, CardSet, Species
+from pokedex.db.models import Card, CardPrice, CardSet, CollectionItem, Species
 from pokedex.integrations.pokeapi import SpeciesPayload
 from pokedex.integrations.tcgdex import CardPayload, SetPayload
 
@@ -160,6 +160,36 @@ async def get_card(db: AsyncSession, card_id: str) -> Card | None:
     )
     result = await db.execute(statement)
     return result.scalar_one_or_none()
+
+
+async def evolution_family(
+    db: AsyncSession, species_id: int, owner_id: str
+) -> list[tuple[Species, bool]]:
+    """The species' evolution chain in dex order, each member marked as held or not.
+
+    Empty when the species is unknown, carries no chain, or is alone in its
+    chain: a family of one is nothing to draw a line between.
+    """
+    species = await db.get(Species, species_id)
+    if species is None or species.evolution_chain_id is None:
+        return []
+
+    held = (
+        select(1)
+        .select_from(CollectionItem)
+        .join(Card, Card.id == CollectionItem.card_id)
+        .where(CollectionItem.user_id == owner_id, Card.species_id == Species.id)
+        .exists()
+    )
+    statement = (
+        select(Species, held)
+        .where(Species.evolution_chain_id == species.evolution_chain_id)
+        .order_by(Species.id)
+    )
+
+    result = await db.execute(statement)
+    family = [(member, owned) for member, owned in result.all()]
+    return family if len(family) > 1 else []
 
 
 async def count_species(db: AsyncSession) -> int:
