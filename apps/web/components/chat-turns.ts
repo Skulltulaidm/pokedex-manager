@@ -64,7 +64,6 @@ export function useChatTurns() {
           switch (event.type) {
             case "conversation":
               setConversationId(event.id);
-              queryClient.invalidateQueries({ queryKey: listConversationsQueryKey() });
               break;
             case "tool":
               setStatus(TOOL_LABELS[event.name] ?? "Consultando");
@@ -88,6 +87,9 @@ export function useChatTurns() {
         setStatus(null);
         setBusy(false);
         abort.current = null;
+        // The conversation row is committed with the turn, not when its id is
+        // announced, so the list is only right once the stream is over.
+        queryClient.invalidateQueries({ queryKey: listConversationsQueryKey() });
       }
     },
     [busy, conversationId, queryClient],

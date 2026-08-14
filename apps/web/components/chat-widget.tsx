@@ -1,15 +1,15 @@
 "use client";
 
-import { ArrowUp, Maximize2, MessageCircle, Square, X } from "lucide-react";
+import { Maximize2, MessageCircle, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { ChatAnswer } from "@/components/chat-answer";
+import { ChatComposer } from "@/components/chat-composer";
 import { useChatTurns } from "@/components/chat-turns";
 import { authClient } from "@/lib/auth-client";
 import { Spinner } from "@workspace/ui/components/spinner";
-import { cn } from "@workspace/ui/lib/utils";
 
 /**
  * The mini chat lives in the app layout, so its thread survives moving between
@@ -90,40 +90,15 @@ export function ChatWidget() {
             </ol>
           </div>
 
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              submit();
-            }}
-            className="bg-secondary ring-edge m-2 flex items-end gap-2 rounded-3xl p-1.5 ring-1"
-          >
-            <textarea
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
-                  submit();
-                }
-              }}
-              rows={1}
-              placeholder="Pregunta lo que quieras"
-              aria-label="Mensaje"
-              className="max-h-24 min-h-8 flex-1 resize-none bg-transparent px-2.5 py-1.5 text-sm focus-visible:outline-none"
-            />
-            <button
-              type={busy ? "button" : "submit"}
-              onClick={busy ? stop : undefined}
-              disabled={!busy && !draft.trim()}
-              aria-label={busy ? "Detener" : "Enviar"}
-              className={cn(
-                "bg-foreground text-background grid size-8 shrink-0 place-items-center rounded-full transition-opacity",
-                !busy && !draft.trim() && "opacity-25",
-              )}
-            >
-              {busy ? <Square className="size-3 fill-current" /> : <ArrowUp className="size-4" />}
-            </button>
-          </form>
+          <ChatComposer
+            value={draft}
+            onChange={setDraft}
+            onSubmit={submit}
+            onStop={stop}
+            busy={busy}
+            compact
+            className="m-2"
+          />
         </section>
       )}
 
