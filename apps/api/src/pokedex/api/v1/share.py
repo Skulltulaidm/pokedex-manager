@@ -3,11 +3,12 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, status
 
 from pokedex.api.deps import CurrentUser, DbSession
+from pokedex.api.route import CommittingRoute
 from pokedex.schemas.collection import CollectionFilters
 from pokedex.schemas.share import PublicCollection, PublicItemView, ShareLinkView
 from pokedex.services import collection, share, stats
 
-router = APIRouter(tags=["share"])
+router = APIRouter(tags=["share"], route_class=CommittingRoute)
 
 MAX_PUBLIC_ITEMS = 200
 

@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 
+from fastapi import Request
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -29,9 +30,15 @@ engine = create_engine()
 SessionFactory = async_sessionmaker(engine, expire_on_commit=False)
 
 
-async def get_db() -> AsyncIterator[AsyncSession]:
-    """One transaction per request: committed on success, rolled back on error."""
+async def get_db(request: Request) -> AsyncIterator[AsyncSession]:
+    """One transaction per request: committed on success, rolled back on error.
+
+    The session is published on the request so `CommittingRoute` can commit it
+    while the response is still being built; the commit below is what covers
+    anything that never reaches that route handler.
+    """
     async with SessionFactory() as session:
+        request.state.db = session
         try:
             yield session
             await session.commit()

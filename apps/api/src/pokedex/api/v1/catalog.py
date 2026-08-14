@@ -4,6 +4,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from pokedex.api.deps import CurrentUser, DbSession
+from pokedex.api.route import CommittingRoute
 from pokedex.schemas.catalog import CardView, SpeciesView, TriviaView
 from pokedex.schemas.common import Page
 from pokedex.schemas.market import (
@@ -16,7 +17,7 @@ from pokedex.schemas.market import (
 from pokedex.services import catalog, collection, market, trivia
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/catalog", tags=["catalog"])
+router = APIRouter(prefix="/catalog", tags=["catalog"], route_class=CommittingRoute)
 
 
 @router.get("/cards", response_model=list[CardView])

@@ -4,12 +4,13 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, status
 
 from pokedex.api.deps import CurrentUser, DbSession
+from pokedex.api.route import CommittingRoute
 from pokedex.db.models import WishlistSource
 from pokedex.schemas.gaps import AddWishlistRequest, SetGap, WishlistItemView
 from pokedex.services import gaps, wishlist
 from pokedex.services.collection import CardNotFoundError
 
-router = APIRouter(tags=["wishlist"])
+router = APIRouter(tags=["wishlist"], route_class=CommittingRoute)
 
 
 @router.get("/gaps", response_model=list[SetGap])

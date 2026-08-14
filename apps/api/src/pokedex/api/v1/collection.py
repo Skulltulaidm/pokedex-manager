@@ -7,6 +7,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from pokedex.api.deps import CurrentUser, DbSession
+from pokedex.api.route import CommittingRoute
 from pokedex.schemas.activity import ActivityEntry
 from pokedex.schemas.catalog import CollectionItemView
 from pokedex.schemas.collection import (
@@ -17,7 +18,7 @@ from pokedex.schemas.collection import (
 from pokedex.schemas.common import Page
 from pokedex.services import activity, collection, export
 
-router = APIRouter(prefix="/collection", tags=["collection"])
+router = APIRouter(prefix="/collection", tags=["collection"], route_class=CommittingRoute)
 
 
 def _attachment(filename: str) -> dict[str, str]:

@@ -7,6 +7,7 @@ from fastapi.responses import Response
 
 from pokedex.agent import read_card
 from pokedex.api.deps import CurrentUser, DbSession
+from pokedex.api.route import CommittingRoute
 from pokedex.config import get_settings
 from pokedex.schemas.catalog import CollectionItemView
 from pokedex.schemas.collection import AddCardRequest
@@ -16,7 +17,7 @@ from pokedex.services import scan as scans
 from pokedex.storage import InvalidImageError, LocalFilesystemStorage, StorageBackend, prepare
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/scans", tags=["scans"])
+router = APIRouter(prefix="/scans", tags=["scans"], route_class=CommittingRoute)
 
 
 def get_storage() -> StorageBackend:

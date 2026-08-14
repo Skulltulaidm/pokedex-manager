@@ -2,8 +2,9 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from pokedex.api.deps import CurrentUser
+from pokedex.api.route import CommittingRoute
 
-router = APIRouter(tags=["probe"])
+router = APIRouter(tags=["probe"], route_class=CommittingRoute)
 
 
 class MeResponse(BaseModel):

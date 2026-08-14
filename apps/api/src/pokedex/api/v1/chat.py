@@ -18,6 +18,7 @@ from pydantic_ai.run import AgentRunResultEvent
 
 from pokedex.agent import TURN_LIMITS, build_agent, mcp_session
 from pokedex.api.deps import Caller, CurrentCaller, CurrentUser, DbSession
+from pokedex.api.route import CommittingRoute
 from pokedex.config import get_settings
 from pokedex.db import SessionFactory
 from pokedex.schemas.chat import (
@@ -30,7 +31,7 @@ from pokedex.services import conversation as conversations
 from pokedex.services import preferences
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/chat", tags=["chat"])
+router = APIRouter(prefix="/chat", tags=["chat"], route_class=CommittingRoute)
 
 
 def sse(event: str, data: dict[str, Any]) -> str:
