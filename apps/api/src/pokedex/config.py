@@ -9,6 +9,10 @@ class Settings(BaseSettings):
 
     database_url: str
 
+    # Comma separated, because a deployment has one origin and a preview has
+    # another, and both arrive as one environment variable.
+    cors_origins: str = "http://localhost:3000"
+
     auth_jwks_url: str
     auth_issuer: str
     auth_audience: str
@@ -20,6 +24,10 @@ class Settings(BaseSettings):
     # Where the in-app agent connects. Same server, but reached from inside: in a
     # container the published port does not exist.
     mcp_internal_url: str = ""
+
+    @property
+    def allowed_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @property
     def mcp_agent_url(self) -> str:

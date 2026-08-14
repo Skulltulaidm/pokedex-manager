@@ -2,7 +2,7 @@ import asyncio
 from logging.config import fileConfig
 from typing import Any
 
-from sqlalchemy import pool
+from sqlalchemy import pool, text
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
@@ -81,6 +81,10 @@ async def run_async_migrations() -> None:
     )
 
     async with connectable.connect() as connection:
+        # The first migration writes into this schema, so nothing in the
+        # migration chain can be the thing that creates it.
+        await connection.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{DOMAIN_SCHEMA}"'))
+        await connection.commit()
         await connection.run_sync(do_run_migrations)
 
     await connectable.dispose()
