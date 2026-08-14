@@ -21,4 +21,7 @@ ENV PATH="/app/.venv/bin:$PATH" \
     STORAGE_ROOT=/data/scans
 
 EXPOSE 8000
-CMD ["sh", "-c", "alembic upgrade head && fastapi run src/pokedex/main.py --host 0.0.0.0 --port 8000"]
+# The domain tables carry foreign keys into auth.user, which Better Auth
+# creates from the web service. Both start at once on a fresh deployment, so
+# this waits for that schema rather than crash-looping until someone notices.
+CMD ["sh", "-c", "for i in $(seq 1 30); do alembic upgrade head && break; echo 'waiting for the auth schema'; sleep 5; done; alembic current | grep -q . && exec fastapi run src/pokedex/main.py --host 0.0.0.0 --port 8000"]
