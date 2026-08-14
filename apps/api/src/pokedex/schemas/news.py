@@ -11,6 +11,7 @@ NewsKind = Literal[
     "offer_answered",
     "trade_closed",
     "listing_taken",
+    "message_unread",
     "wish_cheaper",
     "wish_dearer",
 ]

@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { CardImage } from "@/components/card-image";
+import { MessageLink } from "@/components/message-link";
 import { Pager } from "@/components/pager";
 import { PanelSkeleton } from "@/components/pokeball";
 import { UserAvatar } from "@/components/user-avatar";
@@ -260,6 +261,9 @@ function Listing({
       </div>
 
       <div className="border-edge mt-4 flex flex-wrap items-center gap-3 border-t pt-4">
+        {/* Whoever published it is the only one who can answer what a listing
+            does not say: the condition of a card, or where to meet. */}
+        {!listing.is_mine && <MessageLink partnerId={listing.owner_id} variant="ghost" />}
         {listing.is_mine ? (
           open ? (
             <>

@@ -13,6 +13,7 @@ from pokedex.db.models.conversation import (
     MessageRole,
     UserPreference,
 )
+from pokedex.db.models.direct import DirectMessage, DirectThread
 from pokedex.db.models.external import auth_user
 from pokedex.db.models.share import ShareLink
 from pokedex.db.models.trade import (
@@ -33,6 +34,8 @@ __all__ = [
     "CardSet",
     "CollectionItem",
     "Conversation",
+    "DirectMessage",
+    "DirectThread",
     "ListingStatus",
     "Message",
     "MessageRole",

@@ -8,6 +8,7 @@ export const newsEntryKindEnum = {
   offer_answered: "offer_answered",
   trade_closed: "trade_closed",
   listing_taken: "listing_taken",
+  message_unread: "message_unread",
   wish_cheaper: "wish_cheaper",
   wish_dearer: "wish_dearer",
 } as const;

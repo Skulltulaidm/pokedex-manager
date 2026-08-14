@@ -78,6 +78,16 @@ export function AskIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+/** Two bubbles talking: the same shape as AskIcon, answered. */
+export function MessagesIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M5 3.5h9a2.5 2.5 0 0 1 2.5 2.5v4a2.5 2.5 0 0 1-2.5 2.5H9l-3.6 3v-3H5A2.5 2.5 0 0 1 2.5 10V6A2.5 2.5 0 0 1 5 3.5" />
+      <path d="M8.5 15.5v.5a2.5 2.5 0 0 0 2.5 2.5h4l3.6 3v-3H19a2.5 2.5 0 0 0 2.5-2.5v-4A2.5 2.5 0 0 0 19 9.5h-2.5" />
+    </Icon>
+  );
+}
+
 /** A trainer, cap and all. */
 export function TrainerIcon(props: SVGProps<SVGSVGElement>) {
   return (

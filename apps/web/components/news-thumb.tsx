@@ -1,4 +1,12 @@
-import { ArrowDownRight, ArrowUpRight, CheckCheck, Handshake, Megaphone, Reply } from "lucide-react";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  CheckCheck,
+  Handshake,
+  Megaphone,
+  MessageCircle,
+  Reply,
+} from "lucide-react";
 import Image from "next/image";
 
 import type { NewsEntry } from "@/lib/api/types";
@@ -9,6 +17,7 @@ const MARK = {
   offer_answered: { icon: Reply, tone: "" },
   trade_closed: { icon: CheckCheck, tone: "text-emerald-600" },
   listing_taken: { icon: Megaphone, tone: "" },
+  message_unread: { icon: MessageCircle, tone: "" },
   wish_cheaper: { icon: ArrowDownRight, tone: "text-emerald-600" },
   wish_dearer: { icon: ArrowUpRight, tone: "text-destructive" },
 } as const;

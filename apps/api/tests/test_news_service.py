@@ -9,9 +9,18 @@ from pokedex.db.models import CardPrice, WishlistSource
 from pokedex.integrations.pokeapi import SpeciesPayload
 from pokedex.integrations.tcgdex import CardPayload, SetPayload
 from pokedex.schemas.collection import AddCardRequest
+from pokedex.schemas.direct import SendMessageRequest
 from pokedex.schemas.gaps import AddWishlistRequest
 from pokedex.schemas.trade import CreateListingRequest, CreateOfferRequest, OfferCardInput
-from pokedex.services import catalog, collection, news, preferences, trade, wishlist
+from pokedex.services import (
+    catalog,
+    collection,
+    direct,
+    news,
+    preferences,
+    trade,
+    wishlist,
+)
 
 SET_ID = "t-news"
 CHARIZARD_CARD = "t-news-4"
@@ -346,3 +355,47 @@ async def test_someone_elses_want_list_is_not_yours(
     feed = await news.feed(catalogued, user_id)
 
     assert [entry for entry in feed.items if entry.card_id == CHARIZARD_CARD] == []
+
+
+async def test_an_unread_message_is_something_to_answer(
+    catalogued: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    await direct.send(
+        catalogued, other_user_id, SendMessageRequest(to_user_id=user_id, body="¿Sigue en pie?")
+    )
+
+    feed = await news.feed(catalogued, user_id)
+
+    entries = [entry for entry in feed.items if entry.kind == "message_unread"]
+    assert len(entries) == 1
+    assert entries[0].partner_id == other_user_id
+    assert entries[0].href == f"/messages/{other_user_id}"
+    assert feed.waiting == 1
+
+
+async def test_opening_the_news_does_not_read_somebody_elses_message(
+    catalogued: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    """Marking the week seen is not the same as reading what was written."""
+    await direct.send(
+        catalogued, other_user_id, SendMessageRequest(to_user_id=user_id, body="Hola")
+    )
+    await news.mark_seen(catalogued, user_id)
+
+    feed = await news.feed(catalogued, user_id)
+
+    entries = [entry for entry in feed.items if entry.kind == "message_unread"]
+    assert entries and entries[0].seen is False
+    assert feed.waiting == 1
+
+
+async def test_a_message_you_sent_is_not_news_for_you(
+    catalogued: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    await direct.send(
+        catalogued, user_id, SendMessageRequest(to_user_id=other_user_id, body="Hola")
+    )
+
+    feed = await news.feed(catalogued, user_id)
+
+    assert [entry for entry in feed.items if entry.kind == "message_unread"] == []

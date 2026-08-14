@@ -8,6 +8,7 @@ import { PokedexMark } from "@/components/logo";
 import {
   AskIcon,
   CatalogIcon,
+  MessagesIcon,
   NewsIcon,
   ScanIcon,
   StatsIcon,
@@ -37,14 +38,17 @@ export const NAV = [
 ];
 
 /**
- * The rail can hold one more than the phone's bar can.
+ * The rail can hold more than the phone's bar can.
  *
  * Seven pills do not fit across 390px once the active one opens to show its
  * label, so novedades is reached on a phone through the bell in the header
- * instead of through the bar.
+ * instead of through the bar — and mensajes with it, since an unread message is
+ * one of the things the bell counts. Every conversation also has a way in from
+ * beside the trade it is about, which is where one actually starts.
  */
 export const SIDEBAR_NAV = [
   ...NAV,
+  { href: "/messages", label: "Mensajes", icon: MessagesIcon },
   { href: "/notifications", label: "Novedades", icon: NewsIcon },
 ];
 

@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { CardImage } from "@/components/card-image";
+import { MessageLink } from "@/components/message-link";
 import { UserAvatar } from "@/components/user-avatar";
 import { apiClient } from "@/lib/api-client";
 import { useRespondToOffer } from "@/lib/api/hooks/useRespondToOffer";
@@ -111,9 +112,11 @@ export function OfferList({ offers }: { offers: TradeOfferView[] }) {
               <Cards title="Recibes" cards={offer.you_get} value={offer.get_value} />
             </div>
 
-            {offer.status === "pending" && (
-              <div className="border-edge mt-4 flex gap-2 border-t pt-3">
-                {offer.direction === "received" ? (
+            {/* The way to talk sits with the buttons that answer an offer: most
+                of what a counteroffer is trying to say is a sentence. */}
+            <div className="border-edge mt-4 flex flex-wrap gap-2 border-t pt-3">
+              {offer.status === "pending" &&
+                (offer.direction === "received" ? (
                   <>
                     <Button
                       size="sm"
@@ -153,12 +156,13 @@ export function OfferList({ offers }: { offers: TradeOfferView[] }) {
                   >
                     Retirar
                   </Button>
-                )}
-              </div>
-            )}
+                ))}
+
+              <MessageLink partnerId={offer.partner_id} variant="ghost" />
+            </div>
 
             {offer.status === "accepted" && (
-              <p className="text-muted-foreground/70 border-edge mt-4 border-t pt-3 text-xs">
+              <p className="text-muted-foreground/70 mt-3 text-xs">
                 Acordado. Las cartas no se movieron de ninguna colección: cuando
                 tengas la carta en la mano, cargala vos.
               </p>

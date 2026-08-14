@@ -15,7 +15,7 @@ from pokedex.db.models import (
 )
 from pokedex.db.models.trade import ListingStatus, OfferStatus
 from pokedex.schemas.news import NewsEntry, NewsFeed
-from pokedex.services import preferences
+from pokedex.services import direct, preferences
 
 WINDOW = timedelta(days=7)
 
@@ -149,6 +149,26 @@ async def _listings_taken(db: AsyncSession, user_id: str, since: datetime) -> li
     ]
 
 
+async def _messages_unread(db: AsyncSession, user_id: str) -> list[NewsEntry]:
+    """One entry per conversation with something unanswered in it.
+
+    Not one per message: a collector who sent five lines wrote one thing to
+    answer, and five rows in the feed would say otherwise.
+    """
+    return [
+        NewsEntry(
+            kind="message_unread",
+            at=at,
+            title="Te escribieron" if count == 1 else f"Te escribieron {count} mensajes",
+            detail=None,
+            partner_id=partner_id,
+            href=f"/messages/{partner_id}",
+            actionable=True,
+        )
+        for partner_id, at, count in await direct.unread_by_partner(db, user_id)
+    ]
+
+
 async def _wishlist_moves(
     db: AsyncSession, user_id: str, since: date, no_later_than: datetime
 ) -> list[NewsEntry]:
@@ -252,11 +272,16 @@ async def feed(
         *await _offers_answered(db, user_id, since),
         *await _trades_closed(db, user_id, since),
         *await _listings_taken(db, user_id, since),
+        *await _messages_unread(db, user_id),
         *await _wishlist_moves(db, user_id, since.date(), now),
     ]
     entries.sort(key=lambda entry: entry.at, reverse=True)
     for entry in entries:
-        entry.seen = seen_at is not None and entry.at <= seen_at
+        # An unread message keeps its own read state, which is the stronger
+        # claim: opening this screen is not reading what somebody wrote.
+        entry.seen = (
+            entry.kind != "message_unread" and seen_at is not None and entry.at <= seen_at
+        )
 
     waiting = sum(1 for entry in entries if entry.actionable and not entry.seen)
     if actionable_only:

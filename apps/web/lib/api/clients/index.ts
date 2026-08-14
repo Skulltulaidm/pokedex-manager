@@ -53,3 +53,8 @@ export { updateItem } from "./updateItem"
 export { withdrawOffer } from "./withdrawOffer"
 export * from "./newsFeed";
 export * from "./proposeTrade";
+export * from "./listThreads";
+export * from "./getThreadWith";
+export * from "./listThreadMessages";
+export * from "./sendDirectMessage";
+export * from "./markThreadRead";

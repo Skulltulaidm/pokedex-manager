@@ -8,6 +8,7 @@ import { useUrlState } from "@/lib/url-state";
 import { Suspense, useState } from "react";
 
 import { CardImage } from "@/components/card-image";
+import { MessageLink } from "@/components/message-link";
 import { PanelSkeleton } from "@/components/pokeball";
 import { Pager } from "@/components/pager";
 import { ScreenHeader } from "@/components/screen-header";
@@ -54,13 +55,16 @@ function Collector() {
     <>
       <ScreenHeader title={profile.is_self ? "Tu perfil" : "Coleccionista"}>
         {!profile.is_self && (
-          <Link
-            href={`/trades/new?con=${profile.user_id}`}
-            className={buttonVariants({ size: "sm" })}
-          >
-            <Handshake />
-            Armar un trueque
-          </Link>
+          <>
+            <MessageLink partnerId={profile.user_id} />
+            <Link
+              href={`/trades/new?con=${profile.user_id}`}
+              className={buttonVariants({ size: "sm" })}
+            >
+              <Handshake />
+              Armar un trueque
+            </Link>
+          </>
         )}
       </ScreenHeader>
 
