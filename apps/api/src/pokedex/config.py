@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     # The scan column stores the key; the backend owns the path.
     storage_root: Path = Path("./data/scans")
 
+    # One reading a day is what makes a portfolio a series instead of a number.
+    # It reaches tcgdex on boot, so tests and offline runs turn it off.
+    price_refresh_on_start: bool = True
+
     agent_model: str = "google-gla:gemini-flash-latest"
     google_api_key: str = ""
 

@@ -18,7 +18,7 @@ class SyncReport:
     failed: list[str]
 
 
-async def _gather_cards(
+async def gather_cards(
     client: TcgdexClient, card_ids: list[str]
 ) -> tuple[list[CardPayload], list[str]]:
     limit = asyncio.Semaphore(CONCURRENCY)
@@ -44,7 +44,7 @@ async def sync_set(db: AsyncSession, set_id: str) -> SyncReport:
     async with TcgdexClient() as tcg:
         card_set = await tcg.fetch_set(set_id)
         await catalog.upsert_sets(db, [card_set])
-        cards, failed = await _gather_cards(tcg, card_set.card_ids)
+        cards, failed = await gather_cards(tcg, card_set.card_ids)
 
     dex_ids = sorted({card.species_id for card in cards if card.species_id is not None})
     written_species = 0

@@ -1,3 +1,5 @@
+import asyncio
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -8,10 +10,27 @@ from fastapi.routing import APIRoute
 from scalar_fastapi import get_scalar_api_reference
 
 from pokedex.api.v1 import router as v1_router
-from pokedex.db import engine
+from pokedex.config import get_settings
+from pokedex.db import SessionFactory, engine
 from pokedex.mcp import server as mcp_server
+from pokedex.services import prices
 
 OPENAPI_URL = "/openapi.json"
+
+log = logging.getLogger(__name__)
+
+
+async def take_todays_prices() -> None:
+    """Never fails the boot: a catalog that cannot be reached is a stale series,
+    not a broken app."""
+    try:
+        async with SessionFactory() as db:
+            report = await prices.refresh_prices(db)
+            await db.commit()
+        if not report.skipped:
+            log.info("priced %s cards across %s sets", report.cards, report.sets)
+    except Exception:
+        log.exception("could not take today's prices")
 
 
 def operation_id(route: APIRoute) -> str:
@@ -29,7 +48,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # MCP session manager. Without this the first /mcp request fails with an
     # error that points nowhere near the lifespan.
     async with mcp_server.session_manager.run():
+        # Detached, because the reading walks every cached set and the app must
+        # answer requests while it does.
+        task = (
+            asyncio.create_task(take_todays_prices())
+            if get_settings().price_refresh_on_start
+            else None
+        )
         yield
+        if task is not None:
+            task.cancel()
 
     await engine.dispose()
 
