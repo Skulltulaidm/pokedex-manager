@@ -8,6 +8,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  POSTGRES_DSN: postgresql://pokedex:pokedex@localhost:5432/pokedex
+
 jobs:
   api:
     name: API
@@ -33,16 +36,18 @@ jobs:
       AUTH_JWKS_URL: http://localhost:3000/api/auth/jwks
       AUTH_ISSUER: http://localhost:3000
       AUTH_AUDIENCE: http://localhost:3000
-      # Left unset on purpose: the agent is optional, the chat answers 503
+      BETTER_AUTH_URL: http://localhost:3000
+      # Left unset on purpose. The agent is optional, the chat answers 503
       # without it, and a public repository must not need a key to go green.
       GOOGLE_API_KEY: ""
 
-    defaults:
-      run:
-        working-directory: apps/api
-
     steps:
       - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
 
       - uses: astral-sh/setup-uv@v7
         with:
@@ -50,20 +55,39 @@ jobs:
           cache-dependency-glob: apps/api/uv.lock
 
       # A service container gets no docker-entrypoint-initdb.d, so the schemas
-      # and the trigram extension the migrations expect are created by hand.
-      - name: Prepare the database
-        working-directory: .
-        run: psql "postgresql://pokedex:pokedex@localhost:5432/pokedex" -f db/init/01-schemas.sql
+      # and the trigram extension are created the way the compose file would.
+      - name: Create the schemas
+        run: psql "$POSTGRES_DSN" -f db/init/01-schemas.sql
+
+      - run: npm ci
+
+      # The domain tables carry foreign keys into auth."user", and Better Auth
+      # owns that table: without this the first Alembic migration cannot run.
+      - name: Migrate the auth schema
+        run: node apps/web/scripts/migrate-auth.mjs
+        env:
+          DATABASE_URL: ${{ env.POSTGRES_DSN }}
 
       - run: uv sync --frozen
+        working-directory: apps/api
 
       - run: uv run alembic upgrade head
+        working-directory: apps/api
+
+      # The service tests reach for real catalog cards rather than inventing
+      # them, so the catalog has to be there. One set is enough and takes ~8s.
+      - name: Seed the card catalog
+        run: uv run pokedex-sync base1
+        working-directory: apps/api
 
       - run: uv run pytest -q
+        working-directory: apps/api
 
       - run: uv run mypy src
+        working-directory: apps/api
 
       - run: uv run ruff check .
+        working-directory: apps/api
 
   web:
     name: Web
