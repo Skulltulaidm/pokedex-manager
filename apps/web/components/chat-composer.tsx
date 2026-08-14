@@ -75,7 +75,7 @@ export function ChatComposer({
         disabled={!busy && !value.trim()}
         aria-label={busy ? "Detener" : "Enviar"}
         className={cn(
-          "bg-foreground text-background grid shrink-0 place-items-center rounded-full transition-opacity",
+          "bg-primary text-primary-foreground grid shrink-0 place-items-center rounded-full transition-opacity",
           compact ? "size-8" : "size-9",
           !busy && !value.trim() && "opacity-25",
         )}

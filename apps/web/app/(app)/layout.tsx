@@ -64,7 +64,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   className={cn(
                     "flex items-center gap-2 rounded-full px-3.5 py-2.5 text-[13px] font-medium transition-all duration-300",
                     active
-                      ? "bg-foreground text-background"
+                      ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground active:scale-90",
                   )}
                 >

@@ -170,7 +170,7 @@ function Sets({ profile }: { profile: CollectorProfile }) {
             <p className="w-32 shrink-0 truncate text-sm font-medium">{set.set_name}</p>
             <div className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full">
               <div
-                className="bg-foreground h-full rounded-full"
+                className="bg-primary h-full rounded-full"
                 style={{ width: `${(set.owned / set.printed_total) * 100}%` }}
               />
             </div>

@@ -49,7 +49,6 @@ export function CardPocket({
           glowType={held ? types[0] : null}
           locked={!held}
           foil={held}
-          art
           category={category}
           className={cn(!held && "opacity-80 transition-opacity group-hover:opacity-100")}
         >

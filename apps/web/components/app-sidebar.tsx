@@ -1,17 +1,18 @@
 "use client";
 
-import {
-  ArrowLeftRight,
-  LayoutGrid,
-  MessageCircle,
-  PieChart,
-  ScanLine,
-  UserRound,
-} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { AccountMenu } from "@/components/account-menu";
+import { PokedexMark } from "@/components/logo";
+import {
+  AskIcon,
+  CatalogIcon,
+  ScanIcon,
+  StatsIcon,
+  TradeIcon,
+  TrainerIcon,
+} from "@/components/nav-icons";
 import { authClient } from "@/lib/auth-client";
 import {
   Sidebar,
@@ -26,12 +27,12 @@ import {
 } from "@workspace/ui/components/sidebar";
 
 export const NAV = [
-  { href: "/collection", label: "Catálogo", icon: LayoutGrid },
-  { href: "/scan", label: "Escanear", icon: ScanLine },
-  { href: "/trades", label: "Trueques", icon: ArrowLeftRight },
-  { href: "/stats", label: "Resumen", icon: PieChart },
-  { href: "/chat", label: "Preguntar", icon: MessageCircle },
-  { href: "/profile", label: "Tu perfil", icon: UserRound },
+  { href: "/collection", label: "Catálogo", icon: CatalogIcon },
+  { href: "/scan", label: "Escanear", icon: ScanIcon },
+  { href: "/trades", label: "Trueques", icon: TradeIcon },
+  { href: "/stats", label: "Resumen", icon: StatsIcon },
+  { href: "/chat", label: "Preguntar", icon: AskIcon },
+  { href: "/profile", label: "Tu perfil", icon: TrainerIcon },
 ];
 
 export function AppSidebar() {
@@ -47,9 +48,7 @@ export function AppSidebar() {
               size="lg"
               render={
                 <Link href="/collection">
-                  <span className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                    <LayoutGrid className="size-4" />
-                  </span>
+                  <PokedexMark className="size-8!" />
                   <span className="font-display text-[15px] font-semibold tracking-[-0.02em]">
                     Poké<span className="text-muted-foreground">Dex</span>
                   </span>

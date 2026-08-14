@@ -329,7 +329,7 @@ function Chip({
       className={cn(
         "shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-all hover:-translate-y-px active:translate-y-0",
         active
-          ? "bg-foreground text-background"
+          ? "bg-primary text-primary-foreground"
           : "bg-secondary text-muted-foreground hover:bg-accent hover:text-foreground",
       )}
     >

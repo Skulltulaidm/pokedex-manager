@@ -73,7 +73,7 @@ export function DialogToolbar<T extends string>({
               className={cn(
                 "rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors",
                 filter === option.value
-                  ? "bg-foreground text-background"
+                  ? "bg-primary text-primary-foreground"
                   : "bg-secondary text-muted-foreground hover:text-foreground",
               )}
             >

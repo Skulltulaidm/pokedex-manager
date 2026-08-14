@@ -1,6 +1,6 @@
 "use client";
 
-import { Maximize2, MessageCircle, X } from "lucide-react";
+import { Maximize2, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -8,12 +8,16 @@ import { useEffect, useRef, useState } from "react";
 import { ChatAnswer } from "@/components/chat-answer";
 import { ChatComposer } from "@/components/chat-composer";
 import { useChatTurns } from "@/components/chat-turns";
+import { PokeballIcon } from "@/components/nav-icons";
 import { authClient } from "@/lib/auth-client";
 import { Spinner } from "@workspace/ui/components/spinner";
 
 /**
  * The mini chat lives in the app layout, so its thread survives moving between
  * screens. Only /chat hides it, where the full screen already owns the agent.
+ *
+ * Desktop only: below lg the bottom nav already carries "Preguntar", and a
+ * bubble floating over that nav covers content for a door that is already open.
  */
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
@@ -36,7 +40,7 @@ export function ChatWidget() {
   }
 
   return (
-    <div className="fixed right-4 bottom-28 z-30 flex flex-col items-end gap-3 lg:right-6 lg:bottom-6">
+    <div className="fixed right-6 bottom-6 z-30 hidden flex-col items-end gap-3 lg:flex">
       {open && (
         <section
           aria-label="Asistente"
@@ -106,9 +110,9 @@ export function ChatWidget() {
         onClick={() => setOpen((previous) => !previous)}
         aria-expanded={open}
         aria-label={open ? "Cerrar el asistente" : "Abrir el asistente"}
-        className="bg-foreground text-background grid size-12 place-items-center rounded-full shadow-lg transition-transform active:scale-90"
+        className="bg-primary text-primary-foreground grid size-12 place-items-center rounded-full shadow-lg transition-transform active:scale-90"
       >
-        {open ? <X className="size-5" /> : <MessageCircle className="size-5" />}
+        {open ? <X className="size-5" /> : <PokeballIcon className="size-6" />}
       </button>
     </div>
   );

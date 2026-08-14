@@ -242,7 +242,7 @@ function ConfirmForm({ card, onBack }: { card: CardView; onBack: () => void }) {
               className={cn(
                 "ring-edge rounded-full px-3 py-1.5 text-sm ring-1 transition-colors",
                 condition === value
-                  ? "bg-foreground text-background ring-transparent"
+                  ? "bg-primary text-primary-foreground ring-transparent"
                   : "bg-card hover:bg-accent",
               )}
             >

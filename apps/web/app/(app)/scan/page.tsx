@@ -263,7 +263,7 @@ export default function ScanPage() {
                     className={cn(
                       "rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors",
                       condition === value
-                        ? "bg-foreground text-background"
+                        ? "bg-primary text-primary-foreground"
                         : "bg-secondary text-muted-foreground hover:text-foreground",
                     )}
                   >
