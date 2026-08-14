@@ -1,5 +1,6 @@
 import { CardImage } from "@/components/card-image";
 import { TypeDots } from "@/components/type-dot";
+import { WishButton } from "@/components/wish-button";
 import { formatUsd } from "@/lib/format";
 import { cn } from "@workspace/ui/lib/utils";
 
@@ -20,6 +21,7 @@ export function CardPocket({
   price,
   rarity,
   category,
+  cardId,
 }: {
   name: string;
   setName: string;
@@ -31,36 +33,47 @@ export function CardPocket({
   price?: number | null;
   rarity?: string | null;
   category?: string;
+  cardId?: string;
 }) {
   const held = owned > 0;
 
   return (
     <div className="group flex flex-col gap-2.5">
-      <CardImage
-        src={imageUrl}
-        alt={name}
-        sizes="(min-width: 1536px) 13vw, (min-width: 1024px) 17vw, (min-width: 640px) 28vw, 46vw"
-        glowType={held ? types[0] : null}
-        locked={!held}
-        foil={held}
-        art
-        category={category}
-        className={cn(
-          "transition-transform duration-300 group-hover:-translate-y-1",
-          !held && "opacity-80 transition-opacity group-hover:opacity-100",
+      {/* The lift moved out of the frame so the wish button rides with it, and
+          out of the frame's grayscale so it keeps its colour on a missing card. */}
+      <div className="relative transition-transform duration-300 group-hover:-translate-y-1">
+        <CardImage
+          src={imageUrl}
+          alt={name}
+          sizes="(min-width: 1536px) 13vw, (min-width: 1024px) 17vw, (min-width: 640px) 28vw, 46vw"
+          glowType={held ? types[0] : null}
+          locked={!held}
+          foil={held}
+          art
+          category={category}
+          className={cn(!held && "opacity-80 transition-opacity group-hover:opacity-100")}
+        >
+          {owned > 1 && (
+            <span className="glass text-foreground absolute top-2 right-2 rounded-full px-2 py-0.5 font-mono text-[11px] leading-none">
+              ×{owned}
+            </span>
+          )}
+          {rarity && (
+            <span className="glass text-muted-foreground absolute top-2 left-2 rounded-full px-2 py-0.5 text-[10px] leading-none tracking-wide uppercase">
+              {rarity}
+            </span>
+          )}
+        </CardImage>
+
+        {cardId && (
+          <WishButton
+            cardId={cardId}
+            cardName={name}
+            held={held}
+            className="absolute right-2 bottom-2"
+          />
         )}
-      >
-        {owned > 1 && (
-          <span className="glass text-foreground absolute top-2 right-2 rounded-full px-2 py-0.5 font-mono text-[11px] leading-none">
-            ×{owned}
-          </span>
-        )}
-        {rarity && (
-          <span className="glass text-muted-foreground absolute top-2 left-2 rounded-full px-2 py-0.5 text-[10px] leading-none tracking-wide uppercase">
-            {rarity}
-          </span>
-        )}
-      </CardImage>
+      </div>
 
       <div className="min-w-0">
         <div className="flex items-baseline justify-between gap-2">

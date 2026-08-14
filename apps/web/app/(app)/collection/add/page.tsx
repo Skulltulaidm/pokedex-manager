@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Heart, Search } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { TypeDots } from "@/components/type-dot";
 import { apiClient } from "@/lib/api-client";
 import { useAddCard } from "@/lib/api/hooks/useAddCard";
+import { useAddToWishlist } from "@/lib/api/hooks/useAddToWishlist";
 import { useGetCard } from "@/lib/api/hooks/useGetCard";
 import { useSearchCards } from "@/lib/api/hooks/useSearchCards";
 import type { CardView } from "@/lib/api/types/CardView";
@@ -180,6 +181,20 @@ function ConfirmForm({ card, onBack }: { card: CardView; onBack: () => void }) {
     },
   });
 
+  const want = useAddToWishlist({
+    client: { client: apiClient },
+    mutation: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries();
+        toast.success(`${card.name} anotada en tus deseos`);
+        router.push("/stats?tab=deseos");
+      },
+      onError: () => toast.error("No se pudo anotar. Intenta de nuevo."),
+    },
+  });
+
+  const busy = isPending || want.isPending;
+
   return (
     <div className="space-y-6">
       <div className="ring-edge bg-surface flex gap-4 rounded-lg p-3 ring-1">
@@ -278,12 +293,12 @@ function ConfirmForm({ card, onBack }: { card: CardView; onBack: () => void }) {
       </div>
 
       <div className="flex gap-2">
-        <Button variant="outline" onClick={onBack} disabled={isPending}>
+        <Button variant="outline" onClick={onBack} disabled={busy}>
           Cambiar carta
         </Button>
         <Button
           className="flex-1"
-          disabled={isPending}
+          disabled={busy}
           onClick={() =>
             mutate({
               data: {
@@ -298,6 +313,27 @@ function ConfirmForm({ card, onBack }: { card: CardView; onBack: () => void }) {
         >
           {isPending ? "Guardando…" : "Guardar en mi colección"}
         </Button>
+      </div>
+
+      {/* Landing here from a card you do not own means one of two things, and
+          only one of them had a way out. Wanting a card is what a counterparty
+          can match against; without it a collection is invisible to trading. */}
+      <div className="border-edge border-t pt-5 text-center">
+        <p className="text-muted-foreground mb-3 text-sm">
+          ¿Todavía no la tienes?
+        </p>
+        <Button
+          variant="outline"
+          disabled={busy}
+          onClick={() => want.mutate({ data: { card_id: card.id } })}
+        >
+          <Heart />
+          {want.isPending ? "Anotando…" : "La quiero"}
+        </Button>
+        <p className="text-muted-foreground/60 mx-auto mt-3 max-w-sm text-xs">
+          Va a tus deseos. Cuando alguien la tenga repetida y quiera algo que a
+          ti te sobra, aparece en Trueques.
+        </p>
       </div>
     </div>
   );

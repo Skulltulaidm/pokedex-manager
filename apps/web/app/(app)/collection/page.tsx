@@ -231,6 +231,9 @@ function CollectionGrid() {
                     price={entry.card.price_usd == null ? null : Number(entry.card.price_usd)}
                     rarity={entry.card.rarity}
                     category={entry.card.category}
+                    // No wish button while comparing: the tile is a button then,
+                    // and a button cannot nest another.
+                    cardId={comparing ? undefined : entry.card.id}
                   />
                 </ItemLink>
               </li>
