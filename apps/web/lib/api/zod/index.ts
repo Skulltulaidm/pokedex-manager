@@ -326,3 +326,5 @@ export {
   withdrawOfferMutationResponseSchema,
   withdrawOfferPathParamsSchema,
 } from "./withdrawOfferSchema"
+export * from "./newsEntrySchema";
+export * from "./newsFeedSchema";

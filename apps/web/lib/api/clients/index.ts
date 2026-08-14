@@ -46,3 +46,4 @@ export { speciesEvolutions } from "./speciesEvolutions"
 export { speciesTrivia } from "./speciesTrivia"
 export { updateItem } from "./updateItem"
 export { withdrawOffer } from "./withdrawOffer"
+export * from "./newsFeed";

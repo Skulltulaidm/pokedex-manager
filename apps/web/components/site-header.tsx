@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 
 import { NAV } from "@/components/app-sidebar";
+import { NewsBell } from "@/components/news-bell";
 import { Separator } from "@workspace/ui/components/separator";
 import { SidebarTrigger } from "@workspace/ui/components/sidebar";
 
@@ -22,6 +23,9 @@ export function SiteHeader() {
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
         <span className="text-sm font-medium">{current?.label ?? "PokéDex"}</span>
+        <div className="ml-auto">
+          <NewsBell />
+        </div>
       </div>
     </header>
   );

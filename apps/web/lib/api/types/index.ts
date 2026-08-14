@@ -402,3 +402,5 @@ export { offerStatusEnum } from "./OfferStatus"
 export { scanResultStatusEnum } from "./ScanResult"
 export { tradeOfferViewDirectionEnum } from "./TradeOfferView"
 export { wishlistSourceEnum } from "./WishlistSource"
+export type * from "./NewsEntry";
+export type * from "./NewsFeed";

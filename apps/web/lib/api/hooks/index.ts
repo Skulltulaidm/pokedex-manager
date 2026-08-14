@@ -318,3 +318,5 @@ export { useUpdateItem } from "./useUpdateItem"
 export { useWithdrawOffer } from "./useWithdrawOffer"
 export { withdrawOfferMutationKey } from "./useWithdrawOffer"
 export { withdrawOfferMutationOptions } from "./useWithdrawOffer"
+export * from "./useNewsFeed";
+export * from "./useNewsFeedSuspense";
