@@ -1,7 +1,6 @@
 "use client";
 
 import { Check, ChevronDown, X } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
 
 import { apiClient } from "@/lib/api-client";
 import { useCollectionStats } from "@/lib/api/hooks/useCollectionStats";
@@ -30,21 +29,22 @@ type Option = { value: string; label: string; count?: string };
  * A rail costs a column on every screen for controls used once a session; a bar
  * costs one row and leaves the width to the cards.
  */
-export function FilterBar() {
-  const params = useSearchParams();
-  const router = useRouter();
+/**
+ * The bar reads and writes the grid's state rather than owning it: two
+ * components each navigating on their own would fight over the same URL, and
+ * only one of them would win the render.
+ */
+export function FilterBar({
+  params,
+  onChange,
+}: {
+  params: URLSearchParams;
+  onChange: (next: Record<string, string | undefined>) => void;
+}) {
   const { data: stats } = useCollectionStats({ client: { client: apiClient } });
 
-  const set = (next: Record<string, string | undefined>) => {
-    const search = new URLSearchParams(params.toString());
-    for (const [key, value] of Object.entries({ ...next, p: undefined })) {
-      if (value) search.set(key, value);
-      else search.delete(key);
-    }
-    router.replace(search.size ? `/collection?${search}` : "/collection", {
-      scroll: false,
-    });
-  };
+  const set = (next: Record<string, string | undefined>) =>
+    onChange({ ...next, p: undefined });
 
   const facets = [
     { key: "orden", label: "Ordenar", options: SORTS },

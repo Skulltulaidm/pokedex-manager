@@ -3,6 +3,8 @@
 import { ArrowLeftRight, Check, Handshake, Heart, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+
+import { useUrlState } from "@/lib/url-state";
 import { Suspense, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -170,19 +172,9 @@ function toggle(set: Set<string>, id: string): Set<string> {
 
 /** Who to trade with, before there is anything to trade. */
 function CollectorPicker() {
-  const router = useRouter();
-  const params = useSearchParams();
+  const [params, setParam] = useUrlState();
   const page = Math.max(1, Number(params.get("p") ?? 1));
   const search = params.get("q") ?? "";
-
-  const setParam = (next: Record<string, string | undefined>) => {
-    const merged = new URLSearchParams(params.toString());
-    for (const [key, value] of Object.entries(next)) {
-      if (!value) merged.delete(key);
-      else merged.set(key, value);
-    }
-    router.replace(`/trades/new${merged.size ? `?${merged}` : ""}`, { scroll: false });
-  };
 
   const { data, isPending } = useListCollectors(
     { search: search || undefined, limit: 12, offset: (page - 1) * 12 },
@@ -263,8 +255,7 @@ function SparePanel({
   paramKey: string;
   markWanted?: boolean;
 }) {
-  const router = useRouter();
-  const params = useSearchParams();
+  const [params, setParam] = useUrlState();
   const page = Math.max(1, Number(params.get(paramKey) ?? 1));
   const [search, setSearch] = useState("");
   const [onlyWanted, setOnlyWanted] = useState(false);
@@ -280,11 +271,7 @@ function SparePanel({
     { client: { client: apiClient }, query: { enabled: Boolean(ownerId) } },
   );
 
-  const setPage = (next: number) => {
-    const merged = new URLSearchParams(params.toString());
-    merged.set(paramKey, String(next));
-    router.replace(`/trades/new?${merged}`, { scroll: false });
-  };
+  const setPage = (next: number) => setParam({ [paramKey]: String(next) });
 
   const lastPage = data ? Math.max(1, Math.ceil(data.total / PER_PAGE)) : 1;
 

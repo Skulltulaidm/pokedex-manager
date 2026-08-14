@@ -2,7 +2,6 @@
 
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 import { ActivityFeed } from "@/components/activity-feed";
@@ -15,6 +14,7 @@ import { ScreenHeader } from "@/components/screen-header";
 import { SetPositions } from "@/components/set-positions";
 import { typeColor, typeLabel } from "@/components/type-dot";
 import { apiClient } from "@/lib/api-client";
+import { useUrlState } from "@/lib/url-state";
 import { formatShare, formatUsd } from "@/lib/format";
 import { useCollectionStats } from "@/lib/api/hooks/useCollectionStats";
 import { useMarketSummary } from "@/lib/api/hooks/useMarketSummary";
@@ -57,13 +57,9 @@ function StatsSkeleton() {
 function Stats() {
   // The tab lives in the URL so a link can point at the want list and a reload
   // stays where it was, the way the catalog already treats its filters.
-  const router = useRouter();
-  const params = useSearchParams();
+  const [params, setParam] = useUrlState();
   const tab = params.get("tab") === "deseos" ? "deseos" : "resumen";
-  const setTab = (next: string) =>
-    router.replace(next === "resumen" ? "/stats" : `/stats?tab=${next}`, {
-      scroll: false,
-    });
+  const setTab = (next: string) => setParam({ tab: next === "resumen" ? undefined : next });
 
   const { data, isPending } = useCollectionStats({ client: { client: apiClient } });
 

@@ -12,7 +12,7 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { ScreenHeader } from "@/components/screen-header";
 import { UserAvatar } from "@/components/user-avatar";
 import { clearAccessToken, apiClient } from "@/lib/api-client";
+import { useUrlState } from "@/lib/url-state";
 import { useForgetPreference } from "@/lib/api/hooks/useForgetPreference";
 import { useGetShareLink } from "@/lib/api/hooks/useGetShareLink";
 import { useListPreferences } from "@/lib/api/hooks/useListPreferences";
@@ -48,9 +49,8 @@ export default function AccountPage() {
 }
 
 function Account() {
-  const router = useRouter();
-  const params = useSearchParams();
   const { data: session, isPending } = authClient.useSession();
+  const [params, setParam] = useUrlState();
   const section = params.get("s") ?? "cuenta";
 
   if (isPending) return <Skeleton className="h-96 rounded-2xl" />;
@@ -69,7 +69,7 @@ function Account() {
             {SECTIONS.map(({ id, label, icon: Icon }) => (
               <li key={id}>
                 <button
-                  onClick={() => router.replace(`/profile?s=${id}`, { scroll: false })}
+                  onClick={() => setParam({ s: id })}
                   aria-current={section === id}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm whitespace-nowrap transition-colors",

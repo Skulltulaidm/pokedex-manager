@@ -2,7 +2,6 @@
 
 import { ArrowLeftRight, Handshake, Search, X } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -14,6 +13,7 @@ import { Pager } from "@/components/pager";
 import { ScreenHeader } from "@/components/screen-header";
 import { UserAvatar } from "@/components/user-avatar";
 import { apiClient } from "@/lib/api-client";
+import { useUrlState } from "@/lib/url-state";
 import { useCreateOffer } from "@/lib/api/hooks/useCreateOffer";
 import { useListOffers } from "@/lib/api/hooks/useListOffers";
 import { useListTrades } from "@/lib/api/hooks/useListTrades";
@@ -40,9 +40,8 @@ export default function TradesPage() {
 }
 
 function Trades() {
-  const router = useRouter();
-  const params = useSearchParams();
   const queryClient = useQueryClient();
+  const [params, setParam] = useUrlState();
 
   // Every list state lives in the URL: a filtered page can be linked, and going
   // back returns to the same page rather than the top of the list.
@@ -50,15 +49,6 @@ function Trades() {
   const offersPage = Math.max(1, Number(params.get("op") ?? 1));
   const search = params.get("q") ?? "";
   const side = params.get("lado");
-
-  const setParam = (next: Record<string, string | undefined>) => {
-    const merged = new URLSearchParams(params.toString());
-    for (const [key, value] of Object.entries(next)) {
-      if (value === undefined || value === "") merged.delete(key);
-      else merged.set(key, value);
-    }
-    router.replace(`/trades${merged.size ? `?${merged}` : ""}`, { scroll: false });
-  };
 
   const { data: matches, isPending } = useListTrades(
     {

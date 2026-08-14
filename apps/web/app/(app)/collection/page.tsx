@@ -2,7 +2,7 @@
 
 import { ArrowLeftRight, Search, X } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 import { BinderMark } from "@/components/binder-mark";
@@ -16,6 +16,7 @@ import { ShareMenu } from "@/components/share-menu";
 import { TYPE_ICON, typeColor, typeLabel } from "@/components/type-dot";
 import { useGridColumns } from "@/hooks/use-grid-columns";
 import { apiClient } from "@/lib/api-client";
+import { useUrlState } from "@/lib/url-state";
 import { useMarketCards } from "@/lib/api/hooks/useMarketCards";
 import { useMarketSummary } from "@/lib/api/hooks/useMarketSummary";
 import type { MarketCardsQueryParams } from "@/lib/api/types/MarketCards";
@@ -35,8 +36,8 @@ const FALLBACK_COLUMNS = 6;
 
 
 function CollectionGrid() {
-  const params = useSearchParams();
   const router = useRouter();
+  const [params, setParam] = useUrlState();
 
   const type = params.get("type") ?? undefined;
   const setId = params.get("set") ?? undefined;
@@ -88,14 +89,7 @@ function CollectionGrid() {
     { client: { client: apiClient } },
   );
 
-  function setParam(next: Record<string, string | undefined>) {
-    const search = new URLSearchParams(params.toString());
-    for (const [key, value] of Object.entries(next)) {
-      if (value) search.set(key, value);
-      else search.delete(key);
-    }
-    router.replace(search.size ? `/collection?${search}` : "/collection", { scroll: false });
-  }
+
 
   const total = data?.total ?? 0;
   const lastPage = Math.max(1, Math.ceil(total / pageSize));
@@ -162,7 +156,7 @@ function CollectionGrid() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <OwnedTabs value={owned} onChange={(next) => setParam({ tengo: next, p: undefined })} />
         <span aria-hidden className="bg-edge mx-1 hidden h-5 w-px sm:block" />
-        <FilterBar />
+        <FilterBar params={params} onChange={setParam} />
       </div>
 
       {summary && summary.types.length > 0 && (

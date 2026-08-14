@@ -2,7 +2,9 @@
 
 import { CalendarDays, Handshake, Heart, Layers, Search, X } from "lucide-react";
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
+
+import { useUrlState } from "@/lib/url-state";
 import { Suspense, useState } from "react";
 
 import { CardImage } from "@/components/card-image";
@@ -184,8 +186,7 @@ function Sets({ profile }: { profile: CollectorProfile }) {
 }
 
 function Spares({ ownerId, isSelf }: { ownerId: string; isSelf: boolean }) {
-  const router = useRouter();
-  const params = useSearchParams();
+  const [params, setParam] = useUrlState();
   const page = Math.max(1, Number(params.get("p") ?? 1));
   const [search, setSearch] = useState("");
 
@@ -229,11 +230,7 @@ function Spares({ ownerId, isSelf }: { ownerId: string; isSelf: boolean }) {
           <Pager
             page={page}
             lastPage={lastPage}
-            onChange={(next) => {
-              const merged = new URLSearchParams(params.toString());
-              merged.set("p", String(next));
-              router.replace(`?${merged}`, { scroll: false });
-            }}
+            onChange={(next) => setParam({ p: String(next) })}
           />
         </div>
       </div>
