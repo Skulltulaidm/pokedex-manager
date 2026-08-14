@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { CardImage } from "@/components/card-image";
+import { CardSkeleton } from "@/components/pokeball";
 import { StatRadar } from "@/components/stat-radar";
 import { TypeChip, typeColor } from "@/components/type-dot";
 import { Pager } from "@/components/pager";
@@ -150,7 +151,15 @@ export function SetCardsDialog({
             openCard && "border-edge max-h-[62svh] sm:border-r",
           )}
         >
-          {isPending && <Skeleton className="h-64 rounded-xl" />}
+          {isPending && (
+            <ul className="grid grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-3">
+              {Array.from({ length: 12 }).map((_, index) => (
+                <li key={index}>
+                  <CardSkeleton />
+                </li>
+              ))}
+            </ul>
+          )}
 
           {data?.total === 0 && (
             <p className="text-muted-foreground py-12 text-center text-sm">

@@ -16,6 +16,7 @@ import { ShareMenu } from "@/components/share-menu";
 import { TYPE_ICON, typeColor, typeLabel } from "@/components/type-dot";
 import { useGridColumns } from "@/hooks/use-grid-columns";
 import { apiClient } from "@/lib/api-client";
+import { CardSkeleton, LoadFailed } from "@/components/pokeball";
 import { useUrlState } from "@/lib/url-state";
 import { useMarketCards } from "@/lib/api/hooks/useMarketCards";
 import { useMarketSummary } from "@/lib/api/hooks/useMarketSummary";
@@ -75,7 +76,7 @@ function CollectionGrid() {
   }, [draft]);
 
   const { data: summary } = useMarketSummary({ client: { client: apiClient } });
-  const { data, isPending, error } = useMarketCards(
+  const { data, isPending, error, refetch } = useMarketCards(
     {
       type,
       set_id: setId,
@@ -180,9 +181,10 @@ function CollectionGrid() {
       {isPending && <PocketSkeleton />}
 
       {error && (
-        <p className="text-destructive text-sm">
-          No se pudo cargar la colección. Revisa que el servidor esté corriendo.
-        </p>
+        <LoadFailed
+          message="No se pudo cargar el catálogo. Revisa que el servidor esté corriendo."
+          onRetry={() => refetch()}
+        />
       )}
 
       {data && data.items.length === 0 && (
@@ -348,7 +350,7 @@ function PocketSkeleton() {
     <ul className="grid grid-cols-2 gap-x-3.5 gap-y-6 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
       {Array.from({ length: 8 }).map((_, index) => (
         <li key={index} className="space-y-2">
-          <Skeleton className="aspect-[63/88] rounded-lg" />
+          <CardSkeleton />
           <Skeleton className="h-3.5 w-3/4" />
           <Skeleton className="h-3 w-1/2" />
         </li>

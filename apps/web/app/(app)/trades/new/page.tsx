@@ -10,6 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { CardImage } from "@/components/card-image";
+import { CardSkeleton } from "@/components/pokeball";
 import { Pager } from "@/components/pager";
 import { ScreenHeader } from "@/components/screen-header";
 import { UserAvatar } from "@/components/user-avatar";
@@ -326,7 +327,15 @@ function SparePanel({
         <Pager page={page} lastPage={lastPage} onChange={setPage} />
       </div>
 
-      {isPending && <Skeleton className="h-64 rounded-xl" />}
+      {isPending && (
+        <ul className="grid grid-cols-[repeat(auto-fill,minmax(88px,1fr))] gap-2.5">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <li key={index}>
+              <CardSkeleton />
+            </li>
+          ))}
+        </ul>
+      )}
 
       {data?.total === 0 && (
         <p className="text-muted-foreground py-10 text-center text-sm">

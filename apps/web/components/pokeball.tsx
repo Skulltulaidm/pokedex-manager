@@ -1,0 +1,131 @@
+"use client";
+
+import { cn } from "@workspace/ui/lib/utils";
+
+type Catch = "waiting" | "caught" | "escaped";
+
+/**
+ * The three states of a throw, borrowed for the three states of a request.
+ *
+ * A ball that has caught something sits still; a ball still deciding shakes.
+ * That is the same uncertainty a pending request is in, so waiting wobbles,
+ * arriving clicks shut, and failing bursts open — which is also why a failed
+ * load can say so without a second icon: the animation already did.
+ */
+export function Pokeball({
+  state = "waiting",
+  size = 28,
+  className,
+}: {
+  state?: Catch;
+  size?: number;
+  className?: string;
+}) {
+  return (
+    <svg
+      viewBox="0 0 48 48"
+      width={size}
+      height={size}
+      role="presentation"
+      className={cn(
+        "shrink-0",
+        state === "waiting" && "wobble",
+        state === "caught" && "caught",
+        state === "escaped" && "escaped",
+        className,
+      )}
+    >
+      <defs>
+        <clipPath id="pokeball-top">
+          <rect x="0" y="0" width="48" height="24" />
+        </clipPath>
+        <clipPath id="pokeball-bottom">
+          <rect x="0" y="24" width="48" height="24" />
+        </clipPath>
+      </defs>
+
+      {/* Halves rather than one circle: a burst opens them apart, and a whole
+          circle has nothing to open. */}
+      <g className={cn(state === "escaped" && "origin-center")}>
+        <circle
+          cx="24"
+          cy="24"
+          r="21"
+          className="fill-destructive"
+          clipPath="url(#pokeball-top)"
+          transform={state === "escaped" ? "translate(0 -5)" : undefined}
+        />
+        <circle
+          cx="24"
+          cy="24"
+          r="21"
+          className="fill-surface stroke-foreground/15"
+          strokeWidth="1.5"
+          clipPath="url(#pokeball-bottom)"
+          transform={state === "escaped" ? "translate(0 5)" : undefined}
+        />
+      </g>
+
+      <circle
+        cx="24"
+        cy="24"
+        r="21"
+        fill="none"
+        className="stroke-foreground/20"
+        strokeWidth="1.5"
+      />
+      {state !== "escaped" && (
+        <>
+          <rect x="3" y="22" width="42" height="4" className="fill-foreground/85" />
+          <circle cx="24" cy="24" r="7.5" className="fill-surface stroke-foreground/85" strokeWidth="3" />
+          <circle cx="24" cy="24" r="3" className="fill-foreground/25" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+/**
+ * A card-shaped hole with a ball spinning in it.
+ *
+ * Sized by its container rather than a fixed height, so it can stand in for a
+ * tile in a grid without the grid moving when the real card arrives.
+ */
+export function CardSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "ring-edge bg-surface grid aspect-[63/88] w-full place-items-center rounded-lg ring-1",
+        className,
+      )}
+    >
+      <Pokeball size={26} className="opacity-35" />
+    </div>
+  );
+}
+
+/**
+ * What a request that failed looks like: the ball open, and what went wrong.
+ */
+export function LoadFailed({
+  message = "No se pudo cargar.",
+  onRetry,
+}: {
+  message?: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <div className="ring-edge bg-surface/60 flex flex-col items-center gap-3 rounded-2xl px-6 py-12 text-center ring-1">
+      <Pokeball state="escaped" size={40} />
+      <p className="text-muted-foreground text-sm">{message}</p>
+      {onRetry && (
+        <button
+          onClick={onRetry}
+          className="text-foreground text-sm underline underline-offset-4"
+        >
+          Reintentar
+        </button>
+      )}
+    </div>
+  );
+}

@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { Pokeball } from "@/components/pokeball";
 import { TYPE_VAR } from "@/components/type-dot";
 import { cn } from "@workspace/ui/lib/utils";
 
@@ -89,6 +90,15 @@ export function CardImage({
           locked && "grayscale",
         )}
       >
+        {/* Behind the art rather than swapped for it: the ball needs no state
+            and no client boundary, and the image covers it the moment it
+            paints. Cards are opaque rectangles, so nothing shows through. */}
+        {src && (
+          <span className="bg-surface absolute inset-0 grid place-items-center">
+            <Pokeball size={24} className="opacity-30" />
+          </span>
+        )}
+
         {src ? (
           art ? (
             <Image
