@@ -267,6 +267,22 @@ async def test_seeding_twice_writes_the_market_once(
     assert await _rows(db, ids) == written
 
 
+async def test_two_seeds_can_share_a_database(
+    db: AsyncSession, catalogued: list[seed.CardRef]
+) -> None:
+    """Handles repeat across runs, and an email is unique across the whole table:
+    two runs that both wanted `voidraptor` must still both land."""
+    first = seed.plan_market(catalogued, count=30, seed=1)
+    second = seed.plan_market(catalogued, count=30, seed=3)
+
+    assert {c.name for c in first.collectors} & {c.name for c in second.collectors}
+
+    await seed.write_market(db, first)
+    report = await seed.write_market(db, second)
+
+    assert report.collectors.written == 30
+
+
 async def test_seeded_collectors_cannot_sign_in(
     db: AsyncSession, catalogued: list[seed.CardRef]
 ) -> None:

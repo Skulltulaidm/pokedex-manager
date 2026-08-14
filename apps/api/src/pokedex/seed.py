@@ -43,6 +43,9 @@ DEFAULT_SEED = 20260813
 
 # Seeded rows are recognisable by their owner's id, which is what lets --reset
 # remove exactly what this command wrote and nothing a real person signed up for.
+# Both the id and the email are scoped to the run seed: two seeds generate the
+# same handles eventually, and an email collision would be refused by the unique
+# constraint rather than by anything this module could see.
 ID_PREFIX = "seed-"
 EMAIL_DOMAIN = "seed.pokedex.test"
 
@@ -152,6 +155,10 @@ _INSERT_USER = text(
     "VALUES (:id, :name, :email, true, :created_at, :created_at) ON CONFLICT DO NOTHING"
 )
 _DELETE_USERS = text('DELETE FROM auth."user" WHERE id LIKE :prefix RETURNING id')
+
+
+class SeedError(RuntimeError):
+    """The database would not take what the plan describes."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -413,7 +420,7 @@ def _collector(index: int, seed: int, pool: Sequence[CardRef], taken: set[str]) 
     return Collector(
         id=f"{ID_PREFIX}{seed}-{index:05d}",
         name=handle,
-        email=f"{handle.lower()}@{EMAIL_DOMAIN}",
+        email=f"{handle.lower()}@{seed}.{EMAIL_DOMAIN}",
         created_at=joined - timedelta(days=rng.randrange(1, 60)),
         holdings=tuple(holdings),
         wants=wants,
@@ -793,6 +800,13 @@ async def write_market(db: AsyncSession, market: Market) -> SeedReport:
                 for collector in market.collectors[start : start + CHUNK]
             ],
         )
+
+    # A collector the insert declined to write takes every row that points at
+    # them down with it, several statements later and as a foreign key error
+    # naming no cause. Whatever refused them is worth saying out loud here.
+    present = await _count(db, auth_user, auth_user.c.id, ids)
+    if present != len(ids):
+        raise SeedError(f"{len(ids) - present} of {len(ids)} collectors were refused")
 
     await _insert(
         db,

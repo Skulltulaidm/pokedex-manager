@@ -427,7 +427,10 @@ async def test_a_collector_is_listed_without_a_mutual_swap(
         swappable, user_id, AddWishlistRequest(card_id=CHARIZARD_CARD), WishlistSource.USER
     )
 
-    page = await trade.collector_page(swappable, user_id)
+    # Searched rather than read off the first page: like matching, this is a
+    # service that sees every collector in the database, and a seeded one has
+    # hundreds of them to be buried under.
+    page = await trade.collector_page(swappable, user_id, search="dani")
     them = next(c for c in page.items if c.user_id == other_user_id)
 
     assert them.spares == 1
