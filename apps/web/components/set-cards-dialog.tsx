@@ -1,32 +1,17 @@
 "use client";
 
-import { ExternalLink, Search, X } from "lucide-react";
-import Link from "next/link";
+import { Search, X } from "lucide-react";
 import { useState } from "react";
 
-import { CardDetail } from "@/components/card-detail";
-import { CardImage } from "@/components/card-image";
-import { CardSkeleton, PanelSkeleton } from "@/components/pokeball";
-import { StatRadar } from "@/components/stat-radar";
-import { TypeChip, typeColor } from "@/components/type-dot";
+import { CardsDialog, type DialogCard } from "@/components/cards-dialog";
 import { Pager } from "@/components/pager";
 import { apiClient } from "@/lib/api-client";
-import { useCardMarketContext } from "@/lib/api/hooks/useCardMarketContext";
-import { useGetCard } from "@/lib/api/hooks/useGetCard";
 import { useMarketCards } from "@/lib/api/hooks/useMarketCards";
-import { formatUsd } from "@/lib/format";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@workspace/ui/components/dialog";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from "@workspace/ui/components/input-group";
-import { Button } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 
 const PER_PAGE = 18;
@@ -42,7 +27,8 @@ const FILTERS = [
  *
  * The strip answers how much of a set is held; the only next question is which
  * ones, and until now that meant leaving the page and rebuilding the filter by
- * hand in the catalog.
+ * hand in the catalog. A set is the one list long enough to need searching and
+ * paging, so it brings its own controls to the shared dialog.
  */
 export function SetCardsDialog({
   setId,
@@ -58,7 +44,6 @@ export function SetCardsDialog({
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [owned, setOwned] = useState<(typeof FILTERS)[number]["value"]>("all");
-  const [openCard, setOpenCard] = useState<string | null>(null);
 
   const { data, isPending } = useMarketCards(
     {
@@ -78,25 +63,37 @@ export function SetCardsDialog({
     setPage(1);
   };
 
-  return (
-    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent
-        showCloseButton
-        className="max-h-[88svh] w-full max-w-4xl gap-0 overflow-hidden p-0 sm:max-w-4xl"
-      >
-        <DialogTitle className="border-edge border-b px-5 py-4 pr-14 text-left">
-          <span className="font-display text-lg font-semibold">{setName}</span>
-          {data && (
-            <span className="text-muted-foreground ml-2 text-sm font-normal tabular-nums">
-              {data.total}
-            </span>
-          )}
-        </DialogTitle>
-        <DialogDescription className="sr-only">
-          Cartas del set {setName}, con búsqueda, filtros y paginación.
-        </DialogDescription>
+  const cards: DialogCard[] =
+    data?.items.map((entry) => ({
+      id: entry.card.id,
+      name: entry.card.name,
+      number: entry.card.number,
+      printedTotal: entry.card.card_set.printed_total,
+      imageUrl: entry.card.image_small_url,
+      category: entry.card.category,
+      price: entry.card.price_usd === null ? null : Number(entry.card.price_usd),
+      owned: entry.owned,
+    })) ?? [];
 
-        <div className="border-edge flex flex-wrap items-center gap-2 border-b px-5 py-3">
+  return (
+    <CardsDialog
+      open={open}
+      onClose={onClose}
+      title={setName}
+      count={data?.total}
+      cards={cards}
+      loading={isPending}
+      empty={
+        <p className="text-muted-foreground py-12 text-center text-sm">
+          {search
+            ? "Ninguna carta del set coincide."
+            : owned === "owned"
+              ? "Todavía no tienes ninguna de este set."
+              : "No falta ninguna: el set está completo."}
+        </p>
+      }
+      toolbar={
+        <>
           <InputGroup className="bg-secondary h-9 max-w-[15rem] min-w-0 flex-1 rounded-full border-transparent">
             <InputGroupAddon>
               <Search className="size-3.5" />
@@ -135,94 +132,8 @@ export function SetCardsDialog({
           </div>
 
           <Pager page={page} lastPage={lastPage} onChange={setPage} />
-        </div>
-
-        <div
-          className={cn(
-            "max-h-[62svh]",
-            openCard ? "grid sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]" : "",
-          )}
-        >
-        {/* The grid narrows instead of closing: the card you opened stays in the
-            list beside its details, so the next one is one click away. */}
-        <div
-          className={cn(
-            "overflow-y-auto px-5 py-4",
-            openCard && "border-edge max-h-[62svh] sm:border-r",
-          )}
-        >
-          {isPending && (
-            <ul className="grid grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-3">
-              {Array.from({ length: 12 }).map((_, index) => (
-                <li key={index}>
-                  <CardSkeleton />
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {data?.total === 0 && (
-            <p className="text-muted-foreground py-12 text-center text-sm">
-              {search
-                ? "Ninguna carta del set coincide."
-                : owned === "owned"
-                  ? "Todavía no tienes ninguna de este set."
-                  : "No falta ninguna: el set está completo."}
-            </p>
-          )}
-
-          <ul
-            className={cn(
-              "grid gap-3",
-              openCard
-                ? "grid-cols-2"
-                : "grid-cols-[repeat(auto-fill,minmax(104px,1fr))]",
-            )}
-          >
-            {data?.items.map((entry) => (
-              <li key={entry.card.id}>
-                <button
-                  onClick={() => setOpenCard(entry.card.id)}
-                  aria-pressed={openCard === entry.card.id}
-                  className="block w-full rounded-lg text-left"
-                >
-                  {/* `locked` drains the art alone. Draining the frame would
-                      take the placeholder behind it with it, and a card you do
-                      not own is exactly where the wait is longest. */}
-                  <CardImage
-                    src={entry.card.image_small_url}
-                    alt={entry.card.name}
-                    sizes="112px"
-                    category={entry.card.category}
-                    locked={entry.owned === 0}
-                    selected={openCard === entry.card.id}
-                  />
-                  <p className="mt-1.5 truncate text-[12px] font-medium">
-                    {entry.card.name}
-                  </p>
-                  <p className="text-muted-foreground font-mono text-[10px] tabular-nums">
-                    {entry.card.number}
-                    <span className="text-muted-foreground/50">
-                      /{entry.card.card_set.printed_total}
-                    </span>
-                    {entry.owned > 1 && ` · ×${entry.owned}`}
-                  </p>
-                  <p className="font-mono text-[11px] tabular-nums">
-                    {entry.card.price_usd === null
-                      ? "—"
-                      : formatUsd(Number(entry.card.price_usd))}
-                  </p>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {openCard && (
-          <CardDetail cardId={openCard} onClose={() => setOpenCard(null)} />
-        )}
-        </div>
-      </DialogContent>
-    </Dialog>
+        </>
+      }
+    />
   );
 }

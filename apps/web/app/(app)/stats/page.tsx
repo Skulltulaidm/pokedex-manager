@@ -7,7 +7,7 @@ import { Suspense, useState } from "react";
 import { ActivityFeed } from "@/components/activity-feed";
 import { BinderMark } from "@/components/binder-mark";
 import { CardRow } from "@/components/card-row";
-import { CardSheet } from "@/components/card-sheet";
+import { CardsDialog, type DialogCard } from "@/components/cards-dialog";
 import { TypeSpectrum } from "@/components/coverage-strip";
 import { PanelSkeleton, RowsSkeleton } from "@/components/pokeball";
 import { PriceDelta } from "@/components/price-delta";
@@ -58,9 +58,9 @@ function Stats() {
   // The tab lives in the URL so a link can point at the want list and a reload
   // stays where it was, the way the catalog already treats its filters.
   const [params, setParam] = useUrlState();
-  // One sheet for the screen rather than one per list: only one card can be
-  // open, and the panel outlives the tab you opened it from.
-  const [openCard, setOpenCard] = useState<string | null>(null);
+  // Which list is open, not which card: the dialog owns the card, so opening
+  // one from the want list arrives with the rest of the want list beside it.
+  const [openList, setOpenList] = useState<"holdings" | "wishes" | null>(null);
   const tab = params.get("tab") === "deseos" ? "deseos" : "resumen";
   const setTab = (next: string) => setParam({ tab: next === "resumen" ? undefined : next });
 
@@ -166,7 +166,7 @@ function Stats() {
           </div>
 
           <div className="space-y-8">
-            <TopHoldings total={Number(data.value.total_usd)} onOpen={setOpenCard} />
+            <TopHoldings total={Number(data.value.total_usd)} onOpen={() => setOpenList("holdings")} />
             <section>
               <h2 className="font-display mb-3 text-lg font-semibold tracking-tight">
                 Actividad
@@ -178,11 +178,11 @@ function Stats() {
         </TabsContent>
 
         <TabsContent value="deseos">
-          <Wishlist onOpen={setOpenCard} />
+          <Wishlist onOpen={() => setOpenList("wishes")} />
         </TabsContent>
       </Tabs>
 
-      <CardSheet cardId={openCard} onClose={() => setOpenCard(null)} />
+      <ListDialog which={openList} onClose={() => setOpenList(null)} />
     </div>
   );
 }
@@ -249,13 +249,7 @@ function Value({ value }: { value: CollectionStats["value"] }) {
  * The cards carrying the value, largest first. A portfolio is read by its
  * positions, not only by its total.
  */
-function TopHoldings({
-  total,
-  onOpen,
-}: {
-  total: number;
-  onOpen: (cardId: string) => void;
-}) {
+function TopHoldings({ total, onOpen }: { total: number; onOpen: () => void }) {
   const { data, isPending } = useListCollection(
     { sort: "price" as never, limit: 5 },
     { client: { client: apiClient } },
@@ -288,7 +282,7 @@ function TopHoldings({
           return (
             <li key={item.id}>
               <button
-                onClick={() => onOpen(item.card.id)}
+                onClick={onOpen}
                 className="block w-full text-left"
                 aria-label={`Ver ${item.card.name}`}
               >
@@ -319,7 +313,7 @@ function TopHoldings({
   );
 }
 
-function Wishlist({ onOpen }: { onOpen: (cardId: string) => void }) {
+function Wishlist({ onOpen }: { onOpen: () => void }) {
   const queryClient = useQueryClient();
   const { data, isPending } = useListWishlist({ client: { client: apiClient } });
   const { mutate: remove } = useRemoveFromWishlist({
@@ -382,7 +376,7 @@ function Wishlist({ onOpen }: { onOpen: (cardId: string) => void }) {
         {sorted.map((item) => (
           <li key={item.id}>
             <button
-              onClick={() => onOpen(item.card.id)}
+              onClick={onOpen}
               className="block w-full text-left"
               aria-label={`Ver ${item.card.name}`}
             >
@@ -454,5 +448,63 @@ function Empty() {
         </Link>
       </div>
     </>
+  );
+}
+
+/**
+ * The two lists on this screen, in the dialog the sets already use.
+ *
+ * Both are short enough to arrive whole, so neither brings a toolbar: searching
+ * five holdings is a control nobody needs.
+ */
+function ListDialog({
+  which,
+  onClose,
+}: {
+  which: "holdings" | "wishes" | null;
+  onClose: () => void;
+}) {
+  const { data: holdings } = useListCollection(
+    { sort: "price" as never, limit: 20 },
+    { client: { client: apiClient }, query: { enabled: which === "holdings" } },
+  );
+  const { data: wishes } = useListWishlist({
+    client: { client: apiClient },
+    query: { enabled: which === "wishes" },
+  });
+
+  const cards: DialogCard[] =
+    which === "holdings"
+      ? (holdings?.items ?? []).map((item) => ({
+          id: item.card.id,
+          name: item.card.name,
+          number: item.card.number,
+          printedTotal: item.card.card_set.printed_total,
+          imageUrl: item.card.image_small_url,
+          category: item.card.category,
+          price: item.card.price_usd === null ? null : Number(item.card.price_usd),
+          owned: item.quantity,
+        }))
+      : (wishes ?? []).map((wish) => ({
+          id: wish.card.id,
+          name: wish.card.name,
+          number: wish.card.number,
+          printedTotal: wish.card.card_set.printed_total,
+          imageUrl: wish.card.image_small_url,
+          category: wish.card.category,
+          price: wish.card.price_usd === null ? null : Number(wish.card.price_usd),
+          owned: wish.owned ?? 0,
+          note: (wish.owned ?? 0) > 0 ? `Ya tienes ${wish.owned}` : (wish.reason ?? undefined),
+        }));
+
+  return (
+    <CardsDialog
+      open={which !== null}
+      onClose={onClose}
+      title={which === "wishes" ? "Tus deseos" : "Tus cartas más valiosas"}
+      count={cards.length}
+      cards={cards}
+      loading={which !== null && cards.length === 0}
+    />
   );
 }
