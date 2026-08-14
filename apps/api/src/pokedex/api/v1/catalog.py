@@ -12,7 +12,12 @@ from pokedex.schemas.market import (
     MarketCardView,
     MarketFilters,
     MarketSummary,
+    PortfolioConcentration,
+    PositionFilters,
+    PositionView,
     SetMarketView,
+    TradeSimulation,
+    TradeSimulationRequest,
 )
 from pokedex.services import catalog, collection, market, trivia
 
@@ -61,6 +66,40 @@ async def market_cards(
 @router.get("/market/summary", response_model=MarketSummary)
 async def market_summary(user: CurrentUser, db: DbSession) -> MarketSummary:
     return await market.summary(db, user.id)
+
+
+@router.get("/market/positions", response_model=Page[PositionView])
+async def market_positions(
+    user: CurrentUser,
+    db: DbSession,
+    filters: Annotated[PositionFilters, Depends()],
+) -> Page[PositionView]:
+    """Every held card as a position: cost, value, gain and weight in the portfolio."""
+    return Page(
+        items=await market.list_positions(db, user.id, filters),
+        total=await market.count_positions(db, user.id),
+        limit=filters.limit,
+        offset=filters.offset,
+    )
+
+
+@router.get("/market/concentration", response_model=PortfolioConcentration)
+async def market_concentration(user: CurrentUser, db: DbSession) -> PortfolioConcentration:
+    """How few cards carry the value of the portfolio."""
+    return await market.concentration(db, user.id)
+
+
+@router.post("/market/simulate", response_model=TradeSimulation)
+async def simulate_trade(
+    request: TradeSimulationRequest, user: CurrentUser, db: DbSession
+) -> TradeSimulation:
+    """What a swap would do to the portfolio. Reads only; nothing is traded."""
+    try:
+        return await market.simulate_trade(db, user.id, request)
+    except market.UnknownCardError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"Unknown card: {exc}") from exc
+    except market.InsufficientCopiesError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from exc
 
 
 @router.get("/market/sets", response_model=list[SetMarketView])

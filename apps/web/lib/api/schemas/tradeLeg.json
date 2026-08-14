@@ -1,0 +1,15 @@
+{
+  "properties": {
+    "card_id": { "type": "string", "title": "Card Id" },
+    "quantity": {
+      "type": "integer",
+      "minimum": 1,
+      "title": "Quantity",
+      "default": 1
+    }
+  },
+  "type": "object",
+  "required": ["card_id"],
+  "title": "TradeLeg",
+  "x-readme-ref-name": "TradeLeg"
+}

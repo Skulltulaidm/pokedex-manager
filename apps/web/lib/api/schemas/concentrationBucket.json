@@ -1,0 +1,16 @@
+{
+  "properties": {
+    "cards": { "type": "integer", "title": "Cards" },
+    "value": {
+      "type": "string",
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Value"
+    },
+    "share": { "type": "number", "title": "Share" }
+  },
+  "type": "object",
+  "required": ["cards", "value", "share"],
+  "title": "ConcentrationBucket",
+  "description": "What the largest `cards` positions add up to.",
+  "x-readme-ref-name": "ConcentrationBucket"
+}

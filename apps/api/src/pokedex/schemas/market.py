@@ -9,6 +9,8 @@ from pokedex.schemas.catalog import CardView
 
 MarketSortKey = Literal["number", "name", "price", "owned"]
 OwnedFilter = Literal["all", "owned", "missing"]
+PositionSortKey = Literal["value", "gain", "gain_percent", "cost", "quantity", "name"]
+SortDirection = Literal["asc", "desc"]
 
 
 class MarketFilters(BaseModel):
@@ -89,6 +91,82 @@ class PortfolioReturn(BaseModel):
     percent: float
     positions: int
     positions_without_cost: int
+
+
+class PositionFilters(BaseModel):
+    sort: PositionSortKey = "value"
+    direction: SortDirection = "desc"
+    limit: int = Field(default=20, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
+
+
+class PositionView(BaseModel):
+    """One held card as a position: what it cost, what it is worth now, and how
+    much of the portfolio rests on it.
+
+    Cost and gain are measured over the copies carrying a recorded cost, and
+    `costed_quantity` says how many those are: a copy bought before costs were
+    tracked would otherwise land on the value side of the subtraction alone and
+    read as pure profit.
+    """
+
+    card: CardView
+    quantity: int
+    costed_quantity: int
+    unit_cost_usd: Decimal | None
+    cost_basis: Decimal | None
+    market_value: Decimal | None
+    gain_absolute: Decimal | None
+    gain_percent: float | None
+    portfolio_share: float
+
+
+class ConcentrationBucket(BaseModel):
+    """What the largest `cards` positions add up to."""
+
+    cards: int
+    value: Decimal
+    share: float
+
+
+class PortfolioConcentration(BaseModel):
+    """How few cards carry the value.
+
+    `cards_for_half` is the count of positions, largest first, that reach half
+    the portfolio: one number for how exposed the whole thing is to a handful of
+    cards. Unpriced holdings are counted but never valued.
+    """
+
+    total_value: Decimal
+    priced_positions: int
+    unpriced_positions: int
+    buckets: list[ConcentrationBucket]
+    cards_for_half: int | None
+
+
+class TradeLeg(BaseModel):
+    card_id: str
+    quantity: int = Field(default=1, ge=1)
+
+
+class TradeSimulationRequest(BaseModel):
+    give: list[TradeLeg] = Field(default_factory=list, max_length=50)
+    receive: list[TradeLeg] = Field(default_factory=list, max_length=50)
+
+
+class TradeSimulation(BaseModel):
+    """The portfolio either side of a swap that has not happened.
+
+    Cards with no market price are named rather than valued at zero, because a
+    swap resting on them is not the even trade the totals would claim.
+    """
+
+    before: PortfolioConcentration
+    after: PortfolioConcentration
+    give_value: Decimal
+    receive_value: Decimal
+    value_delta: Decimal
+    unpriced_cards: list[str]
 
 
 class MarketSummary(BaseModel):

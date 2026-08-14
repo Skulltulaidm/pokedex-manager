@@ -1,0 +1,47 @@
+{
+  "properties": {
+    "give": {
+      "items": {
+        "properties": {
+          "card_id": { "type": "string", "title": "Card Id" },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "title": "Quantity",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "required": ["card_id"],
+        "title": "TradeLeg",
+        "x-readme-ref-name": "TradeLeg"
+      },
+      "type": "array",
+      "maxItems": 50,
+      "title": "Give"
+    },
+    "receive": {
+      "items": {
+        "properties": {
+          "card_id": { "type": "string", "title": "Card Id" },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "title": "Quantity",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "required": ["card_id"],
+        "title": "TradeLeg",
+        "x-readme-ref-name": "TradeLeg"
+      },
+      "type": "array",
+      "maxItems": 50,
+      "title": "Receive"
+    }
+  },
+  "type": "object",
+  "title": "TradeSimulationRequest",
+  "x-readme-ref-name": "TradeSimulationRequest"
+}

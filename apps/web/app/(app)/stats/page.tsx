@@ -10,6 +10,10 @@ import { CardRow } from "@/components/card-row";
 import { CardsDialog, type DialogCard } from "@/components/cards-dialog";
 import { TypeSpectrum } from "@/components/coverage-strip";
 import { PanelSkeleton, RowsSkeleton } from "@/components/pokeball";
+import { ConcentrationPanel } from "@/components/portfolio-concentration";
+import { PortfolioHistory } from "@/components/portfolio-history";
+import { PortfolioPositions } from "@/components/portfolio-positions";
+import { PortfolioSimulator } from "@/components/portfolio-simulator";
 import { PriceDelta } from "@/components/price-delta";
 import { ReturnSummary } from "@/components/return-summary";
 import { ScreenHeader } from "@/components/screen-header";
@@ -37,6 +41,13 @@ import {
 import { cn } from "@workspace/ui/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 
+const TABS = [
+  { value: "resumen", label: "Resumen" },
+  { value: "posiciones", label: "Posiciones" },
+  { value: "simulador", label: "Simulador" },
+  { value: "deseos", label: "Deseos" },
+];
+
 export default function StatsPage() {
   return (
     <Suspense fallback={<StatsSkeleton />}>
@@ -61,7 +72,8 @@ function Stats() {
   // Which list is open, not which card: the dialog owns the card, so opening
   // one from the want list arrives with the rest of the want list beside it.
   const [openList, setOpenList] = useState<"holdings" | "wishes" | null>(null);
-  const tab = params.get("tab") === "deseos" ? "deseos" : "resumen";
+  const requested = params.get("tab") ?? "";
+  const tab = TABS.some((entry) => entry.value === requested) ? requested : "resumen";
   const setTab = (next: string) => setParam({ tab: next === "resumen" ? undefined : next });
 
   const { data, isPending } = useCollectionStats({ client: { client: apiClient } });
@@ -75,9 +87,14 @@ function Stats() {
       <ScreenHeader title="Resumen" />
 
       <Tabs value={tab} onValueChange={(next) => setTab(next as string)}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="resumen">Resumen</TabsTrigger>
-          <TabsTrigger value="deseos">Deseos</TabsTrigger>
+        {/* The list scrolls rather than wraps: four tabs do not fit 390px, and a
+            second row of them reads as a second navigation. */}
+        <TabsList className="scrollbar-none mb-6 max-w-full overflow-x-auto">
+          {TABS.map((entry) => (
+            <TabsTrigger key={entry.value} value={entry.value}>
+              {entry.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value="resumen">
@@ -175,6 +192,20 @@ function Stats() {
             </section>
           </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="posiciones">
+          <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] xl:items-start">
+            <PortfolioPositions />
+            <div className="min-w-0 space-y-6">
+              <ConcentrationPanel />
+              <PortfolioHistory />
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="simulador">
+          <PortfolioSimulator />
         </TabsContent>
 
         <TabsContent value="deseos">

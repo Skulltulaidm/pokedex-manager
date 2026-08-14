@@ -6,11 +6,16 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from pokedex.db.models import CardPrice
+from pokedex.db.models import CardCondition, CardPrice
 from pokedex.integrations.pokeapi import SpeciesPayload
 from pokedex.integrations.tcgdex import CardPayload, SetPayload
 from pokedex.schemas.collection import AddCardRequest
-from pokedex.schemas.market import MarketFilters
+from pokedex.schemas.market import (
+    MarketFilters,
+    PositionFilters,
+    TradeLeg,
+    TradeSimulationRequest,
+)
 from pokedex.services import catalog, collection, market
 
 CHARIZARD = SpeciesPayload(
@@ -448,3 +453,248 @@ async def test_the_summary_carries_the_return(
 
     assert result.performance is not None
     assert result.performance.absolute == Decimal("8.00")
+
+
+async def costed_squirtle(db: AsyncSession, user_id: str) -> None:
+    """Two $10 Squirtle bought at $4, beside the fixture's two uncosted Charizard."""
+    await collection.add_card(
+        db,
+        user_id,
+        AddCardRequest(
+            card_id=f"{SET_ID}-63", quantity=2, unit_cost_usd=Decimal("4.00")
+        ),
+    )
+
+
+async def test_a_position_is_a_card_not_a_group(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    """The same card in two conditions is two rows in the collection and one
+    position here: the sleeve does not move the money."""
+    await collection.add_card(
+        stocked,
+        user_id,
+        AddCardRequest(
+            card_id=f"{SET_ID}-4", quantity=1, condition=CardCondition.LIGHTLY_PLAYED
+        ),
+    )
+
+    positions = await market.list_positions(stocked, user_id, PositionFilters())
+
+    assert len(positions) == 1
+    assert positions[0].quantity == 3
+    assert await market.count_positions(stocked, user_id) == 1
+
+
+async def test_position_values_every_copy_at_todays_price(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    positions = await market.list_positions(stocked, user_id, PositionFilters())
+
+    assert positions[0].market_value == Decimal("200.00")
+    assert positions[0].portfolio_share == pytest.approx(100.0)
+
+
+async def test_position_gain_is_measured_over_the_costed_copies(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    await costed_squirtle(stocked, user_id)
+
+    positions = await market.list_positions(stocked, user_id, PositionFilters())
+    squirtle = next(p for p in positions if p.card.id == f"{SET_ID}-63")
+
+    assert squirtle.cost_basis == Decimal("8.00")
+    assert squirtle.unit_cost_usd == Decimal("4.00")
+    assert squirtle.market_value == Decimal("20.00")
+    assert squirtle.gain_absolute == Decimal("12.00")
+    assert squirtle.gain_percent == pytest.approx(150.0)
+
+
+async def test_position_without_a_cost_reports_no_gain_rather_than_zero(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    positions = await market.list_positions(stocked, user_id, PositionFilters())
+
+    assert positions[0].cost_basis is None
+    assert positions[0].gain_absolute is None
+    assert positions[0].gain_percent is None
+
+
+async def test_share_is_against_the_portfolio_not_the_page(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    """A single position per page still reports its weight in the whole."""
+    await costed_squirtle(stocked, user_id)
+
+    page = await market.list_positions(
+        stocked, user_id, PositionFilters(sort="value", limit=1, offset=1)
+    )
+
+    assert [p.card.id for p in page] == [f"{SET_ID}-63"]
+    # $20 of a $220 portfolio, not 100% of the page it arrived on.
+    assert page[0].portfolio_share == pytest.approx(20 / 220 * 100)
+
+
+async def test_positions_sort_by_the_requested_column(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    await costed_squirtle(stocked, user_id)
+
+    by_value = await market.list_positions(
+        stocked, user_id, PositionFilters(sort="value", direction="asc")
+    )
+    by_name = await market.list_positions(
+        stocked, user_id, PositionFilters(sort="name", direction="asc")
+    )
+
+    assert [p.card.id for p in by_value] == [f"{SET_ID}-63", f"{SET_ID}-4"]
+    assert [p.card.name for p in by_name] == ["Charizard", "Squirtle"]
+
+
+async def test_unmeasurable_gains_sort_last_in_both_directions(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    """The uncosted Charizard has no gain at all, so it belongs at the end
+    whichever way the column is read — not among the positions that broke even."""
+    await costed_squirtle(stocked, user_id)
+
+    descending = await market.list_positions(
+        stocked, user_id, PositionFilters(sort="gain", direction="desc")
+    )
+    ascending = await market.list_positions(
+        stocked, user_id, PositionFilters(sort="gain", direction="asc")
+    )
+
+    assert descending[-1].card.id == f"{SET_ID}-4"
+    assert ascending[-1].card.id == f"{SET_ID}-4"
+
+
+async def stocked_with_a_third(db: AsyncSession, user_id: str) -> None:
+    """$200 of Charizard, $20 of Squirtle and one Chikorita nobody prices."""
+    await collection.add_card(db, user_id, AddCardRequest(card_id=f"{SET_ID}-63", quantity=2))
+    await collection.add_card(db, user_id, AddCardRequest(card_id=f"{SET_ID}-99"))
+
+
+async def test_concentration_says_how_few_cards_hold_half_the_value(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    await stocked_with_a_third(stocked, user_id)
+
+    result = await market.concentration(stocked, user_id)
+
+    assert result.total_value == Decimal("220.00")
+    assert result.cards_for_half == 1
+    assert result.priced_positions == 2
+    assert result.unpriced_positions == 1
+
+
+async def test_concentration_buckets_stop_short_of_the_whole_portfolio(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    """A bucket as wide as the portfolio would report 100%, which is arithmetic."""
+    await stocked_with_a_third(stocked, user_id)
+
+    result = await market.concentration(stocked, user_id)
+
+    assert [bucket.cards for bucket in result.buckets] == [1]
+    assert result.buckets[0].value == Decimal("200.00")
+    assert result.buckets[0].share == pytest.approx(200 / 220 * 100)
+
+
+async def test_concentration_of_an_unpriced_portfolio_is_unknown_not_zero_cards(
+    stocked: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    await collection.add_card(stocked, other_user_id, AddCardRequest(card_id=f"{SET_ID}-99"))
+
+    result = await market.concentration(stocked, other_user_id)
+
+    assert result.total_value == Decimal("0")
+    assert result.cards_for_half is None
+    assert result.unpriced_positions == 1
+
+
+async def test_simulation_values_both_sides_of_the_swap(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    result = await market.simulate_trade(
+        stocked,
+        user_id,
+        TradeSimulationRequest(
+            give=[TradeLeg(card_id=f"{SET_ID}-4")],
+            receive=[TradeLeg(card_id=f"{SET_ID}-63", quantity=2)],
+        ),
+    )
+
+    assert result.give_value == Decimal("100.00")
+    assert result.receive_value == Decimal("20.00")
+    assert result.value_delta == Decimal("-80.00")
+    assert result.before.total_value == Decimal("200.00")
+    assert result.after.total_value == Decimal("120.00")
+    assert result.after.priced_positions == 2
+
+
+async def test_simulation_writes_nothing(stocked: AsyncSession, user_id: str) -> None:
+    await market.simulate_trade(
+        stocked,
+        user_id,
+        TradeSimulationRequest(
+            give=[TradeLeg(card_id=f"{SET_ID}-4", quantity=2)],
+            receive=[TradeLeg(card_id=f"{SET_ID}-63")],
+        ),
+    )
+
+    assert await market.portfolio_value(stocked, user_id) == Decimal("200.00")
+    assert await market.count_positions(stocked, user_id) == 1
+
+
+async def test_a_position_given_away_entirely_leaves_the_portfolio(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    result = await market.simulate_trade(
+        stocked,
+        user_id,
+        TradeSimulationRequest(give=[TradeLeg(card_id=f"{SET_ID}-4", quantity=2)]),
+    )
+
+    assert result.after.total_value == Decimal("0")
+    assert result.after.priced_positions == 0
+    assert result.after.cards_for_half is None
+
+
+async def test_simulation_refuses_to_give_copies_that_are_not_held(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    with pytest.raises(market.InsufficientCopiesError):
+        await market.simulate_trade(
+            stocked,
+            user_id,
+            TradeSimulationRequest(give=[TradeLeg(card_id=f"{SET_ID}-4", quantity=3)]),
+        )
+
+
+async def test_simulation_rejects_a_card_outside_the_catalog(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    with pytest.raises(market.UnknownCardError):
+        await market.simulate_trade(
+            stocked,
+            user_id,
+            TradeSimulationRequest(receive=[TradeLeg(card_id="nope-1")]),
+        )
+
+
+async def test_simulation_names_what_it_cannot_price(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    """An unpriced card counted as zero would make a lopsided swap look even."""
+    result = await market.simulate_trade(
+        stocked,
+        user_id,
+        TradeSimulationRequest(
+            give=[TradeLeg(card_id=f"{SET_ID}-4")],
+            receive=[TradeLeg(card_id=f"{SET_ID}-99")],
+        ),
+    )
+
+    assert result.unpriced_cards == [f"{SET_ID}-99"]
+    assert result.receive_value == Decimal("0")

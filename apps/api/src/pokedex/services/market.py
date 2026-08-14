@@ -1,6 +1,7 @@
-from collections.abc import Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from datetime import date, timedelta
 from decimal import Decimal
+from itertools import accumulate
 from typing import Any
 from uuid import UUID
 
@@ -10,6 +11,8 @@ from sqlalchemy import (
     ScalarSelect,
     Select,
     SQLColumnExpression,
+    Subquery,
+    case,
     cast,
     func,
     select,
@@ -18,19 +21,46 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from pokedex.db.models import Card, CardPrice, CardSet, CollectionItem, Species
+from pokedex.schemas.catalog import CardView
 from pokedex.schemas.market import (
     CardMarketContext,
+    ConcentrationBucket,
     MarketFilters,
     MarketSummary,
     MarketTypeCount,
+    PortfolioConcentration,
     PortfolioReturn,
+    PositionFilters,
+    PositionView,
     PriceChange,
     SetMarketView,
+    TradeSimulation,
+    TradeSimulationRequest,
 )
 
 # How far back a reported change looks. Long enough that a weekly sync produces
 # one, short enough that the number still describes the present.
 WINDOW_DAYS = 30
+
+# Sizes the concentration is reported at: round numbers a reader can weigh
+# against each other, rather than a curve nobody reads off a screen.
+CONCENTRATION_BUCKETS = (1, 3, 5, 10)
+
+CENTS = Decimal("0.01")
+
+
+class UnknownCardError(LookupError):
+    """A card named in a hypothetical trade is absent from the catalog."""
+
+
+class InsufficientCopiesError(ValueError):
+    """The trade gives away more copies of a card than are held."""
+
+    def __init__(self, card_id: str, held: int, requested: int) -> None:
+        super().__init__(f"Holds {held} copies of {card_id}, cannot give {requested}")
+        self.card_id = card_id
+        self.held = held
+        self.requested = requested
 
 
 def _owned_total(user_id: str) -> ColumnElement[int]:
@@ -440,4 +470,256 @@ async def summary(db: AsyncSession, user_id: str) -> MarketSummary:
         types=await _types(db, user_id),
         change=await portfolio_change(db, user_id),
         performance=await portfolio_return(db, user_id),
+    )
+
+
+def _holding_groups(user_id: str) -> Subquery:
+    """One row per held card: the copies, and what the costed ones cost.
+
+    Copies kept in different conditions collapse into a single position, because
+    a portfolio is read by card and the sleeve a copy sits in does not move the
+    money. The cost sums only the copies carrying one, so a group catalogued
+    without a price leaves the basis alone instead of counting as free.
+    """
+    costed = CollectionItem.unit_cost_usd.isnot(None)
+    return (
+        select(
+            CollectionItem.card_id.label("card_id"),
+            func.sum(CollectionItem.quantity).label("quantity"),
+            func.coalesce(
+                func.sum(CollectionItem.unit_cost_usd * CollectionItem.quantity).filter(costed),
+                0,
+            ).label("cost_basis"),
+            func.coalesce(func.sum(CollectionItem.quantity).filter(costed), 0).label(
+                "costed_quantity"
+            ),
+        )
+        .where(CollectionItem.user_id == user_id)
+        .group_by(CollectionItem.card_id)
+        .subquery()
+    )
+
+
+def _position_order[T: tuple[Any, ...]](
+    statement: Select[T], filters: PositionFilters, groups: Subquery
+) -> Select[T]:
+    price = func.coalesce(Card.price_usd, 0)
+    # Null rather than zero wherever no copy carries a cost: a position that
+    # cannot be measured must not sort among the ones that broke even.
+    gain = case(
+        (
+            groups.c.costed_quantity > 0,
+            price * groups.c.costed_quantity - groups.c.cost_basis,
+        ),
+        else_=None,
+    )
+    columns: dict[str, SQLColumnExpression[Any]] = {
+        "value": price * groups.c.quantity,
+        "gain": gain,
+        "gain_percent": case((groups.c.cost_basis > 0, gain / groups.c.cost_basis), else_=None),
+        "cost": case((groups.c.costed_quantity > 0, groups.c.cost_basis), else_=None),
+        "quantity": groups.c.quantity,
+        "name": Card.name,
+    }
+
+    column = columns[filters.sort]
+    ordered = column.asc() if filters.direction == "asc" else column.desc()
+    # Every ordering ends on the id: a tie with no tiebreaker lets a row appear
+    # on two pages or on neither.
+    return statement.order_by(ordered.nulls_last(), Card.id)
+
+
+def _position(
+    card: Card,
+    quantity: int,
+    cost_basis: Decimal,
+    costed_quantity: int,
+    portfolio: Decimal,
+) -> PositionView:
+    price = card.price_usd
+    value = None if price is None else price * quantity
+    cost = cost_basis if costed_quantity else None
+
+    gain: Decimal | None = None
+    percent: float | None = None
+    if price is not None and cost is not None and cost > 0:
+        gain = price * costed_quantity - cost
+        percent = float(gain / cost * 100)
+
+    return PositionView(
+        card=CardView.model_validate(card),
+        quantity=quantity,
+        costed_quantity=costed_quantity,
+        unit_cost_usd=None if cost is None else (cost / costed_quantity).quantize(CENTS),
+        cost_basis=cost,
+        market_value=value,
+        gain_absolute=gain,
+        gain_percent=percent,
+        portfolio_share=float(value / portfolio * 100) if value and portfolio > 0 else 0.0,
+    )
+
+
+async def portfolio_value(db: AsyncSession, user_id: str) -> Decimal:
+    """What every copy held is worth at today's prices."""
+    total = (
+        await db.execute(
+            select(
+                func.coalesce(
+                    func.sum(func.coalesce(Card.price_usd, 0) * CollectionItem.quantity), 0
+                )
+            )
+            .select_from(CollectionItem)
+            .join(Card, Card.id == CollectionItem.card_id)
+            .where(CollectionItem.user_id == user_id)
+        )
+    ).scalar_one()
+    return Decimal(total)
+
+
+async def count_positions(db: AsyncSession, user_id: str) -> int:
+    result = await db.execute(
+        select(func.count(func.distinct(CollectionItem.card_id))).where(
+            CollectionItem.user_id == user_id
+        )
+    )
+    return result.scalar_one()
+
+
+async def list_positions(
+    db: AsyncSession, user_id: str, filters: PositionFilters
+) -> list[PositionView]:
+    """One page of holdings, each as a position.
+
+    The share is measured against the whole portfolio rather than the page, so
+    the third page still says what a position is worth in the round.
+    """
+    groups = _holding_groups(user_id)
+    statement = (
+        select(Card, groups.c.quantity, groups.c.cost_basis, groups.c.costed_quantity)
+        .join(groups, groups.c.card_id == Card.id)
+        .options(joinedload(Card.card_set), joinedload(Card.species))
+    )
+    statement = _position_order(statement, filters, groups)
+    statement = statement.limit(filters.limit).offset(filters.offset)
+
+    portfolio = await portfolio_value(db, user_id)
+    rows = (await db.execute(statement)).unique().all()
+    return [
+        _position(card, quantity, Decimal(cost_basis), costed, portfolio)
+        for card, quantity, cost_basis, costed in rows
+    ]
+
+
+async def _holdings(db: AsyncSession, user_id: str) -> dict[str, tuple[int, Decimal | None]]:
+    """Copies and unit price of every held card, keyed by card."""
+    result = await db.execute(
+        select(CollectionItem.card_id, func.sum(CollectionItem.quantity), Card.price_usd)
+        .join(Card, Card.id == CollectionItem.card_id)
+        .where(CollectionItem.user_id == user_id)
+        .group_by(CollectionItem.card_id, Card.price_usd)
+    )
+    return {card_id: (quantity, price) for card_id, quantity, price in result}
+
+
+def _concentration_of(
+    holdings: Mapping[str, tuple[int, Decimal | None]],
+) -> PortfolioConcentration:
+    values = sorted(
+        (price * quantity for quantity, price in holdings.values() if price is not None),
+        reverse=True,
+    )
+    total = sum(values, Decimal(0))
+    unpriced = sum(1 for _, price in holdings.values() if price is None)
+
+    if total <= 0:
+        return PortfolioConcentration(
+            total_value=total,
+            priced_positions=len(values),
+            unpriced_positions=unpriced,
+            buckets=[],
+            cards_for_half=None,
+        )
+
+    cumulative = list(accumulate(values))
+    # A bucket as wide as the portfolio says 100% of the value is in all of it,
+    # which is arithmetic rather than information.
+    buckets = [
+        ConcentrationBucket(
+            cards=size,
+            value=cumulative[size - 1],
+            share=float(cumulative[size - 1] / total * 100),
+        )
+        for size in CONCENTRATION_BUCKETS
+        if size < len(values)
+    ]
+
+    return PortfolioConcentration(
+        total_value=total,
+        priced_positions=len(values),
+        unpriced_positions=unpriced,
+        buckets=buckets,
+        cards_for_half=next(
+            index for index, reached in enumerate(cumulative, start=1) if reached * 2 >= total
+        ),
+    )
+
+
+async def concentration(db: AsyncSession, user_id: str) -> PortfolioConcentration:
+    return _concentration_of(await _holdings(db, user_id))
+
+
+async def _prices(db: AsyncSession, card_ids: Iterable[str]) -> dict[str, Decimal | None]:
+    wanted = set(card_ids)
+    if not wanted:
+        return {}
+
+    rows = (await db.execute(select(Card.id, Card.price_usd).where(Card.id.in_(wanted)))).all()
+    found: dict[str, Decimal | None] = {card_id: price for card_id, price in rows}
+
+    missing = sorted(wanted - found.keys())
+    if missing:
+        raise UnknownCardError(missing[0])
+
+    return found
+
+
+async def simulate_trade(
+    db: AsyncSession, user_id: str, request: TradeSimulationRequest
+) -> TradeSimulation:
+    """The portfolio as a swap would leave it.
+
+    Nothing is written and nothing is reserved: the answer is arithmetic over
+    today's holdings at today's prices, which is what makes it worth asking
+    before agreeing to anything.
+    """
+    holdings = await _holdings(db, user_id)
+    prices = await _prices(db, [leg.card_id for leg in (*request.give, *request.receive)])
+
+    after = dict(holdings)
+    give_value = Decimal(0)
+    for leg in request.give:
+        held, price = after.get(leg.card_id, (0, prices[leg.card_id]))
+        if leg.quantity > held:
+            raise InsufficientCopiesError(leg.card_id, held, leg.quantity)
+        after[leg.card_id] = (held - leg.quantity, price)
+        if price is not None:
+            give_value += price * leg.quantity
+
+    receive_value = Decimal(0)
+    for leg in request.receive:
+        held = after.get(leg.card_id, (0, None))[0]
+        price = prices[leg.card_id]
+        after[leg.card_id] = (held + leg.quantity, price)
+        if price is not None:
+            receive_value += price * leg.quantity
+
+    return TradeSimulation(
+        before=_concentration_of(holdings),
+        after=_concentration_of({
+            card_id: holding for card_id, holding in after.items() if holding[0] > 0
+        }),
+        give_value=give_value,
+        receive_value=receive_value,
+        value_delta=receive_value - give_value,
+        unpriced_cards=sorted(card_id for card_id, price in prices.items() if price is None),
     )

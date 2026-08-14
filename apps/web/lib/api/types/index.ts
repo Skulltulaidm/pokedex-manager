@@ -49,6 +49,7 @@ export type {
 export type { CollectionValue } from "./CollectionValue"
 export type { CollectorProfile } from "./CollectorProfile"
 export type { CollectorView } from "./CollectorView"
+export type { ConcentrationBucket } from "./ConcentrationBucket"
 export type { ConditionCount } from "./ConditionCount"
 export type {
   ConfirmScan201,
@@ -217,6 +218,20 @@ export type {
   MarketCardsQueryResponse,
 } from "./MarketCards"
 export type {
+  MarketConcentration200,
+  MarketConcentrationQuery,
+  MarketConcentrationQueryResponse,
+} from "./MarketConcentration"
+export type {
+  MarketPositions200,
+  MarketPositions422,
+  MarketPositionsQuery,
+  MarketPositionsQueryParams,
+  MarketPositionsQueryParamsDirectionEnumKey,
+  MarketPositionsQueryParamsSortEnumKey,
+  MarketPositionsQueryResponse,
+} from "./MarketPositions"
+export type {
   MarketSets200,
   MarketSetsQuery,
   MarketSetsQueryResponse,
@@ -244,10 +259,13 @@ export type { OwnedSlot } from "./OwnedSlot"
 export type { PageCollectionItemView } from "./PageCollectionItemView"
 export type { PageCollectorView } from "./PageCollectorView"
 export type { PageMarketCardView } from "./PageMarketCardView"
+export type { PagePositionView } from "./PagePositionView"
 export type { PageSpareCard } from "./PageSpareCard"
 export type { PageTradeMatch } from "./PageTradeMatch"
 export type { PageTradeOfferView } from "./PageTradeOfferView"
+export type { PortfolioConcentration } from "./PortfolioConcentration"
 export type { PortfolioReturn } from "./PortfolioReturn"
+export type { PositionView } from "./PositionView"
 export type { PreferenceView } from "./PreferenceView"
 export type { PriceChange } from "./PriceChange"
 export type { ProfileSet } from "./ProfileSet"
@@ -314,6 +332,13 @@ export type { SetCoverage } from "./SetCoverage"
 export type { SetGap } from "./SetGap"
 export type { SetMarketView } from "./SetMarketView"
 export type { ShareLinkView } from "./ShareLinkView"
+export type {
+  SimulateTrade200,
+  SimulateTrade422,
+  SimulateTradeMutation,
+  SimulateTradeMutationRequest,
+  SimulateTradeMutationResponse,
+} from "./SimulateTrade"
 export type { SpareCard } from "./SpareCard"
 export type {
   SpeciesTrivia200,
@@ -324,11 +349,14 @@ export type {
 } from "./SpeciesTrivia"
 export type { SpeciesView } from "./SpeciesView"
 export type { TradeCard } from "./TradeCard"
+export type { TradeLeg } from "./TradeLeg"
 export type { TradeMatch } from "./TradeMatch"
 export type {
   TradeOfferView,
   TradeOfferViewDirectionEnumKey,
 } from "./TradeOfferView"
+export type { TradeSimulation } from "./TradeSimulation"
+export type { TradeSimulationRequest } from "./TradeSimulationRequest"
 export type { TriviaView } from "./TriviaView"
 export type { TypeCount } from "./TypeCount"
 export type {
@@ -359,6 +387,8 @@ export { listCollectionQueryParamsSortEnum } from "./ListCollection"
 export { listOffersQueryParamsDirectionEnum } from "./ListOffers"
 export { marketCardsQueryParamsOwnedEnum } from "./MarketCards"
 export { marketCardsQueryParamsSortEnum } from "./MarketCards"
+export { marketPositionsQueryParamsDirectionEnum } from "./MarketPositions"
+export { marketPositionsQueryParamsSortEnum } from "./MarketPositions"
 export { messageRoleEnum } from "./MessageRole"
 export { offerStatusEnum } from "./OfferStatus"
 export { scanResultStatusEnum } from "./ScanResult"

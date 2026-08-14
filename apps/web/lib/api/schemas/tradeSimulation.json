@@ -1,0 +1,134 @@
+{
+  "properties": {
+    "before": {
+      "properties": {
+        "total_value": {
+          "type": "string",
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "title": "Total Value"
+        },
+        "priced_positions": { "type": "integer", "title": "Priced Positions" },
+        "unpriced_positions": {
+          "type": "integer",
+          "title": "Unpriced Positions"
+        },
+        "buckets": {
+          "items": {
+            "properties": {
+              "cards": { "type": "integer", "title": "Cards" },
+              "value": {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "title": "Value"
+              },
+              "share": { "type": "number", "title": "Share" }
+            },
+            "type": "object",
+            "required": ["cards", "value", "share"],
+            "title": "ConcentrationBucket",
+            "description": "What the largest `cards` positions add up to.",
+            "x-readme-ref-name": "ConcentrationBucket"
+          },
+          "type": "array",
+          "title": "Buckets"
+        },
+        "cards_for_half": {
+          "anyOf": [{ "type": "integer" }, { "type": "null" }],
+          "title": "Cards For Half"
+        }
+      },
+      "type": "object",
+      "required": [
+        "total_value",
+        "priced_positions",
+        "unpriced_positions",
+        "buckets",
+        "cards_for_half"
+      ],
+      "title": "PortfolioConcentration",
+      "description": "How few cards carry the value.\n\n`cards_for_half` is the count of positions, largest first, that reach half\nthe portfolio: one number for how exposed the whole thing is to a handful of\ncards. Unpriced holdings are counted but never valued.",
+      "x-readme-ref-name": "PortfolioConcentration"
+    },
+    "after": {
+      "properties": {
+        "total_value": {
+          "type": "string",
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "title": "Total Value"
+        },
+        "priced_positions": { "type": "integer", "title": "Priced Positions" },
+        "unpriced_positions": {
+          "type": "integer",
+          "title": "Unpriced Positions"
+        },
+        "buckets": {
+          "items": {
+            "properties": {
+              "cards": { "type": "integer", "title": "Cards" },
+              "value": {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "title": "Value"
+              },
+              "share": { "type": "number", "title": "Share" }
+            },
+            "type": "object",
+            "required": ["cards", "value", "share"],
+            "title": "ConcentrationBucket",
+            "description": "What the largest `cards` positions add up to.",
+            "x-readme-ref-name": "ConcentrationBucket"
+          },
+          "type": "array",
+          "title": "Buckets"
+        },
+        "cards_for_half": {
+          "anyOf": [{ "type": "integer" }, { "type": "null" }],
+          "title": "Cards For Half"
+        }
+      },
+      "type": "object",
+      "required": [
+        "total_value",
+        "priced_positions",
+        "unpriced_positions",
+        "buckets",
+        "cards_for_half"
+      ],
+      "title": "PortfolioConcentration",
+      "description": "How few cards carry the value.\n\n`cards_for_half` is the count of positions, largest first, that reach half\nthe portfolio: one number for how exposed the whole thing is to a handful of\ncards. Unpriced holdings are counted but never valued.",
+      "x-readme-ref-name": "PortfolioConcentration"
+    },
+    "give_value": {
+      "type": "string",
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Give Value"
+    },
+    "receive_value": {
+      "type": "string",
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Receive Value"
+    },
+    "value_delta": {
+      "type": "string",
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Value Delta"
+    },
+    "unpriced_cards": {
+      "items": { "type": "string" },
+      "type": "array",
+      "title": "Unpriced Cards"
+    }
+  },
+  "type": "object",
+  "required": [
+    "before",
+    "after",
+    "give_value",
+    "receive_value",
+    "value_delta",
+    "unpriced_cards"
+  ],
+  "title": "TradeSimulation",
+  "description": "The portfolio either side of a swap that has not happened.\n\nCards with no market price are named rather than valued at zero, because a\nswap resting on them is not the even trade the totals would claim.",
+  "x-readme-ref-name": "TradeSimulation"
+}
