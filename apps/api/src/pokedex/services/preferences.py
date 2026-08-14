@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import select
@@ -7,6 +8,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pokedex.db.models import UserPreference
 
 MAX_PREFERENCES = 20
+
+# Rows the app keeps for itself in the same table. They are hidden from the
+# preference endpoints, which promise the user a list of what the assistant
+# learned about them: a bookmark the screen wrote is not that, and letting it be
+# deleted there would look like forgetting a fact.
+INTERNAL_PREFIX = "sys."
+NOTIFICATIONS_SEEN_AT = f"{INTERNAL_PREFIX}notifications_seen_at"
 
 
 async def remember(db: AsyncSession, user_id: str, key: str, value: str) -> UserPreference:
@@ -27,7 +35,10 @@ async def remember(db: AsyncSession, user_id: str, key: str, value: str) -> User
 async def list_all(db: AsyncSession, user_id: str) -> list[UserPreference]:
     result = await db.execute(
         select(UserPreference)
-        .where(UserPreference.user_id == user_id)
+        .where(
+            UserPreference.user_id == user_id,
+            ~UserPreference.key.startswith(INTERNAL_PREFIX),
+        )
         .order_by(UserPreference.updated_at.desc())
         .limit(MAX_PREFERENCES)
     )
@@ -35,6 +46,9 @@ async def list_all(db: AsyncSession, user_id: str) -> list[UserPreference]:
 
 
 async def forget(db: AsyncSession, user_id: str, key: str) -> bool:
+    if key.startswith(INTERNAL_PREFIX):
+        return False
+
     preference = await db.scalar(
         select(UserPreference).where(
             UserPreference.user_id == user_id, UserPreference.key == key
@@ -44,6 +58,27 @@ async def forget(db: AsyncSession, user_id: str, key: str) -> bool:
         return False
     await db.delete(preference)
     return True
+
+
+async def mark(db: AsyncSession, user_id: str, key: str, at: datetime) -> None:
+    """Record that the user reached some point in time, under an internal key."""
+    value = {"at": at.isoformat()}
+    await db.execute(
+        insert(UserPreference)
+        .values(user_id=user_id, key=key, value=value)
+        .on_conflict_do_update(constraint="uq_user_preference_key", set_={"value": value})
+    )
+    await db.flush()
+
+
+async def marked_at(db: AsyncSession, user_id: str, key: str) -> datetime | None:
+    value = await db.scalar(
+        select(UserPreference.value).where(
+            UserPreference.user_id == user_id, UserPreference.key == key
+        )
+    )
+    at = (value or {}).get("at")
+    return datetime.fromisoformat(at) if isinstance(at, str) else None
 
 
 def as_text(preferences: list[UserPreference]) -> str:

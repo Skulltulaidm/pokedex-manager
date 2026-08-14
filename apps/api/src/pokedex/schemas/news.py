@@ -4,7 +4,16 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-NewsKind = Literal["offer_waiting", "offer_answered", "wish_cheaper", "wish_dearer"]
+from pokedex.schemas.common import Page
+
+NewsKind = Literal[
+    "offer_waiting",
+    "offer_answered",
+    "trade_closed",
+    "listing_taken",
+    "wish_cheaper",
+    "wish_dearer",
+]
 
 
 class NewsEntry(BaseModel):
@@ -20,11 +29,15 @@ class NewsEntry(BaseModel):
     image_url: str | None = None
     amount: Decimal | None = None
     href: str | None = None
-    # Whether the reader has something to do about it, which is what the badge
-    # counts: a price that moved is news, an offer waiting is a task.
+    # Whether the reader owes somebody something, which is what the badge counts
+    # and what the screen can filter down to: a price that moved is news, an
+    # offer nobody has answered is a task.
     actionable: bool = False
+    # Whether it happened before the last time the reader opened the screen.
+    # Every entry is derived from rows that keep existing, so without this the
+    # same week of news would stay new forever.
+    seen: bool = False
 
 
-class NewsFeed(BaseModel):
-    entries: list[NewsEntry]
+class NewsFeed(Page[NewsEntry]):
     waiting: int

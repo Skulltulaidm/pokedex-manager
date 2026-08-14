@@ -90,6 +90,19 @@ export function TrainerIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+/** A bell wearing the ball's band. */
+export function NewsIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5" />
+      <path d="M4.4 16.5h15.2" />
+      <path d="M10 19.4a2 2 0 0 0 4 0" />
+      <circle cx="12" cy="11" r="2.4" />
+      <path d="M6.1 11h3.5M14.4 11h3.5" />
+    </Icon>
+  );
+}
+
 /** The open-the-assistant mark: a ball, at a glance. */
 export function PokeballIcon(props: SVGProps<SVGSVGElement>) {
   return (

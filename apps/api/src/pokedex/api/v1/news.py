@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, status
 
 from pokedex.api.deps import CurrentUser, DbSession
 from pokedex.api.route import CommittingRoute
@@ -12,6 +12,13 @@ router = APIRouter(prefix="/news", tags=["news"], route_class=CommittingRoute)
 async def news_feed(
     user: CurrentUser,
     db: DbSession,
+    actionable: bool = Query(default=False),
     limit: int = Query(default=20, ge=1, le=50),
+    offset: int = Query(default=0, ge=0),
 ) -> NewsFeed:
-    return await news.feed(db, user.id, limit)
+    return await news.feed(db, user.id, limit, offset, actionable)
+
+
+@router.post("/seen", status_code=status.HTTP_204_NO_CONTENT)
+async def mark_news_seen(user: CurrentUser, db: DbSession) -> None:
+    await news.mark_seen(db, user.id)
