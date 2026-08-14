@@ -51,6 +51,16 @@ next-env.d.ts
 docs/
 !docs/manual-tecnico/
 !docs/manual-usuario/
+
+# LaTeX build leftovers. The PDF and the sources ship; the scratch does not.
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.toc
+*.synctex.gz
+.DS_Store
 .remember/
 
 # Python
