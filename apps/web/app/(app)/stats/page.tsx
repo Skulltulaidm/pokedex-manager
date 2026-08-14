@@ -2,11 +2,12 @@
 
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 
 import { ActivityFeed } from "@/components/activity-feed";
 import { BinderMark } from "@/components/binder-mark";
 import { CardRow } from "@/components/card-row";
+import { CardSheet } from "@/components/card-sheet";
 import { TypeSpectrum } from "@/components/coverage-strip";
 import { PanelSkeleton, RowsSkeleton } from "@/components/pokeball";
 import { PriceDelta } from "@/components/price-delta";
@@ -57,6 +58,9 @@ function Stats() {
   // The tab lives in the URL so a link can point at the want list and a reload
   // stays where it was, the way the catalog already treats its filters.
   const [params, setParam] = useUrlState();
+  // One sheet for the screen rather than one per list: only one card can be
+  // open, and the panel outlives the tab you opened it from.
+  const [openCard, setOpenCard] = useState<string | null>(null);
   const tab = params.get("tab") === "deseos" ? "deseos" : "resumen";
   const setTab = (next: string) => setParam({ tab: next === "resumen" ? undefined : next });
 
@@ -162,7 +166,7 @@ function Stats() {
           </div>
 
           <div className="space-y-8">
-            <TopHoldings total={Number(data.value.total_usd)} />
+            <TopHoldings total={Number(data.value.total_usd)} onOpen={setOpenCard} />
             <section>
               <h2 className="font-display mb-3 text-lg font-semibold tracking-tight">
                 Actividad
@@ -174,9 +178,11 @@ function Stats() {
         </TabsContent>
 
         <TabsContent value="deseos">
-          <Wishlist />
+          <Wishlist onOpen={setOpenCard} />
         </TabsContent>
       </Tabs>
+
+      <CardSheet cardId={openCard} onClose={() => setOpenCard(null)} />
     </div>
   );
 }
@@ -243,7 +249,13 @@ function Value({ value }: { value: CollectionStats["value"] }) {
  * The cards carrying the value, largest first. A portfolio is read by its
  * positions, not only by its total.
  */
-function TopHoldings({ total }: { total: number }) {
+function TopHoldings({
+  total,
+  onOpen,
+}: {
+  total: number;
+  onOpen: (cardId: string) => void;
+}) {
   const { data, isPending } = useListCollection(
     { sort: "price" as never, limit: 5 },
     { client: { client: apiClient } },
@@ -275,7 +287,11 @@ function TopHoldings({ total }: { total: number }) {
           const line = unit * item.quantity;
           return (
             <li key={item.id}>
-              <Link href={`/collection/${item.id}`} className="block">
+              <button
+                onClick={() => onOpen(item.card.id)}
+                className="block w-full text-left"
+                aria-label={`Ver ${item.card.name}`}
+              >
                 <CardRow
                   name={item.card.name}
                   number={item.card.number}
@@ -294,7 +310,7 @@ function TopHoldings({ total }: { total: number }) {
                     </p>
                   </div>
                 </CardRow>
-              </Link>
+              </button>
             </li>
           );
         })}
@@ -303,7 +319,7 @@ function TopHoldings({ total }: { total: number }) {
   );
 }
 
-function Wishlist() {
+function Wishlist({ onOpen }: { onOpen: (cardId: string) => void }) {
   const queryClient = useQueryClient();
   const { data, isPending } = useListWishlist({ client: { client: apiClient } });
   const { mutate: remove } = useRemoveFromWishlist({
@@ -365,6 +381,11 @@ function Wishlist() {
       <ul className="grid gap-2.5 lg:grid-cols-2">
         {sorted.map((item) => (
           <li key={item.id}>
+            <button
+              onClick={() => onOpen(item.card.id)}
+              className="block w-full text-left"
+              aria-label={`Ver ${item.card.name}`}
+            >
             <CardRow
               name={item.card.name}
               number={item.card.number}
@@ -407,6 +428,7 @@ function Wishlist() {
                 </Button>
               </div>
             </CardRow>
+            </button>
           </li>
         ))}
       </ul>

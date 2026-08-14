@@ -87,7 +87,6 @@ export function CardImage({
         className={cn(
           "ring-edge relative size-full overflow-hidden rounded-lg ring-1",
           selected && "ring-primary ring-2 ring-inset",
-          locked && "grayscale",
         )}
       >
         {/* Behind the art rather than swapped for it: the ball needs no state
@@ -108,7 +107,7 @@ export function CardImage({
               height={670}
               sizes={sizes}
               priority={priority}
-              className={cn("absolute max-w-none", locked && "opacity-40")}
+              className={cn("absolute max-w-none", locked && "opacity-40 grayscale")}
               style={{
                 width: `${ART_SCALE * 100}%`,
                 height: "auto",
@@ -123,7 +122,7 @@ export function CardImage({
               fill
               sizes={sizes}
               priority={priority}
-              className={cn("object-cover", locked && "opacity-40")}
+              className={cn("object-cover", locked && "opacity-40 grayscale")}
             />
           )
         ) : (
