@@ -1,6 +1,5 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUp,
   History,
@@ -10,18 +9,15 @@ import {
   SquarePen,
   Square,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import Markdown from "react-markdown";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 import { AccountMenu } from "@/components/account-menu";
-import { getConversation } from "@/lib/api/clients/getConversation";
-import {
-  listConversationsQueryKey,
-  useListConversations,
-} from "@/lib/api/hooks/useListConversations";
+import { ChatAnswer } from "@/components/chat-answer";
+import { useChatTurns } from "@/components/chat-turns";
+import { useListConversations } from "@/lib/api/hooks/useListConversations";
 import { apiClient } from "@/lib/api-client";
 import { authClient } from "@/lib/auth-client";
-import { streamChat } from "@/lib/chat-stream";
 import { Button } from "@workspace/ui/components/button";
 import {
   Sheet,
@@ -33,15 +29,6 @@ import {
 import { Spinner } from "@workspace/ui/components/spinner";
 import { cn } from "@workspace/ui/lib/utils";
 
-type Turn = { role: "user" | "assistant"; text: string };
-
-const TOOL_LABELS: Record<string, string> = {
-  search_cards: "Buscando en el catálogo",
-  get_card_details: "Leyendo la ficha de la carta",
-  get_collection: "Revisando tu colección",
-  collection_stats: "Sacando cuentas",
-};
-
 const SUGGESTIONS = [
   { icon: PieChart, text: "¿Cuántas cartas tengo y de qué tipos?" },
   { icon: SearchCheck, text: "¿Qué me falta para completar el Base Set?" },
@@ -49,77 +36,34 @@ const SUGGESTIONS = [
 ];
 
 export default function ChatPage() {
-  const [turns, setTurns] = useState<Turn[]>([]);
+  return (
+    <Suspense>
+      <Chat />
+    </Suspense>
+  );
+}
+
+function Chat() {
   const [draft, setDraft] = useState("");
-  const [status, setStatus] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const conversationId = useRef<string | null>(null);
-  const abort = useRef<AbortController | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
 
-  const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
   const { data: previous } = useListConversations({ client: { client: apiClient } });
+  const { turns, status, busy, send, stop, reset, resume } = useChatTurns();
+
+  const requested = useSearchParams().get("c");
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [turns, status]);
 
-  async function resume(id: string) {
-    const detail = await getConversation(id, { client: apiClient });
-    conversationId.current = id;
-    setTurns(detail.messages.map(({ role, text }) => ({ role, text })));
-  }
+  useEffect(() => {
+    if (requested) resume(requested);
+  }, [requested, resume]);
 
-  function reset() {
-    abort.current?.abort();
-    conversationId.current = null;
-    setTurns([]);
+  function submit(text: string) {
     setDraft("");
-  }
-
-  async function send(text: string) {
-    const question = text.trim();
-    if (!question || busy) return;
-
-    setDraft("");
-    setBusy(true);
-    setStatus("Pensando");
-    setTurns((prev) => [...prev, { role: "user", text: question }, { role: "assistant", text: "" }]);
-
-    const controller = new AbortController();
-    abort.current = controller;
-
-    try {
-      for await (const event of streamChat(question, conversationId.current, controller.signal)) {
-        switch (event.type) {
-          case "conversation":
-            conversationId.current = event.id;
-            queryClient.invalidateQueries({ queryKey: listConversationsQueryKey() });
-            break;
-          case "tool":
-            setStatus(TOOL_LABELS[event.name] ?? "Consultando");
-            break;
-          case "delta":
-            setStatus(null);
-            setTurns((prev) => appendToLast(prev, event.text));
-            break;
-          case "error":
-            setStatus(null);
-            setTurns((prev) => replaceLast(prev, event.detail));
-            break;
-        }
-      }
-    } catch {
-      // An aborted stream is the user's own doing, not a failure to report.
-      if (!controller.signal.aborted) {
-        setTurns((prev) => replaceLast(prev, "Se perdió la conexión con el asistente."));
-      }
-    } finally {
-      setStatus(null);
-      setBusy(false);
-      abort.current = null;
-    }
+    send(text);
   }
 
   const empty = turns.length === 0;
@@ -171,7 +115,10 @@ export default function ChatPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={reset}
+            onClick={() => {
+              reset();
+              setDraft("");
+            }}
             aria-label="Nueva conversación"
             className="lg:hidden"
           >
@@ -192,7 +139,7 @@ export default function ChatPage() {
             {SUGGESTIONS.map(({ icon: Icon, text }) => (
               <li key={text}>
                 <button
-                  onClick={() => send(text)}
+                  onClick={() => submit(text)}
                   className="hover:text-foreground text-muted-foreground flex w-full items-center gap-3.5 py-3.5 text-left text-[15px] transition-colors"
                 >
                   <Icon className="size-[18px] shrink-0" />
@@ -211,7 +158,7 @@ export default function ChatPage() {
                   {turn.text}
                 </p>
               ) : (
-                <Answer text={turn.text} />
+                <ChatAnswer text={turn.text} className="text-[15px] [&_code]:text-[13px]" />
               )}
             </li>
           ))}
@@ -228,7 +175,7 @@ export default function ChatPage() {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          send(draft);
+          submit(draft);
         }}
         className="bg-secondary ring-edge sticky bottom-20 mt-auto flex items-end gap-2 rounded-[1.75rem] p-2 ring-1 md:bottom-4"
       >
@@ -238,7 +185,7 @@ export default function ChatPage() {
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
-              send(draft);
+              submit(draft);
             }
           }}
           rows={1}
@@ -248,7 +195,7 @@ export default function ChatPage() {
         />
         <button
           type={busy ? "button" : "submit"}
-          onClick={busy ? () => abort.current?.abort() : undefined}
+          onClick={busy ? stop : undefined}
           disabled={!busy && !draft.trim()}
           aria-label={busy ? "Detener" : "Enviar"}
           className={cn(
@@ -261,30 +208,4 @@ export default function ChatPage() {
       </form>
     </div>
   );
-}
-
-/**
- * The model answers in markdown, so it is rendered as markdown.
- *
- * react-markdown ignores raw HTML unless a plugin turns it on, which is what
- * keeps model output from reaching the DOM as markup.
- */
-function Answer({ text }: { text: string }) {
-  return (
-    <div className="text-[15px] leading-[1.7] [&_code]:font-mono [&_code]:text-[13px] [&_li]:my-1 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-3 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-5">
-      <Markdown>{text}</Markdown>
-    </div>
-  );
-}
-
-function appendToLast(turns: Turn[], text: string): Turn[] {
-  const last = turns.at(-1);
-  if (!last) return turns;
-  return [...turns.slice(0, -1), { ...last, text: last.text + text }];
-}
-
-function replaceLast(turns: Turn[], text: string): Turn[] {
-  const last = turns.at(-1);
-  if (!last) return turns;
-  return [...turns.slice(0, -1), { ...last, text }];
 }

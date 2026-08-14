@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { AppSidebar, NAV } from "@/components/app-sidebar";
+import { ChatWidget } from "@/components/chat-widget";
 import { SiteHeader } from "@/components/site-header";
 import { authClient } from "@/lib/auth-client";
 import { SidebarInset, SidebarProvider } from "@workspace/ui/components/sidebar";
@@ -75,6 +76,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           })}
         </ul>
       </nav>
+
+      <ChatWidget />
     </SidebarProvider>
   );
 }

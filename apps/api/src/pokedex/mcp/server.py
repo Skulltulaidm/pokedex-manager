@@ -38,6 +38,12 @@ When the user states a standing fact about how they collect, store it with
 remember. Anything already known about them is given to you below; you do not
 need a tool to read it back.
 
+Whenever you name a specific card, write it as a markdown link to its id:
+[Charizard](card:base1-4). The app turns those into the card itself, with its
+art and a way through to its page, so the reader can see what you are talking
+about instead of matching a name against a binder. Only for cards you have an
+id for, and never for a set, a species or a type.
+
 Answer in Spanish.
 """
 
@@ -183,7 +189,7 @@ async def find_trades(limit: int = 10) -> dict[str, Any]:
     """
     user_id = current_user_id()
     async with SessionFactory() as db:
-        matches = await trade.find_matches(db, user_id, limit=limit)
+        matches = (await trade.match_page(db, user_id, limit=limit)).items
 
     return {
         "currency": "USD",
@@ -239,11 +245,16 @@ async def find_gaps(set_id: str | None = None, limit: int = 20) -> dict[str, Any
 
 @server.tool()
 async def get_wishlist() -> dict[str, Any]:
-    """Cards the user wants, including the ones this assistant suggested."""
+    """Cards the user wants, including the ones this assistant suggested.
+
+    `owned` is how many copies they already hold: wanting a fourth copy to close
+    a playset is normal, but an entry they already satisfied is stale, and
+    counting it toward what a want list costs would overstate it.
+    """
     user_id = current_user_id()
     async with SessionFactory() as db:
         items = await wishlist.list_items(db, user_id)
-        views = [WishlistItemView.model_validate(item).model_dump(mode="json") for item in items]
+        views = [item.model_dump(mode="json") for item in items]
     return {"count": len(views), "items": views}
 
 
