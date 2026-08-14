@@ -1,8 +1,15 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
+import * as React from "react";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 
+/**
+ * The app is light, and only light.
+ *
+ * `forcedTheme` rather than a default: a default still follows the operating
+ * system, so anyone whose machine is dark would land in a theme this app no
+ * longer supports. The provider stays because Sonner reads the theme from it.
+ */
 function ThemeProvider({
   children,
   ...props
@@ -10,62 +17,13 @@ function ThemeProvider({
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="dark"
-      enableSystem
+      forcedTheme="light"
       disableTransitionOnChange
       {...props}
     >
-      <ThemeHotkey />
       {children}
     </NextThemesProvider>
-  )
+  );
 }
 
-function isTypingTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) {
-    return false
-  }
-
-  return (
-    target.isContentEditable ||
-    target.tagName === "INPUT" ||
-    target.tagName === "TEXTAREA" ||
-    target.tagName === "SELECT"
-  )
-}
-
-function ThemeHotkey() {
-  const { resolvedTheme, setTheme } = useTheme()
-
-  React.useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.defaultPrevented || event.repeat) {
-        return
-      }
-
-      if (event.metaKey || event.ctrlKey || event.altKey) {
-        return
-      }
-
-      if (event.key.toLowerCase() !== "d") {
-        return
-      }
-
-      if (isTypingTarget(event.target)) {
-        return
-      }
-
-      setTheme(resolvedTheme === "dark" ? "light" : "dark")
-    }
-
-    window.addEventListener("keydown", onKeyDown)
-
-    return () => {
-      window.removeEventListener("keydown", onKeyDown)
-    }
-  }, [resolvedTheme, setTheme])
-
-  return null
-}
-
-export { ThemeProvider }
+export { ThemeProvider };

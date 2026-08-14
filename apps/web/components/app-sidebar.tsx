@@ -6,6 +6,7 @@ import {
   MessageCircle,
   PieChart,
   ScanLine,
+  UserRound,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -30,6 +31,7 @@ export const NAV = [
   { href: "/trades", label: "Trueques", icon: ArrowLeftRight },
   { href: "/stats", label: "Resumen", icon: PieChart },
   { href: "/chat", label: "Preguntar", icon: MessageCircle },
+  { href: "/profile", label: "Tu perfil", icon: UserRound },
 ];
 
 export function AppSidebar() {

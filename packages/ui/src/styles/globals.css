@@ -225,71 +225,6 @@
     --sidebar-ring: var(--ring);
 }
 
-.dark {
-    --background: oklch(0.135 0.002 0);
-    --foreground: oklch(0.975 0.001 0);
-    --surface: oklch(0.183 0.003 0);
-    --surface-lit: oklch(0.213 0.003 0);
-    --raised: oklch(0.235 0.003 0);
-    --edge: oklch(1 0 0 / 0.09);
-    --lift: 0 1px 2px oklch(0 0 0 / 0.3), 0 12px 32px -14px oklch(0 0 0 / 0.7);
-    --float: 0 2px 8px oklch(0 0 0 / 0.4), 0 18px 44px -12px oklch(0 0 0 / 0.75);
-    --sheen: oklch(1 0 0 / 0.07);
-    --aura-strength: 1;
-
-    --card: var(--surface);
-    --card-foreground: var(--foreground);
-    --popover: oklch(0.205 0.003 0);
-    --popover-foreground: var(--foreground);
-    --primary: oklch(0.63 0.23 27);
-    --primary-foreground: oklch(0.99 0.01 27);
-    --secondary: oklch(0.248 0.003 0);
-    --secondary-foreground: var(--foreground);
-    --muted: oklch(0.232 0.003 0);
-    --muted-foreground: oklch(0.71 0.002 0);
-    --accent: oklch(0.63 0.23 27 / 0.18);
-    --accent-foreground: oklch(0.78 0.19 27);
-    --destructive: oklch(0.68 0.2 22);
-    --border: var(--edge);
-    --input: oklch(1 0 0 / 0.12);
-    --ring: oklch(0.63 0.23 27);
-    --star: oklch(0.84 0.16 88);
-
-    --chart-1: oklch(0.72 0.18 38);
-    --chart-2: oklch(0.7 0.16 250);
-    --chart-3: oklch(0.76 0.17 145);
-    --chart-4: oklch(0.82 0.17 95);
-    --chart-5: oklch(0.7 0.17 320);
-
-    --type-normal: oklch(0.76 0.04 90);
-    --type-fire: oklch(0.72 0.19 38);
-    --type-water: oklch(0.7 0.16 250);
-    --type-electric: oklch(0.86 0.17 95);
-    --type-grass: oklch(0.76 0.17 145);
-    --type-ice: oklch(0.85 0.11 205);
-    --type-fighting: oklch(0.66 0.19 25);
-    --type-poison: oklch(0.68 0.19 320);
-    --type-ground: oklch(0.79 0.12 75);
-    --type-flying: oklch(0.79 0.11 275);
-    --type-psychic: oklch(0.74 0.19 355);
-    --type-bug: oklch(0.75 0.17 120);
-    --type-rock: oklch(0.7 0.08 80);
-    --type-ghost: oklch(0.66 0.16 300);
-    --type-dragon: oklch(0.68 0.19 280);
-    --type-dark: oklch(0.6 0.06 60);
-    --type-steel: oklch(0.78 0.05 220);
-    --type-fairy: oklch(0.82 0.12 350);
-
-    --sidebar: var(--surface);
-    --sidebar-foreground: var(--foreground);
-    --sidebar-primary: var(--primary);
-    --sidebar-primary-foreground: var(--primary-foreground);
-    --sidebar-accent: var(--accent);
-    --sidebar-accent-foreground: var(--accent-foreground);
-    --sidebar-border: var(--edge);
-    --sidebar-ring: var(--ring);
-}
-
 @layer base {
     * {
         @apply border-border outline-ring/50;
@@ -305,14 +240,6 @@
         background-image:
             radial-gradient(70% 45% at 12% -8%, oklch(0.62 0.2 27 / 0.07), transparent 62%),
             radial-gradient(60% 40% at 96% 4%, oklch(0.6 0.02 0 / 0.05), transparent 66%);
-        background-attachment: fixed;
-    }
-
-    .dark body {
-        /* Large dark areas read as a void without something behind them. */
-        background-image:
-            radial-gradient(80% 50% at 12% -8%, oklch(0.48 0.2 27 / 0.22), transparent 60%),
-            radial-gradient(70% 45% at 96% 4%, oklch(0.4 0.03 0 / 0.3), transparent 65%);
         background-attachment: fixed;
     }
 
