@@ -1,0 +1,190 @@
+"use client";
+
+import { Search, X } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+
+import { CardImage } from "@/components/card-image";
+import { Pager } from "@/components/pager";
+import { apiClient } from "@/lib/api-client";
+import { useMarketCards } from "@/lib/api/hooks/useMarketCards";
+import { formatUsd } from "@/lib/format";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@workspace/ui/components/dialog";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@workspace/ui/components/input-group";
+import { Skeleton } from "@workspace/ui/components/skeleton";
+import { cn } from "@workspace/ui/lib/utils";
+
+const PER_PAGE = 18;
+
+const FILTERS = [
+  { value: "all", label: "Todas" },
+  { value: "owned", label: "Tuyas" },
+  { value: "missing", label: "Te faltan" },
+] as const;
+
+/**
+ * The cards behind a set's coverage strip.
+ *
+ * The strip answers how much of a set is held; the only next question is which
+ * ones, and until now that meant leaving the page and rebuilding the filter by
+ * hand in the catalog.
+ */
+export function SetCardsDialog({
+  setId,
+  setName,
+  open,
+  onClose,
+}: {
+  setId: string;
+  setName: string;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [owned, setOwned] = useState<(typeof FILTERS)[number]["value"]>("all");
+
+  const { data, isPending } = useMarketCards(
+    {
+      set_id: setId,
+      search: search || undefined,
+      owned,
+      limit: PER_PAGE,
+      offset: (page - 1) * PER_PAGE,
+    },
+    { client: { client: apiClient }, query: { enabled: open } },
+  );
+
+  const lastPage = data ? Math.max(1, Math.ceil(data.total / PER_PAGE)) : 1;
+
+  const change = (next: () => void) => {
+    next();
+    setPage(1);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent
+        showCloseButton
+        className="max-h-[88svh] w-full max-w-4xl gap-0 overflow-hidden p-0 sm:max-w-4xl"
+      >
+        <DialogTitle className="border-edge border-b px-5 py-4 pr-14 text-left">
+          <span className="font-display text-lg font-semibold">{setName}</span>
+          {data && (
+            <span className="text-muted-foreground ml-2 text-sm font-normal tabular-nums">
+              {data.total}
+            </span>
+          )}
+        </DialogTitle>
+        <DialogDescription className="sr-only">
+          Cartas del set {setName}, con búsqueda, filtros y paginación.
+        </DialogDescription>
+
+        <div className="border-edge flex flex-wrap items-center gap-2 border-b px-5 py-3">
+          <InputGroup className="bg-secondary h-9 max-w-[15rem] min-w-0 flex-1 rounded-full border-transparent">
+            <InputGroupAddon>
+              <Search className="size-3.5" />
+            </InputGroupAddon>
+            <InputGroupInput
+              value={search}
+              placeholder="Buscar en el set…"
+              aria-label={`Buscar en ${setName}`}
+              onChange={(event) => change(() => setSearch(event.target.value))}
+            />
+            {search && (
+              <InputGroupAddon align="inline-end">
+                <button onClick={() => change(() => setSearch(""))} aria-label="Limpiar">
+                  <X className="size-3.5" />
+                </button>
+              </InputGroupAddon>
+            )}
+          </InputGroup>
+
+          <div className="flex gap-1.5">
+            {FILTERS.map((filter) => (
+              <button
+                key={filter.value}
+                onClick={() => change(() => setOwned(filter.value))}
+                aria-pressed={owned === filter.value}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors",
+                  owned === filter.value
+                    ? "bg-foreground text-background"
+                    : "bg-secondary text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+
+          <Pager page={page} lastPage={lastPage} onChange={setPage} />
+        </div>
+
+        <div className="max-h-[62svh] overflow-y-auto px-5 py-4">
+          {isPending && <Skeleton className="h-64 rounded-xl" />}
+
+          {data?.total === 0 && (
+            <p className="text-muted-foreground py-12 text-center text-sm">
+              {search
+                ? "Ninguna carta del set coincide."
+                : owned === "owned"
+                  ? "Todavía no tienes ninguna de este set."
+                  : "No falta ninguna: el set está completo."}
+            </p>
+          )}
+
+          <ul className="grid grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-3">
+            {data?.items.map((entry) => (
+              <li key={entry.card.id}>
+                <Link
+                  href={
+                    entry.item_id
+                      ? `/collection/${entry.item_id}`
+                      : `/collection/add?card=${entry.card.id}`
+                  }
+                  className="block"
+                >
+                  {/* A card you do not own reads as absent rather than as a
+                      different card: same frame, drained of colour. */}
+                  <div className={cn(entry.owned === 0 && "opacity-45 grayscale")}>
+                    <CardImage
+                      src={entry.card.image_small_url}
+                      alt={entry.card.name}
+                      sizes="112px"
+                      category={entry.card.category}
+                    />
+                  </div>
+                  <p className="mt-1.5 truncate text-[12px] font-medium">
+                    {entry.card.name}
+                  </p>
+                  <p className="text-muted-foreground font-mono text-[10px] tabular-nums">
+                    {entry.card.number}
+                    <span className="text-muted-foreground/50">
+                      /{entry.card.card_set.printed_total}
+                    </span>
+                    {entry.owned > 1 && ` · ×${entry.owned}`}
+                  </p>
+                  <p className="font-mono text-[11px] tabular-nums">
+                    {entry.card.price_usd === null
+                      ? "—"
+                      : formatUsd(Number(entry.card.price_usd))}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -1,12 +1,12 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from pokedex.db.models import Card, WishlistItem, WishlistSource
-from pokedex.schemas.gaps import AddWishlistRequest
+from pokedex.db.models import Card, CollectionItem, WishlistItem, WishlistSource
+from pokedex.schemas.gaps import AddWishlistRequest, WishlistItemView
 from pokedex.services.collection import CardNotFoundError
 
 
@@ -38,15 +38,31 @@ async def add(
     return item
 
 
-async def list_items(db: AsyncSession, user_id: str) -> list[WishlistItem]:
+def _owned(user_id: str) -> ColumnElement[int]:
+    """Copies of the wanted card the reader already holds."""
+    return (
+        select(func.coalesce(func.sum(CollectionItem.quantity), 0))
+        .where(
+            CollectionItem.card_id == WishlistItem.card_id,
+            CollectionItem.user_id == user_id,
+        )
+        .correlate(WishlistItem)
+        .scalar_subquery()
+    )
+
+
+async def list_items(db: AsyncSession, user_id: str) -> list[WishlistItemView]:
     result = await db.execute(
-        select(WishlistItem)
+        select(WishlistItem, _owned(user_id))
         .options(joinedload(WishlistItem.card).joinedload(Card.card_set),
                  joinedload(WishlistItem.card).joinedload(Card.species))
         .where(WishlistItem.user_id == user_id)
         .order_by(WishlistItem.priority.desc(), WishlistItem.created_at.desc())
     )
-    return list(result.unique().scalars())
+    return [
+        WishlistItemView.model_validate(item).model_copy(update={"owned": owned})
+        for item, owned in result.unique().all()
+    ]
 
 
 async def get_item(db: AsyncSession, user_id: str, item_id: UUID) -> WishlistItem | None:

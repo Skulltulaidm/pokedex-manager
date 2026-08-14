@@ -29,3 +29,6 @@ class WishlistItemView(BaseModel):
     reason: str | None
     added_by: WishlistSource
     created_at: datetime
+    # Wanting a card you already hold is legitimate — a playset needs four — but
+    # it is also how a want list goes stale, and a total that counts it is wrong.
+    owned: int = 0

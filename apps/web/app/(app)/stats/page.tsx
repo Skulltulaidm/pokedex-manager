@@ -338,7 +338,11 @@ function Wishlist() {
   const sorted = [...data].sort(
     (a, b) => Number(b.card.price_usd ?? 0) - Number(a.card.price_usd ?? 0),
   );
-  const priced = sorted.filter((item) => item.card.price_usd != null);
+  // A card already on the shelf costs nothing to get: counting it would send
+  // the reader shopping for what they own and overstate the total.
+  const missing = sorted.filter((item) => (item.owned ?? 0) === 0);
+  const held = sorted.length - missing.length;
+  const priced = missing.filter((item) => item.card.price_usd != null);
   const total = priced.reduce((sum, item) => sum + Number(item.card.price_usd), 0);
   const suggested = sorted.filter((item) => item.added_by === "agent").length;
 
@@ -354,8 +358,10 @@ function Wishlist() {
           </p>
         </div>
         <p className="text-muted-foreground text-xs tabular-nums">
-          {data.length} {data.length === 1 ? "carta" : "cartas"}
-          {priced.length < data.length && ` · ${data.length - priced.length} sin precio`}
+          {missing.length} {missing.length === 1 ? "carta" : "cartas"} por conseguir
+          {priced.length < missing.length &&
+            ` · ${missing.length - priced.length} sin precio`}
+          {held > 0 && ` · ${held} que ya tienes`}
           {suggested > 0 &&
             ` · ${suggested} ${suggested === 1 ? "sugerida" : "sugeridas"} por el asistente`}
         </p>
@@ -373,13 +379,23 @@ function Wishlist() {
               types={item.card.species?.types ?? []}
               note={
                 <p className="text-muted-foreground/80 mt-1 text-xs">
+                  {(item.owned ?? 0) > 0 && (
+                    <span className="text-emerald-600">
+                      Ya tienes {item.owned} ·{" "}
+                    </span>
+                  )}
                   {item.added_by === "agent" ? "Sugerida · " : ""}
                   {item.reason}
                 </p>
               }
             >
               <div className="flex shrink-0 items-center gap-1">
-                <span className="text-sm font-semibold tabular-nums">
+                <span
+                  className={cn(
+                    "text-sm font-semibold tabular-nums",
+                    (item.owned ?? 0) > 0 && "text-muted-foreground/40 line-through",
+                  )}
+                >
                   {item.card.price_usd == null ? (
                     <span className="text-muted-foreground/40">—</span>
                   ) : (

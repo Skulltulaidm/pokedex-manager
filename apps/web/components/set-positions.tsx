@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
+
 import { CoverageStrip } from "@/components/coverage-strip";
+import { SetCardsDialog } from "@/components/set-cards-dialog";
 import { apiClient } from "@/lib/api-client";
 import { useCollectionStats } from "@/lib/api/hooks/useCollectionStats";
 import { useMarketSets } from "@/lib/api/hooks/useMarketSets";
@@ -17,6 +20,7 @@ import { Skeleton } from "@workspace/ui/components/skeleton";
 export function SetPositions() {
   const { data: sets, isPending } = useMarketSets({ client: { client: apiClient } });
   const { data: stats } = useCollectionStats({ client: { client: apiClient } });
+  const [openSet, setOpenSet] = useState<{ id: string; name: string } | null>(null);
 
   if (isPending) return <Skeleton className="h-64 w-full rounded-xl" />;
   if (!sets?.length) return null;
@@ -33,20 +37,28 @@ export function SetPositions() {
 
         return (
           <li key={set.set_id}>
-            <div className="mb-2.5 flex items-baseline justify-between gap-3">
-              <h3 className="truncate font-medium">{set.set_name}</h3>
-              <p className="text-muted-foreground shrink-0 font-mono text-sm tabular-nums">
-                {set.owned}
-                <span className="text-muted-foreground/50">/{set.cards}</span>
-              </p>
-            </div>
+            <button
+              onClick={() => setOpenSet({ id: set.set_id, name: set.set_name })}
+              aria-label={`Ver las cartas de ${set.set_name}`}
+              className="group/set w-full text-left"
+            >
+              <div className="mb-2.5 flex items-baseline justify-between gap-3">
+                <h3 className="group-hover/set:text-primary truncate font-medium transition-colors">
+                  {set.set_name}
+                </h3>
+                <p className="text-muted-foreground shrink-0 font-mono text-sm tabular-nums">
+                  {set.owned}
+                  <span className="text-muted-foreground/50">/{set.cards}</span>
+                </p>
+              </div>
 
-            {slots && (
-              <CoverageStrip
-                printedTotal={slots.printed_total}
-                ownedSlots={slots.owned_slots}
-              />
-            )}
+              {slots && (
+                <CoverageStrip
+                  printedTotal={slots.printed_total}
+                  ownedSlots={slots.owned_slots}
+                />
+              )}
+            </button>
 
             <dl className="mt-3 flex items-baseline justify-between gap-3 text-sm">
               <div>
@@ -73,6 +85,15 @@ export function SetPositions() {
           </li>
         );
       })}
+
+      {openSet && (
+        <SetCardsDialog
+          setId={openSet.id}
+          setName={openSet.name}
+          open
+          onClose={() => setOpenSet(null)}
+        />
+      )}
     </ul>
   );
 }

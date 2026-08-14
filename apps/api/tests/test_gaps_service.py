@@ -135,3 +135,23 @@ async def test_a_wishlist_is_not_visible_to_another_user(
     )
 
     assert await wishlist.list_items(started, other_user_id) == []
+
+
+async def test_a_wish_says_how_many_you_already_hold(
+    started: AsyncSession, user_id: str
+) -> None:
+    """A want list that ignores the shelf sends you shopping for what you have."""
+    await wishlist.add(
+        started, user_id, AddWishlistRequest(card_id="base1-4"), WishlistSource.USER
+    )
+    await collection.add_card(
+        started, user_id, AddCardRequest(card_id="base1-4", quantity=2)
+    )
+
+    item = next(
+        entry
+        for entry in await wishlist.list_items(started, user_id)
+        if entry.card.id == "base1-4"
+    )
+
+    assert item.owned == 2
