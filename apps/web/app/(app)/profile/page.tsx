@@ -64,8 +64,10 @@ function Account() {
       <div className="grid gap-8 lg:grid-cols-[200px_1fr] lg:items-start">
         {/* A rail inside the page, not another sidebar: these are settings you
             visit occasionally, and they should not cost a column elsewhere. */}
-        <nav aria-label="Secciones de la cuenta">
-          <ul className="flex gap-1 overflow-x-auto lg:flex-col">
+        {/* min-w-0 or the track sizes itself to the widest row of tabs — a grid
+            item never shrinks past its min-content, and the strip stops scrolling. */}
+        <nav aria-label="Secciones de la cuenta" className="min-w-0">
+          <ul className="scrollbar-none flex gap-1 overflow-x-auto lg:flex-col">
             {SECTIONS.map(({ id, label, icon: Icon }) => (
               <li key={id}>
                 <button
@@ -108,8 +110,8 @@ function Row({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border-edge flex flex-wrap items-center justify-between gap-4 border-b py-4 last:border-0">
-      <div className="min-w-0">
+    <div className="border-edge flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b py-4 last:border-0">
+      <div className="min-w-0 flex-1 basis-56">
         <p className="text-sm font-medium">{label}</p>
         {hint && <p className="text-muted-foreground mt-0.5 max-w-md text-xs">{hint}</p>}
       </div>
@@ -120,7 +122,7 @@ function Row({
 
 function Panel({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <section className="ring-edge bg-surface rounded-2xl px-5 py-1 ring-1">
+    <section className="ring-edge bg-surface rounded-2xl px-4 py-1 ring-1 sm:px-5">
       <header className="border-edge border-b py-4">
         <h2 className="font-display text-lg font-semibold">{title}</h2>
         {hint && <p className="text-muted-foreground mt-1 text-sm">{hint}</p>}
@@ -159,13 +161,13 @@ function Identity({ user }: { user: { id: string; email: string; name?: string }
         <p className="text-muted-foreground mt-0.5 mb-2 text-xs">
           Es el nombre que aparece en tus ofertas y en tu perfil público.
         </p>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Input
             id="name"
             value={name}
             maxLength={60}
             onChange={(event) => setName(event.target.value)}
-            className="max-w-xs"
+            className="w-full sm:max-w-xs"
           />
           <Button
             variant="outline"
@@ -309,7 +311,7 @@ function AgentMemory() {
 
       {memories?.map((memory) => (
         <Row key={memory.key} label={memory.key.replace(/_/g, " ")}>
-          <span className="text-muted-foreground max-w-sm truncate text-sm">
+          <span className="text-muted-foreground max-w-[12rem] truncate text-sm sm:max-w-sm">
             {typeof memory.value?.text === "string" ? memory.value.text : JSON.stringify(memory.value)}
           </span>
           <Button
