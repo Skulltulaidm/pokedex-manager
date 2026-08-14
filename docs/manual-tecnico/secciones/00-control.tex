@@ -1,0 +1,58 @@
+\thispagestyle{pokedex}
+\pdfbookmark[0]{Control del documento}{control}
+
+\vspace*{6pt}
+{\sffamily\bfseries\LARGE\color{pkInk} Control del documento\par}
+\vspace{4pt}{\color{pkRed}\rule{2.2cm}{2pt}}\par
+\vspace{18pt}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[2,l]X[5,l]}}
+  Campo & Valor \\
+  Título & Manual Técnico — PokéDex Manager \\
+  Versión & 1.0 \\
+  Fecha & 13 de agosto de 2026 \\
+  Estado & Vigente \\
+  Clasificación & Uso interno \\
+  Repositorio & \pkpath{https://github.com/Skulltulaidm/pokedex-manager} (público) \\
+  Rama documentada & \pkpath{main} \\
+  Revisión del código & \pkpath{c5d3bd3} \\
+  Audiencia & Ingeniería de software, QA, operaciones \\
+  Despliegue en producción & \pkpath{https://web-production-78a4b.up.railway.app} \\
+  API en producción & \pkpath{https://api-production-81ae.up.railway.app} \\
+  Documento hermano & Manual de usuario (mismo repositorio) \\
+\end{pkbox}\par\addvspace{8pt}
+
+\vspace{20pt}
+{\pksb\large\color{pkInk} Historial de revisiones\par}
+\vspace{8pt}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1,l]X[1.4,l]X[4,l]X[1.4,l]}}
+  Versión & Fecha & Cambio & Estado \\
+  1.0 & 2026-08-13 & Primera emisión. Cubre arquitectura, modelo de datos, backend, frontend, requisitos, QA, CI/CD, instalación y bitácora de decisiones. & Vigente \\
+\end{pkbox}\par\addvspace{8pt}
+
+\vspace{20pt}
+{\pksb\large\color{pkInk} Qué contiene y qué no\par}
+\vspace{8pt}
+
+\begin{pknote}[Alcance]
+Este documento describe \textbf{el sistema tal como está construido}, verificado
+leyendo el código de la revisión indicada arriba y ejecutando sus suites de
+pruebas. Las cifras que aparecen (número de rutas, de tablas, de pruebas, de
+herramientas MCP) se obtuvieron de esa revisión, no de una estimación.
+
+Fuera de alcance: la operación día a día del producto para una persona usuaria
+—eso está en el manual de usuario— y cualquier funcionalidad planificada que
+todavía no exista en el repositorio.
+\end{pknote}
+
+\vspace{6pt}
+{\pksb\large\color{pkInk} Convenciones\par}
+\vspace{8pt}
+
+\begin{itemize}[leftmargin=1.1em,itemsep=2pt,topsep=2pt]
+  \item \pkpath{ruta/al/archivo.py} es una ruta relativa a la raíz del repositorio.
+  \item \pkcode{identificador} es una función, clase, columna o variable de entorno tal cual aparece en el código.
+  \item Las citas de código son literales; los comentarios que las acompañan también están en el repositorio.
+  \item Los identificadores de requisito siguen \pkid{RF-nn} (funcional), \pkid{RNF-nn} (no funcional) y \pkid{HU-nn} (historia de usuario).
+\end{itemize}

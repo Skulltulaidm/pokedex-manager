@@ -1,0 +1,38 @@
+// C4 nivel 1 — diagrama de contexto.
+digraph contexto {
+  rankdir = TB;
+  bgcolor = "transparent";
+  splines = spline;
+  nodesep = 0.55;
+  ranksep = 0.75;
+  fontname = "Helvetica";
+
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11,
+        color="#2C2E33", penwidth=1.1, margin="0.20,0.14"];
+  edge [fontname="Helvetica", fontsize=9, color="#5C5A5B", fontcolor="#2C2E33",
+        arrowsize=0.7, penwidth=0.9];
+
+  coleccionista [label=<<b>Coleccionista</b><br/><font point-size="9" color="#5C5A5B">Persona · cataloga, valora e intercambia</font>>,
+                 fillcolor="#FDECEE", color="#DB0016"];
+  asistente [label=<<b>Cliente MCP externo</b><br/><font point-size="9" color="#5C5A5B">Claude Desktop, IDE, agente propio</font>>,
+             fillcolor="#F1F0F0"];
+
+  sistema [label=<<b>PokéDex Manager</b><br/><font point-size="9" color="#F1F0F0">Catálogo, portafolio, intercambio<br/>y asistente sobre la misma colección</font>>,
+           fillcolor="#2C2E33", fontcolor="white", color="#DB0016", penwidth=2.0];
+
+  tcgdex [label=<<b>TCGdex API</b><br/><font point-size="9" color="#5C5A5B">Sets, cartas, arte y precio de mercado</font>>,
+          fillcolor="#E8F1FB", color="#0063B4"];
+  pokeapi [label=<<b>PokeAPI</b><br/><font point-size="9" color="#5C5A5B">Especies, tipos, estadísticas, evoluciones</font>>,
+           fillcolor="#E8F1FB", color="#0063B4"];
+  gemini [label=<<b>Google Gemini</b> <font point-size="9">/ Ollama</font><br/><font point-size="9" color="#5C5A5B">Visión y conversación (opcional)</font>>,
+          fillcolor="#E9F4EA", color="#186B22"];
+
+  { rank = same; coleccionista; asistente; }
+  { rank = same; tcgdex; pokeapi; gemini; }
+
+  coleccionista -> sistema [label="  usa por navegador\n  (HTTPS)"];
+  asistente -> sistema [label="  herramientas MCP\n  (streamable HTTP + JWT)"];
+  sistema -> tcgdex [label="  sincroniza catálogo\n  y toma precios"];
+  sistema -> pokeapi [label="  completa la capa\n  de especie"];
+  sistema -> gemini [label="  transcribe la foto,\n  responde el chat"];
+}

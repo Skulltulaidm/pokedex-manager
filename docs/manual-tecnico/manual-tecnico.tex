@@ -1,0 +1,49 @@
+% PokeDex Manager — technical manual.
+% Build: make   (or: latexmk -pdf manual-tecnico.tex, after `make diagramas`)
+\documentclass[11pt,a4paper,openany]{report}
+
+\usepackage{estilo/pokedex}
+
+\setpkmeta
+  {Manual Técnico}          % document name (running header)
+  {PokéDex Manager}         % project
+  {1.0}                     % version
+  {13 de agosto de 2026}    % date
+  {Vigente}                 % status
+  {Uso interno}             % classification
+
+\graphicspath{{diagramas/out/}}
+
+\hypersetup{
+  pdftitle={PokéDex Manager — Manual Técnico},
+  pdfauthor={PokéDex Manager},
+  pdfsubject={Arquitectura, base de datos, backend, frontend, QA, CI/CD e instalación},
+  pdfkeywords={FastAPI, Next.js, PostgreSQL, MCP, Turborepo}}
+
+\begin{document}
+
+\pkcover{Manual\\Técnico}{Arquitectura, modelo de datos, backend, frontend,
+calidad, integración continua y puesta en marcha de\\ \textbf{\mbox{PokéDex Manager}}.}
+
+\input{secciones/00-control}
+
+\cleardoublepage
+\pdfbookmark[0]{Índice}{toc}
+\tableofcontents
+
+\cleardoublepage
+\input{secciones/01-introduccion}
+\input{secciones/02-requisitos}
+\input{secciones/03-arquitectura}
+\input{secciones/04-datos}
+\input{secciones/05-backend}
+\input{secciones/06-frontend}
+\input{secciones/07-flujos}
+\input{secciones/08-qa}
+\input{secciones/09-cicd}
+\input{secciones/10-instalacion}
+\input{secciones/11-decisiones}
+\appendix
+\input{secciones/A-anexos}
+
+\end{document}

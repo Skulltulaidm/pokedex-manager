@@ -1,0 +1,441 @@
+\chapter{Backend}
+\label{cap:backend}
+
+FastAPI sobre SQLAlchemy asíncrono, con dos superficies —REST y MCP— apoyadas en
+una sola capa de servicios. 87 archivos bajo \pkcode{mypy --strict}.
+
+\section{Capas}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\footnotesize},
+  layer/.style={draw=pkRule, line width=0.5pt, rounded corners=3pt,
+                minimum width=10.2cm, minimum height=1.05cm, align=left,
+                inner xsep=10pt, fill=pkRaised},
+  tag/.style={font=\scriptsize\sffamily, color=pkMuted, align=left, anchor=west},
+  arrow/.style={-{Stealth[length=4pt]}, pkMuted, line width=0.6pt}]
+
+  \node[layer, fill=pkRed!10, draw=pkRed] (rest)
+    {\pksb REST · \texttt{api/v1/*.py}\quad\textcolor{pkMuted}{\scriptsize 59 rutas}};
+  \node[layer, fill=pkRed!10, draw=pkRed, right=0.35cm of rest.east, anchor=west,
+        minimum width=4.2cm] (mcp)
+    {\pksb MCP · \texttt{mcp/server.py}\\\textcolor{pkMuted}{\scriptsize 13 herramientas}};
+
+  \node[layer, below=0.55cm of rest.south west, anchor=north west, minimum width=14.75cm] (svc)
+    {\pksb services/ \quad\textcolor{pkMuted}{\scriptsize 21 módulos · toda la regla de negocio · sin FastAPI dentro}};
+  \node[layer, below=0.45cm of svc.south west, anchor=north west, minimum width=14.75cm] (mdl)
+    {\pksb db/models/ \quad\textcolor{pkMuted}{\scriptsize 18 tablas · restricciones, índices y enums}};
+  \node[layer, below=0.45cm of mdl.south west, anchor=north west, minimum width=14.75cm,
+        fill=tWater!10, draw=tWater] (pg)
+    {\pksb PostgreSQL \quad\textcolor{pkMuted}{\scriptsize una transacción por petición}};
+
+  \draw[arrow] (rest.south) -- ++(0,-0.55);
+  \draw[arrow] (mcp.south) -- ++(0,-0.55);
+  \draw[arrow] ($(svc.south)+(0,0)$) -- ++(0,-0.45);
+  \draw[arrow] ($(mdl.south)+(0,0)$) -- ++(0,-0.45);
+
+  \node[tag, right=0.25cm of rest.east, yshift=-1.7cm, text width=0pt] {};
+  \node[anchor=west, font=\scriptsize\itshape, color=pkMuted]
+    at ($(svc.east)+(0.2cm,0)$) {};
+\end{tikzpicture}
+\caption{Las capas del backend. Una regla se escribe una vez y las dos
+  superficies la comparten; ningún módulo de \pkpath{services/} importa FastAPI.}
+\label{fig:capas}
+\end{figure}
+
+\section{\pkcode{CommittingRoute}: confirmar antes de responder}
+
+Es la pieza menos evidente del backend y merece el detalle. FastAPI ejecuta la
+mitad de una dependencia \pkcode{yield} que va \emph{después} del yield cuando la
+respuesta ya salió. Con una sesión por petición, eso significa que el
+\pkcode{commit} aterriza cuando el cliente ya es libre de actuar sobre el
+resultado. Un cliente que refresca al éxito compite entonces consigo mismo: la
+lectura puede llegar a la base antes que el commit y volver sin el cambio, lo
+que se lee como una mutación que no hizo nada hasta recargar la página.
+
+\begin{lstlisting}[language=Python]
+class CommittingRoute(APIRoute):
+    """Commits the request's transaction before its response leaves."""
+
+    def get_route_handler(self):
+        handler = super().get_route_handler()
+
+        async def commit_before_responding(request: Request) -> Response:
+            response = await handler(request)
+            session = getattr(request.state, "db", None)
+            if session is not None:
+                await session.commit()
+            return response
+
+        return commit_before_responding
+\end{lstlisting}
+
+Funciona porque \pkcode{get\_db} publica la sesión en la petición
+(\pkcode{request.state.db = session}) antes de cederla. Los trece routers de
+\pkpath{api/v1/} declaran \pkcode{route\_class=CommittingRoute}; el commit dentro
+de \pkcode{get\_db} se queda como red de seguridad para lo que nunca llegue aquí.
+
+\begin{pkwarn}[Consecuencia sobre el ORM]
+El commit ocurre después de que el manejador retorna pero \emph{antes} de
+serializar la respuesta, así que cualquier atributo cargado perezosamente ya
+tiene que estar cargado. Por eso \pkcode{SessionFactory} se construye con
+\pkcode{expire\_on\_commit=False} y las relaciones sensibles se declaran
+\pkcode{lazy="raise"}: un acceso perezoso accidental falla ruidosamente en vez
+de emitir una consulta silenciosa.
+\end{pkwarn}
+
+\section{Paginación tipada: \pkcode{Page[T]}}
+
+\begin{lstlisting}[language=Python]
+class Page[T](BaseModel):
+    items: list[T]
+    total: int
+    limit: int
+    offset: int
+\end{lstlisting}
+
+Cuatro líneas, sintaxis de genéricos de PEP 695. Lo relevante es que
+\emph{atraviesa el generador}: FastAPI escribe en el OpenAPI un esquema
+concreto por instanciación (\pkcode{Page[CollectionItemView]},
+\pkcode{Page[TradeMatch]}\dots), Kubb lo convierte en un tipo TypeScript por
+endpoint, y el frontend recibe \pkcode{items}, \pkcode{total}, \pkcode{limit} y
+\pkcode{offset} tipados sin que nadie los escriba dos veces.
+
+Los filtros y la paginación se inyectan como modelos Pydantic
+(\pkcode{Annotated[CollectionFilters, Depends()]}), con los topes en el propio
+modelo: \pkcode{limit=50, ge=1, le=200} en colección y mercado,
+\pkcode{limit=20, le=100} en posiciones.
+
+\section{Autenticación}
+
+\begin{lstlisting}[language=Python]
+# Pinned rather than read from the token header, which would allow algorithm
+# confusion. Better Auth's jwt plugin issues Ed25519 keys.
+ALGORITHMS = ["EdDSA"]
+
+async def verify_token(token: str) -> AuthenticatedUser:
+    ...
+    # PyJWKClient fetches over blocking urllib, so keep it off the event loop.
+    signing_key = await to_thread.run_sync(client.get_signing_key_from_jwt, token)
+    payload = jwt.decode(token, signing_key.key, algorithms=ALGORITHMS,
+                         issuer=settings.auth_issuer, audience=settings.auth_audience)
+    subject = payload.get("sub")
+    if not subject:
+        raise jwt.InvalidTokenError("token has no subject claim")
+    return AuthenticatedUser(id=subject, email=payload.get("email"))
+\end{lstlisting}
+
+Tres detalles que un revisor busca: el algoritmo está \emph{fijado} y no se lee
+de la cabecera del token —leerlo abre la puerta a la confusión de algoritmos—;
+la descarga del JWKS es bloqueante en PyJWT y por eso se saca del bucle de
+eventos con \pkcode{anyio.to\_thread}; y la caché de claves es la del propio
+\pkcode{PyJWKClient}, mantenida viva por un \pkcode{@lru\_cache} sobre la
+fábrica, de modo que hay un cliente por proceso.
+
+\pkcode{Caller} lleva el usuario \emph{y} el token, porque el endpoint de chat
+necesita los dos: el identificador para acotar sus filas y el token para abrir
+una sesión MCP como ese mismo usuario en lugar de como el servicio.
+
+\section{Catálogo de endpoints}
+
+Todas las rutas cuelgan de \pkcode{/api/v1}. El \pkcode{operationId} es
+exactamente el nombre de la función manejadora, porque el generador de ids de
+FastAPI produciría, si no, ganchos como
+\pkcode{useListCollectionApiV1CollectionGet}:
+
+\begin{lstlisting}[language=Python]
+def operation_id(route: APIRoute) -> str:
+    return route.name
+\end{lstlisting}
+
+\begin{pktable}[caption={Catálogo completo de rutas de \texttt{/api/v1}},label={tab:rutas}]{colspec={X[0.7,l]X[2.6,l]X[1.75,l]X[1.95,l]}}
+  Método & Ruta & {\ttfamily operationId} & Respuesta \\
+  GET & \pkcode{/me} & \pkcode{me} & \pkcode{MeResponse} \\
+  GET & \pkcode{/preferences} & \pkcode{list\_preferences} & \pkcode{list[PreferenceView]} \\
+  DELETE & \pkcode{/preferences/\{key\}} & \pkcode{forget\_preference} & 204 \\
+  POST & \pkcode{/advice/trade} & \pkcode{propose\_trade} & \pkcode{TradeAdvice} · 503/404 \\
+  GET & \pkcode{/catalog/cards} & \pkcode{search\_cards} & \pkcode{list[CardView]} \\
+  GET & \pkcode{/catalog/cards/\{id\}} & \pkcode{get\_card} & \pkcode{CardView} \\
+  GET & \pkcode{/catalog/cards/\{id\}/context} & \pkcode{card\_market\_context} & \pkcode{CardMarketContext} \\
+  GET & \pkcode{/catalog/species} & \pkcode{search\_species} & \pkcode{list[SpeciesView]} \\
+  GET & \pkcode{/catalog/species/\{id\}/trivia} & \pkcode{species\_trivia} & \pkcode{TriviaView | None} \\
+  GET & \pkcode{/catalog/species/\{id\}/evolutions} & \pkcode{species\_evolutions} & \pkcode{list[EvolutionMemberView]} \\
+  GET & \pkcode{/catalog/owned-ids} & \pkcode{owned\_card\_ids} & \pkcode{list[str]} \\
+  GET & \pkcode{/catalog/market} & \pkcode{market\_cards} & \pkcode{Page[MarketCardView]} \\
+  GET & \pkcode{/catalog/market/summary} & \pkcode{market\_summary} & \pkcode{MarketSummary} \\
+  GET & \pkcode{/catalog/market/positions} & \pkcode{market\_positions} & \pkcode{Page[PositionView]} \\
+  GET & \pkcode{/catalog/market/concentration} & \pkcode{market\_concentration} & \pkcode{PortfolioConcentration} \\
+  GET & \pkcode{/catalog/market/sets} & \pkcode{market\_sets} & \pkcode{list[SetMarketView]} \\
+  POST & \pkcode{/catalog/market/simulate} & \pkcode{simulate\_trade} & \pkcode{TradeSimulation} · 404/422 \\
+  GET & \pkcode{/chat} & \pkcode{list\_conversations} & \pkcode{list[ConversationView]} \\
+  GET & \pkcode{/chat/\{id\}} & \pkcode{get\_conversation} & \pkcode{ConversationDetail} \\
+  POST & \pkcode{/chat} & \pkcode{send\_message} & SSE · 503 sin modelo \\
+  GET & \pkcode{/collection} & \pkcode{list\_collection} & \pkcode{Page[CollectionItemView]} \\
+  POST & \pkcode{/collection} & \pkcode{add\_card} & 201 \pkcode{CollectionItemView} \\
+  GET & \pkcode{/collection/activity} & \pkcode{collection\_activity} & \pkcode{list[ActivityEntry]} \\
+  GET & \pkcode{/collection/export} & \pkcode{export\_collection} & CSV o JSON adjunto \\
+  GET & \pkcode{/collection/\{id\}} & \pkcode{get\_item} & \pkcode{CollectionItemView} \\
+  PATCH & \pkcode{/collection/\{id\}} & \pkcode{update\_item} & \pkcode{CollectionItemView} \\
+  DELETE & \pkcode{/collection/\{id\}} & \pkcode{remove\_item} & 204 \\
+  GET & \pkcode{/messages} & \pkcode{list\_threads} & \pkcode{Page[ThreadView]} \\
+  GET & \pkcode{/messages/with/\{id\}} & \pkcode{get\_thread\_with} & \pkcode{ThreadView} \\
+  GET & \pkcode{/messages/\{id\}/messages} & \pkcode{list\_thread\_messages} & \pkcode{Page[DirectMessageView]} \\
+  POST & \pkcode{/messages} & \pkcode{send\_direct\_message} & 201 \pkcode{DirectMessageView} \\
+  POST & \pkcode{/messages/\{id\}/read} & \pkcode{mark\_thread\_read} & \pkcode{ThreadView} \\
+  GET & \pkcode{/news} & \pkcode{news\_feed} & \pkcode{NewsFeed} \\
+  POST & \pkcode{/news/seen} & \pkcode{mark\_news\_seen} & 204 \\
+  POST & \pkcode{/scans} & \pkcode{create\_scan} & 201 \pkcode{ScanResult} (multipart) \\
+  GET & \pkcode{/scans/\{id\}/image} & \pkcode{get\_scan\_image} & \pkcode{image/jpeg} \\
+  POST & \pkcode{/scans/\{id\}/confirm} & \pkcode{confirm\_scan} & 201 \pkcode{CollectionItemView} \\
+  GET & \pkcode{/stats} & \pkcode{collection\_stats} & \pkcode{CollectionStats} \\
+  GET & \pkcode{/gaps} & \pkcode{list\_gaps} & \pkcode{list[SetGap]} \\
+  GET & \pkcode{/wishlist} & \pkcode{list\_wishlist} & \pkcode{list[WishlistItemView]} \\
+  POST & \pkcode{/wishlist} & \pkcode{add\_to\_wishlist} & 201 \pkcode{WishlistItemView} \\
+  DELETE & \pkcode{/wishlist/\{id\}} & \pkcode{remove\_from\_wishlist} & 204 \\
+  GET & \pkcode{/share} & \pkcode{get\_share\_link} & \pkcode{ShareLinkView | None} \\
+  POST & \pkcode{/share} & \pkcode{create\_share\_link} & 201 \pkcode{ShareLinkView} \\
+  DELETE & \pkcode{/share} & \pkcode{revoke\_share\_link} & 204 \\
+  GET & \pkcode{/public/\{token\}} & \pkcode{read\_shared\_collection} & \pkcode{PublicCollection} · \textbf{sin auth} \\
+  GET & \pkcode{/trades} & \pkcode{list\_trades} & \pkcode{Page[TradeMatch]} \\
+  GET & \pkcode{/trades/collectors} & \pkcode{list\_collectors} & \pkcode{Page[CollectorView]} \\
+  GET & \pkcode{/trades/collectors/\{id\}} & \pkcode{get\_collector} & \pkcode{CollectorProfile} \\
+  GET & \pkcode{/trades/collectors/\{id\}/spares} & \pkcode{list\_spares} & \pkcode{Page[SpareCard]} \\
+  GET & \pkcode{/trades/offers} & \pkcode{list\_offers} & \pkcode{Page[TradeOfferView]} \\
+  POST & \pkcode{/trades/offers} & \pkcode{create\_offer} & 201 · 422 \\
+  POST & \pkcode{/trades/offers/\{id\}/counter} & \pkcode{counter\_offer} & 201 · 404/409 \\
+  POST & \pkcode{/trades/offers/\{id\}/respond} & \pkcode{respond\_to\_offer} & 200 · 404/409 \\
+  POST & \pkcode{/trades/offers/\{id\}/withdraw} & \pkcode{withdraw\_offer} & 200 · 404/409 \\
+  GET & \pkcode{/trades/listings} & \pkcode{list\_listings} & \pkcode{Page[TradeListingView]} \\
+  POST & \pkcode{/trades/listings} & \pkcode{publish\_listing} & 201 · 422 \\
+  POST & \pkcode{/trades/listings/\{id\}/accept} & \pkcode{accept\_listing} & \pkcode{TradeOfferView} · 404/409 \\
+  POST & \pkcode{/trades/listings/\{id\}/cancel} & \pkcode{cancel\_listing} & \pkcode{TradeListingView} · 404/409 \\
+\end{pktable}
+
+Fuera de \pkcode{/api/v1} sólo hay \pkcode{GET /health}, la referencia
+interactiva en \pkcode{/scalar} (excluida del esquema) y la aplicación MCP
+montada en la raíz. \pkcode{GET /api/v1/public/\{token\}} es la única ruta v1 sin
+autenticación, y responde 404 a un enlace revocado exactamente igual que a uno
+que nunca existió, para que no se puedan distinguir.
+
+\section{La resolución de un escaneo}
+
+El escaneo separa tres decisiones: el modelo lee lo impreso, el código decide
+qué carta es, y la persona decide qué se guarda. La segunda es la interesante,
+y es determinista: una consulta SQL que \emph{puntúa} en vez de filtrar.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+  \def\bw{13.4}
+  \foreach \x/\w/\c/\lab/\val in {
+      0/4.69/tWater/{total impreso del set}/{0.35},
+      4.69/4.69/tGrass/{número de colector}/{0.35},
+      9.38/3.35/pkRed/{nombre (trigramas)}/{0.25},
+      12.73/0.67/tElectric/{HP}/{0.05}} {
+    \fill[\c] (\x,0) rectangle ++(\w,0.62);
+    \node[white, font=\scriptsize\sffamily] at (\x+\w/2,0.31) {\val};
+  }
+  \draw[pkRule, line width=0.4pt] (0,0) rectangle (\bw,0.62);
+
+  \node[anchor=north, font=\scriptsize, color=pkMuted, text width=3.4cm, align=center] at (2.34,-0.12) {total impreso\\del set};
+  \node[anchor=north, font=\scriptsize, color=pkMuted, text width=3.4cm, align=center] at (7.03,-0.12) {número de\\colector};
+  \node[anchor=north, font=\scriptsize, color=pkMuted, text width=3cm, align=center] at (11.05,-0.12) {nombre\\(similitud trigrama)};
+  \node[anchor=north west, font=\scriptsize, color=pkMuted] at (12.9,-0.12) {HP};
+
+  \draw[pkGraphite, line width=0.6pt] (0,1.35) -- (\bw,1.35);
+  \foreach \p/\lab in {0.4/{PLAUSIBLE\\0.4}, 0.7/{CONFIDENT\\0.7}} {
+    \draw[pkGraphite, line width=0.6pt] (\p*\bw,1.25) -- (\p*\bw,1.45);
+  }
+  \node[anchor=south, font=\scriptsize\sffamily, color=pkGraphite, align=center] at (0.4*\bw,1.5) {PLAUSIBLE 0.4};
+  \node[anchor=south, font=\scriptsize\sffamily, color=pkGraphite, align=center] at (0.7*\bw,1.5) {CONFIDENT 0.7};
+  \node[anchor=east, font=\scriptsize, color=pkMuted] at (-0.15,1.35) {0};
+  \node[anchor=west, font=\scriptsize, color=pkMuted] at (\bw+0.15,1.35) {1};
+  \fill[pkRule] (0,1.3) rectangle (0.4*\bw,1.4);
+  \fill[tElectric!45] (0.4*\bw,1.3) rectangle (0.7*\bw,1.4);
+  \fill[tGrass!45] (0.7*\bw,1.3) rectangle (\bw,1.4);
+  \node[anchor=north, font=\scriptsize, color=pkMuted] at (0.2*\bw,1.25) {failed};
+  \node[anchor=north, font=\scriptsize, color=pkMuted] at (0.55*\bw,1.25) {ambiguous};
+  \node[anchor=north, font=\scriptsize, color=pkMuted] at (0.85*\bw,1.25) {resolved (si además supera al segundo por 0.3)};
+\end{tikzpicture}
+\caption{Los pesos de \pkpath{services/resolve.py} y los umbrales que convierten
+  una puntuación en un estado.}
+\label{fig:resolve}
+\end{figure}
+
+\begin{lstlisting}[language=Python]
+# Every signal contributes; none vetoes. A hard filter on a misread field would
+# discard the right card.
+W_SET_TOTAL = 0.35
+W_NUMBER    = 0.35
+W_NAME      = 0.25
+W_HP        = 0.05
+
+PLAUSIBLE = 0.4   # above this a candidate is worth showing at all
+CONFIDENT = 0.7   # above this, and clear of the runner-up, it is settled
+# A margin, not a ceiling on the runner-up: in a full catalog near-miss scores
+# around 0.45 are always present and would make every scan ambiguous.
+MARGIN = 0.3
+MAX_CANDIDATES = 8
+\end{lstlisting}
+
+Dos propiedades importan. La primera: el estrechamiento de filas es una
+\emph{unión} (\pkcode{or\_(*conditions)}), nunca una intersección, así que un HP
+mal leído cuesta su peso —cinco centésimas— en lugar de descartar la carta
+correcta. La segunda: el estado \pkcode{resolved} exige puntuación alta
+\emph{y} distancia sobre el segundo; sin ese margen, un catálogo completo
+siempre tiene casi-aciertos alrededor de 0.45 y todo escaneo saldría ambiguo.
+
+\section{La lectura diaria de precios}
+
+No hay planificador. Al arrancar el proceso se crea una tarea suelta,
+condicionada por \pkcode{PRICE\_REFRESH\_ON\_START} (verdadero por omisión), y se
+cancela al apagar:
+
+\begin{lstlisting}[language=Python]
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with mcp_server.session_manager.run():
+        task = (asyncio.create_task(take_todays_prices())
+                if get_settings().price_refresh_on_start else None)
+        yield
+        if task is not None:
+            task.cancel()
+    await engine.dispose()
+\end{lstlisting}
+
+La deduplicación es por día de calendario y ocurre dos veces. Antes de empezar,
+\pkcode{refresh\_prices} comprueba si ya hay lecturas de hoy y se retira
+(\pkcode{skipped=True}); al escribir, \pkcode{record\_prices} hace
+\pkcode{ON CONFLICT (card\_id, recorded\_on) DO UPDATE}. Reiniciar el servicio
+cinco veces en un día deja una sola lectura por carta. La tarea abre su propia
+sesión (no la de una petición), confirma ella misma y nunca puede tumbar el
+arranque: «un catálogo inalcanzable es una serie desactualizada, no una
+aplicación rota».
+
+\begin{pknote}[Por qué el gestor de sesiones MCP se arranca aquí]
+El \pkcode{lifespan} de una sub-aplicación montada nunca se ejecuta, así que el
+anfitrión tiene que arrancar el \pkcode{session\_manager} del servidor MCP. Sin
+esa línea, la primera petición a \pkcode{/mcp} falla con un error que no apunta
+ni de lejos al \pkcode{lifespan}.
+\end{pknote}
+
+\section{El servidor MCP}
+
+Se monta en la raíz y en último lugar, porque lleva su propia ruta
+\pkcode{/mcp} más los metadatos de recurso OAuth que el descubrimiento espera
+encontrar en la raíz del dominio; Starlette empareja en orden, así que todas las
+rutas anteriores siguen ganando.
+
+Su verificador de tokens delega en el mismo \pkcode{verify\_token} del REST: «el
+servidor MCP es la misma superficie de datos vista desde otro protocolo, no una
+segunda puerta con sus propias reglas». Una herramienta que no puede resolver a
+su usuario lanza \pkcode{UnauthenticatedError} en lugar de recurrir a un usuario
+por defecto.
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1.5,l]X[0.8,l]X[3,l]}}
+  Herramienta & Naturaleza & Servicio que usa \\
+  \pkcode{search\_cards} & lectura & \pkcode{catalog.search\_cards} \\
+  \pkcode{get\_card\_details} & lectura & \pkcode{catalog.get\_card} \\
+  \pkcode{get\_collection} & lectura & \pkcode{collection.list\_items} \\
+  \pkcode{collection\_stats} & lectura & \pkcode{stats.collection\_stats} \\
+  \pkcode{market\_summary} & lectura & \pkcode{market.summary} + \pkcode{set\_breakdown} \\
+  \pkcode{cheapest\_missing} & lectura & \pkcode{market.cheapest\_missing} \\
+  \pkcode{find\_trades} & lectura & \pkcode{trade.match\_page} \\
+  \pkcode{my\_trade\_offers} & lectura & \pkcode{trade.list\_offers} \\
+  \pkcode{find\_gaps} & lectura & \pkcode{gaps.find\_gaps} \\
+  \pkcode{get\_wishlist} & lectura & \pkcode{wishlist.list\_items} \\
+  \pkcode{suggest\_card} & \textbf{escritura} & \pkcode{wishlist.add(added\_by=AGENT)} \\
+  \pkcode{remember} & \textbf{escritura} & \pkcode{preferences.remember} \\
+  \pkcode{forget} & \textbf{escritura} & \pkcode{preferences.forget} \\
+\end{pkbox}\par\addvspace{8pt}
+
+\begin{pkdecision}[Trece herramientas, tres escriben, ninguna toca la colección]
+\pkcode{suggest\_card} sólo puede proponer una carta para la lista de deseos.
+Su documentación fija el límite: «esta es la única escritura disponible aquí, y
+deliberadamente no puede tocar la colección: eso registra qué cartas posee
+físicamente la persona, y nada salvo ella manipulando una carta debería
+cambiarlo». \pkcode{remember} y \pkcode{forget} escriben la memoria del agente,
+no datos de dominio.
+\end{pkdecision}
+
+\section{El agente}
+
+Un agente nuevo por turno, atado a la sesión MCP autenticada de ese turno:
+
+\begin{lstlisting}[language=Python]
+TURN_LIMITS = UsageLimits(tool_calls_limit=8, request_limit=10)
+
+def build_agent(session: ClientSession, model: str, known: str = "") -> Agent[None, str]:
+    """A fresh agent per turn, bound to that turn's authenticated MCP session."""
+    return Agent(build_model(model), instructions=SYSTEM_PROMPT + known,
+                 toolsets=[McpToolset(session)],
+                 model_settings=ModelSettings(temperature=0.2))
+\end{lstlisting}
+
+El \emph{toolset} está escrito a mano porque el cliente MCP propio de pydantic-ai
+apunta al SDK 1.x y no importa contra 2.0, que renombró los campos del
+protocolo. Si una herramienta devuelve error, el adaptador lanza
+\pkcode{ModelRetry} para que el modelo se corrija en lugar de romper el turno.
+
+El streaming vive en el endpoint, no en el paquete del agente: SSE con eventos
+\pkcode{conversation}, \pkcode{delta}, \pkcode{tool}, \pkcode{done} y
+\pkcode{error}. Escucha \pkcode{PartStartEvent} \emph{y} \pkcode{PartDeltaEvent}
+—escuchar sólo los deltas se come las primeras palabras de cada respuesta— y el
+cuerpo abre su propia sesión de base de datos, porque un cuerpo en streaming
+corre después de que el endpoint ya retornó y una sesión de petición estaría
+cerrándose debajo. Si el turno falla, se revierte entero: «medio turno
+persistido no vale nada».
+
+Los modelos se construyen con credenciales explícitas
+(\pkpath{agent/models.py}), no leídas del entorno del proceso, «porque eso
+haría de \pkcode{.env} y \pkcode{os.environ} dos fuentes de verdad para la misma
+clave». Un nombre con prefijo \pkcode{ollama:} se sirve por la API compatible
+con OpenAI y, en visión, se le pide JSON por \emph{prompt}
+(\pkcode{PromptedOutput}) porque los modelos abiertos no implementan llamada a
+herramientas.
+
+\section{Almacenamiento de imágenes}
+
+\pkcode{StorageBackend} es un \pkcode{Protocol} con \pkcode{put}, \pkcode{get} y
+\pkcode{delete}; la única implementación es un volumen de Docker, «en vez de
+MinIO, que añadiría un cuarto contenedor a algo que sólo corre en local». La
+clave de un escaneo es \pkcode{"\{user\_id\}/\{scan\_id\}.jpg"}: la propiedad es
+visible en la propia ruta y borrar un usuario se convierte en borrar un
+directorio. \pkcode{\_resolve} resuelve ambos extremos y rechaza cualquier clave
+que se escape de la raíz, que es la comprobación de travesía que además
+sobrevive a los enlaces simbólicos.
+
+\pkpath{storage/images.py} valida por \emph{firma de bytes} y no por extensión
+ni \pkcode{Content-Type} —los dos los aporta quien sube—, acepta HEIC porque un
+iPhone dispara HEIC por omisión, corrige la orientación EXIF, reescala a
+1600~px de lado largo y recodifica a JPEG con calidad 88. La imagen almacenada y
+la que se manda al modelo son los mismos bytes, así que lo que un revisor vea
+después es exactamente lo que el modelo vio.
+
+\begin{pkwarn}[Las imágenes de escaneo no se limpian]
+No existe trabajo de recolección: cada escaneo deja un JPEG en el volumen y ahí
+se queda mientras exista la fila de \pkcode{scan}. En un despliegue de larga
+vida hay que prever un borrado periódico, o bien un backend de almacenamiento
+con política de expiración; la costura para lo segundo ya está puesta en
+\pkcode{StorageBackend}.
+\end{pkwarn}
+
+\section{Configuración}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1.8,l]X[1.5,l]X[2.4,l]}}
+  Variable & Por omisión & Controla \\
+  \pkcode{DATABASE\_URL} & \emph{obligatoria} & DSN asyncpg \\
+  \pkcode{CORS\_ORIGINS} & \pkcode{http://localhost:3000} & Orígenes permitidos, separados por coma \\
+  \pkcode{AUTH\_JWKS\_URL} & \emph{obligatoria} & Dónde alcanza la API el JWKS \\
+  \pkcode{AUTH\_ISSUER} & \emph{obligatoria} & \pkcode{iss} esperado, y emisor MCP \\
+  \pkcode{AUTH\_AUDIENCE} & \emph{obligatoria} & \pkcode{aud} esperado \\
+  \pkcode{MCP\_RESOURCE\_URL} & \pkcode{…:8010/mcp} & URL anunciada al descubrimiento externo \\
+  \pkcode{MCP\_INTERNAL\_URL} & vacía & Por dónde se conecta el agente interno \\
+  \pkcode{STORAGE\_ROOT} & \pkcode{./data/scans} & Raíz del almacén de imágenes \\
+  \pkcode{PRICE\_REFRESH\_ON\_START} & \pkcode{true} & La lectura de precios al arrancar \\
+  \pkcode{AGENT\_MODEL} & \pkcode{google-gla:}\allowbreak\pkcode{gemini-flash-latest} & Chat, consejo de intercambio y reseñas \\
+  \pkcode{VISION\_MODEL} & \pkcode{google-gla:}\allowbreak\pkcode{gemini-flash-latest} & Transcripción de la foto \\
+  \pkcode{GOOGLE\_API\_KEY} & vacía & Credencial \emph{y} interruptor: sin ella \pkcode{agent\_enabled} es falso \\
+  \pkcode{OLLAMA\_URL} & \pkcode{http://localhost:11434/v1} & Proveedor local alternativo \\
+\end{pkbox}\par\addvspace{8pt}

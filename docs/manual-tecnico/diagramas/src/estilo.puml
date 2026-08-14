@@ -1,0 +1,57 @@
+' Shared PlantUML skin. Colours mirror packages/ui/src/styles/globals.css.
+!$pkRed        = "#DB0016"
+!$pkRedSoft    = "#FDECEE"
+!$pkGraphite   = "#2C2E33"
+!$pkMuted      = "#5C5A5B"
+!$pkRaised     = "#F1F0F0"
+!$pkRule       = "#D8D6D6"
+!$pkWater      = "#0063B4"
+!$pkWaterSoft  = "#E8F1FB"
+!$pkGrass      = "#186B22"
+!$pkGrassSoft  = "#E9F4EA"
+!$pkInk        = "#0E0D0D"
+
+skinparam backgroundColor transparent
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 12
+skinparam maxMessageSize 155
+skinparam wrapWidth 165
+skinparam roundCorner 6
+skinparam dpi 150
+
+skinparam sequence {
+  ArrowColor $pkGraphite
+  ArrowFontColor $pkInk
+  ArrowFontSize 11
+  LifeLineBorderColor $pkRule
+  LifeLineBackgroundColor $pkRaised
+  ParticipantBorderColor $pkGraphite
+  ParticipantBackgroundColor $pkRaised
+  ParticipantFontColor $pkInk
+  ParticipantFontStyle bold
+  ParticipantPadding 18
+  BoxBorderColor $pkRule
+  BoxFontColor $pkMuted
+  ActorBorderColor $pkGraphite
+  ActorBackgroundColor $pkRedSoft
+  GroupBorderColor $pkRule
+  GroupBackgroundColor $pkRaised
+  GroupHeaderFontColor $pkGraphite
+  GroupFontColor $pkGraphite
+  DividerBackgroundColor $pkRaised
+  DividerBorderColor $pkRule
+  DividerFontColor $pkMuted
+}
+
+skinparam note {
+  BackgroundColor $pkRedSoft
+  BorderColor $pkRed
+  FontColor $pkInk
+  FontSize 10
+}
+
+skinparam database {
+  BackgroundColor $pkWaterSoft
+  BorderColor $pkWater
+}

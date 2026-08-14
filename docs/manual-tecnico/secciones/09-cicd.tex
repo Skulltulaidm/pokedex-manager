@@ -1,0 +1,154 @@
+\chapter{Integración continua y despliegue}
+\label{cap:cicd}
+
+\section{El pipeline}
+
+Un solo flujo, \pkpath{.github/workflows/ci.yml}, disparado en \pkcode{push} y en
+\pkcode{pull\_request}, con \pkcode{concurrency} por rama y
+\pkcode{cancel-in-progress}: un empujón nuevo cancela la ejecución anterior de la
+misma rama. Dos jobs independientes que corren en paralelo.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{ci-pipeline.pdf}
+  \caption{Los dos jobs y sus pasos, en orden. Generado desde
+    \pkpath{diagramas/src/ci-pipeline.dot}.}
+  \label{fig:ci}
+\end{figure}
+
+\subsection{Job \emph{API}}
+
+Levanta un \emph{service container} \pkcode{postgres:18-alpine} con
+\pkcode{pg\_isready} como healthcheck, y después ejecuta una secuencia que
+reproduce el arranque real del sistema. Tres pasos existen por razones que no son
+obvias y están comentadas en el propio flujo:
+
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=3pt]
+  \item \textbf{Crear los esquemas a mano.} Un service container no monta
+        \pkpath{docker-entrypoint-initdb.d}, así que el paso ejecuta
+        \pkpath{db/init/01-schemas.sql} —los dos esquemas y la extensión
+        \pkcode{pg\_trgm}— tal como lo haría el fichero de compose.
+  \item \textbf{Migrar el esquema \pkcode{auth} antes que el de dominio.} Las
+        tablas de dominio tienen claves foráneas hacia \pkcode{auth."user"}; sin
+        este paso la primera migración de Alembic no puede correr.
+  \item \textbf{Sembrar un set del catálogo.} Las pruebas de servicio buscan
+        cartas reales en vez de inventarlas, así que el catálogo tiene que estar.
+        Un set basta y tarda unos ocho segundos.
+\end{itemize}
+
+Después, \pkcode{pytest -q}, \pkcode{mypy src} y \pkcode{ruff check .}.
+
+\begin{pkdecision}[CI corre sin ninguna clave de modelo]
+\pkcode{GOOGLE\_API\_KEY} se deja explícitamente vacía, con este comentario en el
+flujo: «el agente es opcional, el chat responde 503 sin él, y un repositorio
+público no debe necesitar una clave para ponerse en verde». Es la prueba
+ejecutable de \pkid{RNF-07}.
+\end{pkdecision}
+
+\subsection{Job \emph{Web}}
+
+Tres pasos: \pkcode{checkout}, \pkcode{npm ci} y
+\pkcode{npx turbo run typecheck lint test --filter=web...}. El filtro acota la
+ejecución al workspace de la web y a sus dependencias; las tareas de raíz
+cubrirían también la API, cuyo utillaje vive en el otro job.
+
+\section{Imágenes}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1,l]X[1.4,l]X[3,l]}}
+  Servicio & Base & Notas \\
+  api & \pkcode{uv:}\allowbreak\pkcode{python3.13-}\allowbreak\pkcode{bookworm-slim} & Capa de dependencias sólo con el \emph{lockfile} (\pkcode{uv sync --frozen --no-install-project --no-dev}), luego el código. \pkcode{UV\_COMPILE\_BYTECODE=1}. \\
+  web & \pkcode{node:22-slim}, dos etapas & Etapa de construcción con \pkcode{npm ci} sobre los \pkcode{package.json} antes de copiar el código; etapa final que ensambla la traza \pkcode{standalone}. \\
+\end{pkbox}\par\addvspace{8pt}
+
+El arranque de cada imagen levanta el esquema que le pertenece. La web ejecuta
+\pkcode{node apps/web/scripts/migrate-auth.mjs \&\& node apps/web/server.js}. La
+API espera:
+
+\begin{lstlisting}[language=bash]
+# The domain tables carry foreign keys into `auth.user`, which Better Auth
+# creates from the web service. Both start at once on a fresh deployment, so
+# this waits for that schema rather than crash-looping.
+for i in $(seq 1 30); do alembic upgrade head && break; \
+  echo 'waiting for the auth schema'; sleep 5; done; \
+  alembic current | grep -q . && exec fastapi run src/pokedex/main.py \
+  --host 0.0.0.0 --port 8000
+\end{lstlisting}
+
+\begin{pkwarn}[La configuración de migración está duplicada a propósito]
+\pkpath{apps/web/scripts/migrate-auth.mjs} repite la configuración de
+\pkpath{lib/auth.ts} porque no puede importarla: la construcción
+\pkcode{standalone} entrega \emph{bundles}, no el TypeScript fuente. El propio
+archivo lo advierte: «un plugin añadido allí y olvidado aquí es una tabla que
+esto nunca crea». Cualquier cambio en la configuración de Better Auth hay que
+hacerlo en los dos sitios.
+\end{pkwarn}
+
+\section{Forma del despliegue}
+
+Producción corre en \textbf{Railway}, con dos servicios y una base de datos:
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1,l]X[3.4,l]}}
+  Servicio & URL pública \\
+  web & \pkpath{https://web-production-78a4b.up.railway.app} \\
+  api & \pkpath{https://api-production-81ae.up.railway.app} \\
+  db & PostgreSQL 18 gestionado, sólo accesible desde la red privada \\
+\end{pkbox}\par\addvspace{8pt}
+
+No hay configuración de proveedor versionada en el repositorio: ni
+\pkpath{railway.json}, ni \pkpath{nixpacks.toml}, ni \pkpath{Procfile}. Lo que
+está definido son las dos imágenes y el contrato de variables, y eso basta: el
+sistema se despliega igual en cualquier anfitrión que ejecute contenedores
+—Railway, Fly, Render o un Kubernetes— con la misma topología:
+
+\begin{center}
+\begin{tikzpicture}[font=\footnotesize,
+  box/.style={draw=pkRule, fill=pkRaised, rounded corners=3pt, minimum height=1.15cm,
+              minimum width=3.5cm, align=center, inner sep=6pt},
+  arrow/.style={-{Stealth[length=4pt]}, pkMuted, line width=0.6pt}]
+  \node[box, draw=pkRed, fill=pkRed!8] (web) {\pksb servicio \texttt{web}\\[2pt]
+    \scriptsize imagen \pkpath{apps/web/Dockerfile}};
+  \node[box, draw=pkRed, fill=pkRed!8, right=2.0cm of web] (api) {\pksb servicio \texttt{api}\\[2pt]
+    \scriptsize imagen \pkpath{apps/api/Dockerfile}};
+  \node[box, draw=tWater, fill=tWater!8, below=1.1cm of $(web)!0.5!(api)$] (db)
+    {\pksb PostgreSQL 18\\[2pt]\scriptsize esquemas \texttt{auth} + \texttt{pokedex}};
+  \draw[arrow] (web.south) -- node[left,pos=0.5,font=\scriptsize,color=pkMuted]
+    {\ \ migra \texttt{auth}} (db.west|-web.south) -- (db.north west);
+  \draw[arrow] (api.south) -- node[right,pos=0.5,font=\scriptsize,color=pkMuted]
+    {migra \texttt{pokedex}\ \ } (db.east|-api.south) -- (db.north east);
+  \draw[arrow] (api) -- node[above,font=\scriptsize,color=pkMuted]{JWKS} (web);
+\end{tikzpicture}
+\end{center}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[0.6,l]X[4,l]}}
+  Servicio & Variables que el anfitrión debe fijar \\
+  api & \pkcode{DATABASE\_URL} (forma asyncpg), \pkcode{AUTH\_JWKS\_URL}, \pkcode{AUTH\_ISSUER}, \pkcode{AUTH\_AUDIENCE}, \pkcode{CORS\_ORIGINS}, \pkcode{PORT} \\
+  web & \pkcode{DATABASE\_URL} (forma \pkcode{postgresql://}, es \pkcode{node-pg}), \pkcode{BETTER\_AUTH\_URL}, \pkcode{BETTER\_AUTH\_SECRET}, \pkcode{NEXT\_PUBLIC\_API\_URL}, \pkcode{PORT}, \pkcode{HOSTNAME=0.0.0.0} \\
+\end{pkbox}\par\addvspace{8pt}
+
+Cuatro puntos que deciden si el despliegue funciona a la primera:
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=4pt,topsep=3pt]
+  \item \textbf{\pkcode{NEXT\_PUBLIC\_API\_URL} es un argumento de construcción.}
+        Next lo hornea en el bundle del cliente, así que tiene que ser la URL
+        \emph{pública} de la API, la que resuelve un navegador —no la interna del
+        contenedor. Cambiarla obliga a reconstruir la imagen. Si el anfitrión
+        sólo permite variables de ejecución, hay que pasarla como
+        \emph{build arg} del contenedor.
+  \item \textbf{El emisor y el JWKS son URLs distintas.} \pkcode{AUTH\_ISSUER} es
+        lo que el token declara y lo que ve el navegador; \pkcode{AUTH\_JWKS\_URL}
+        es por dónde el contenedor de la API alcanza al de la web. En una red
+        interna serán diferentes, y eso es correcto.
+  \item \textbf{Los dos DSN tienen formas distintas.} La API usa
+        \pkcode{postgresql+asyncpg://}; la web usa \pkcode{postgresql://} porque
+        su cliente es \pkcode{node-pg}.
+  \item \textbf{\pkcode{CORS\_ORIGINS} tiene que incluir el origen público de la
+        web}, porque el navegador llama a la API cruzando origen.
+\end{enumerate}
+
+Para poblar un despliegue nuevo:
+
+\begin{lstlisting}[language=bash]
+pokedex-sync base1 base2 base3     # catalogo
+pokedex-seed --count 1000          # un mercado de coleccionistas
+pokedex-demo                       # tres cuentas de demostracion
+\end{lstlisting}

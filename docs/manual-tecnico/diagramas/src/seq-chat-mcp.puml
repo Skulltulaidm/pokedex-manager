@@ -1,0 +1,51 @@
+@startuml seq-chat-mcp
+!include estilo.puml
+
+hide footbox
+
+actor Coleccionista as U
+participant "chat-stream.ts\n(SSE)" as W
+participant "POST /api/v1/chat\n+ mcp_session" as C
+participant "Servidor MCP /mcp\nservices + PostgreSQL" as S
+participant "Gemini" as LLM
+
+U -> W: escribe una pregunta
+W -> C: POST /chat\nAuthorization: Bearer <JWT>
+activate C
+
+alt sin GOOGLE_API_KEY
+  C --> W: 503
+end
+
+C -> S: historial (20 turnos) y preferencias
+C -> S: initialize + tools/list\ncon el token del llamante
+note right of C
+  Una sesion MCP por turno con el MISMO token:
+  el agente actua como el llamante, nunca como
+  una identidad de servicio, y no puede hacer
+  nada que un cliente MCP externo no pueda.
+end note
+S --> C: 13 herramientas\n10 leen, 3 escriben
+
+C -> LLM: run_stream_events\nUsageLimits(8 tools, 10 req)
+
+loop mientras pida herramientas
+  LLM --> C: FunctionToolCallEvent
+  C --> W: event: tool
+  C -> S: tools/call -> services -> SELECT
+  S --> C: structured_content
+  C --> LLM: resultado\n(ModelRetry si is_error)
+end
+
+loop por cada fragmento de texto
+  LLM --> C: PartStartEvent / PartDeltaEvent
+  C --> W: event: delta
+  W -> U: la respuesta se escribe sola
+end
+
+LLM --> C: AgentRunResultEvent
+C -> S: persiste el turno\n(message.content jsonb integro)
+C --> W: event: done
+deactivate C
+
+@enduml

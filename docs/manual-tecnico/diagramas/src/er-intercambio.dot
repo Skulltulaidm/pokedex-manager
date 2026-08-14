@@ -1,0 +1,84 @@
+// ER - intercambio. Derivado de db/models/trade.py
+digraph er_intercambio {
+  rankdir = TB;
+  bgcolor = "transparent";
+  splines = spline;
+  nodesep = 0.32;
+  ranksep = 0.85;
+  fontname = "Helvetica";
+
+  node [shape=plain, fontname="Helvetica", fontsize=9];
+  edge [color="#5C5A5B", arrowhead=none, penwidth=0.9,
+        fontname="Helvetica", fontsize=8, fontcolor="#5C5A5B"];
+
+  card [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#DB0016">
+      <tr><td bgcolor="#DB0016" align="center"><font color="white"><b>card</b></font></td></tr>
+      <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font>  id · varchar(64)</td></tr>
+      <tr><td bgcolor="#FDECEE" align="center"><font point-size="8" color="#DB0016">catálogo · figura 4.1</font></td></tr>
+    </table>>];
+
+  authuser [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#0063B4">
+      <tr><td bgcolor="#0063B4" align="center"><font color="white"><b>auth."user"</b></font></td></tr>
+      <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font>  id · text</td></tr>
+      <tr><td bgcolor="#E8F1FB" align="center"><font point-size="8" color="#0063B4">otro esquema · Better Auth</font></td></tr>
+    </table>>];
+
+  trade_offer [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#4038B8">
+        <tr><td bgcolor="#4038B8" align="center" colspan="2"><font color="white"><b>trade_offer</b></font></td></tr>
+        <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font></td><td align="left">id · uuid</td></tr>
+        <tr><td align="left" port="uf"><font color="#0063B4"><b>FK</b></font></td><td align="left">from_user_id → auth."user"</td></tr>
+        <tr><td align="left" port="ut"><font color="#0063B4"><b>FK</b></font></td><td align="left">to_user_id → auth."user"</td></tr>
+        <tr><td align="left" port="rep"><font color="#0063B4"><b>FK</b></font></td><td align="left">replies_to_id → trade_offer</td></tr>
+        <tr><td align="left"></td><td align="left">status · enum offer_status</td></tr>
+        <tr><td align="left"></td><td align="left">message · text</td></tr>
+        <tr><td align="left"></td><td align="left">created_at · timestamp</td></tr>
+        <tr><td align="left"></td><td align="left">responded_at · timestamp</td></tr>
+      </table>>];
+
+  trade_offer_card [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#4038B8">
+        <tr><td bgcolor="#4038B8" align="center" colspan="2"><font color="white"><b>trade_offer_card</b></font></td></tr>
+        <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font></td><td align="left">id · uuid</td></tr>
+        <tr><td align="left" port="o"><font color="#0063B4"><b>FK</b></font></td><td align="left">offer_id → trade_offer</td></tr>
+        <tr><td align="left" port="c"><font color="#0063B4"><b>FK</b></font></td><td align="left">card_id → card</td></tr>
+        <tr><td align="left"></td><td align="left">side · enum (offered | requested)</td></tr>
+        <tr><td align="left"></td><td align="left">condition · enum  <i>copiada</i></td></tr>
+        <tr><td align="left" colspan="2"><font color="#DB0016"><b>UQ</b></font> (offer_id, card_id, side)</td></tr>
+      </table>>];
+
+  trade_listing [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#4038B8">
+        <tr><td bgcolor="#4038B8" align="center" colspan="2"><font color="white"><b>trade_listing</b></font></td></tr>
+        <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font></td><td align="left">id · uuid</td></tr>
+        <tr><td align="left" port="u"><font color="#0063B4"><b>FK</b></font></td><td align="left">owner_id → auth."user"</td></tr>
+        <tr><td align="left" port="o"><font color="#0063B4"><b>FK</b></font></td><td align="left">offer_id → trade_offer  (nulo)</td></tr>
+        <tr><td align="left"></td><td align="left">status · enum listing_status</td></tr>
+        <tr><td align="left"></td><td align="left">note · text</td></tr>
+        <tr><td align="left"></td><td align="left">taken_at · timestamp</td></tr>
+      </table>>];
+
+  trade_listing_card [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#4038B8">
+        <tr><td bgcolor="#4038B8" align="center" colspan="2"><font color="white"><b>trade_listing_card</b></font></td></tr>
+        <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font></td><td align="left">id · uuid</td></tr>
+        <tr><td align="left" port="l"><font color="#0063B4"><b>FK</b></font></td><td align="left">listing_id → trade_listing</td></tr>
+        <tr><td align="left" port="c"><font color="#0063B4"><b>FK</b></font></td><td align="left">card_id → card</td></tr>
+        <tr><td align="left"></td><td align="left">side · enum</td></tr>
+        <tr><td align="left"></td><td align="left">condition · enum  <i>sólo el lado dado</i></td></tr>
+      </table>>];
+
+  authuser:id -> trade_offer:uf [label="emite", color="#0063B4", fontcolor="#0063B4"];
+  authuser:id -> trade_offer:ut [label="recibe", color="#0063B4", fontcolor="#0063B4"];
+  authuser:id -> trade_listing:u [color="#0063B4"];
+
+  card:id -> trade_offer_card:c [label="1 : N"];
+  card:id -> trade_listing_card:c [label="1 : N"];
+
+  trade_offer:id -> trade_offer_card:o [label="1 : N"];
+  trade_offer:rep -> trade_offer:id [label="contraoferta", style=dashed];
+  trade_listing:id -> trade_listing_card:l [label="1 : N"];
+  trade_listing:o -> trade_offer:id [label="el trato en que se convirtió", style=dashed, color="#DB0016", fontcolor="#DB0016"];
+}

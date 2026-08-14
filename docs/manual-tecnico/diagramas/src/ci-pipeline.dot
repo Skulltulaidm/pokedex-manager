@@ -1,0 +1,50 @@
+// .github/workflows/ci.yml — dos jobs en paralelo, pasos en orden.
+digraph ci {
+  rankdir = TB;
+  bgcolor = "transparent";
+  splines = spline;
+  nodesep = 0.30;
+  ranksep = 0.30;
+  fontname = "Helvetica";
+
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9,
+        color="#D8D6D6", fillcolor="#F1F0F0", penwidth=0.9, margin="0.14,0.09"];
+  edge [color="#5C5A5B", arrowsize=0.6, penwidth=0.9, fontname="Helvetica", fontsize=8];
+
+  trigger [label=<<b>push</b> · <b>pull_request</b><br/><font point-size="8" color="#5C5A5B">concurrency por rama,<br/>cancel-in-progress</font>>,
+           fillcolor="#FDECEE", color="#DB0016", shape=box, style="rounded,filled"];
+
+  subgraph cluster_api {
+    label = <<b>job: API</b>  ·  ubuntu-latest  ·  service container postgres:18-alpine>;
+    fontname="Helvetica"; fontsize=10; fontcolor="#DB0016";
+    style="rounded,dashed"; color="#D8D6D6"; margin=14; labeljust="l";
+
+    a1 [label="checkout · setup-node 24 · setup-uv"];
+    a2 [label=<psql -f db/init/01-schemas.sql<br/><font point-size="7.5" color="#5C5A5B">un service container no ejecuta initdb.d</font>>];
+    a3 [label="npm ci"];
+    a4 [label=<node apps/web/scripts/migrate-auth.mjs<br/><font point-size="7.5" color="#5C5A5B">las FK del dominio apuntan a auth.user</font>>, fillcolor="#E8F1FB", color="#0063B4"];
+    a5 [label="uv sync --frozen"];
+    a6 [label="alembic upgrade head"];
+    a7 [label=<uv run pokedex-sync base1<br/><font point-size="7.5" color="#5C5A5B">las pruebas usan cartas reales</font>>];
+    a8 [label=<<b>pytest -q</b><br/><font point-size="7.5" color="#5C5A5B">292 casos</font>>, fillcolor="#E9F4EA", color="#186B22"];
+    a9 [label=<<b>mypy src</b> · strict<br/><font point-size="7.5" color="#5C5A5B">87 archivos</font>>, fillcolor="#E9F4EA", color="#186B22"];
+    a10 [label=<<b>ruff check .</b>>, fillcolor="#E9F4EA", color="#186B22"];
+
+    a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> a10;
+  }
+
+  subgraph cluster_web {
+    label = <<b>job: Web</b>  ·  ubuntu-latest>;
+    fontname="Helvetica"; fontsize=10; fontcolor="#0063B4";
+    style="rounded,dashed"; color="#D8D6D6"; margin=14; labeljust="l";
+
+    w1 [label="checkout · setup-node 24"];
+    w2 [label="npm ci"];
+    w3 [label=<<b>turbo run typecheck lint test</b><br/><font point-size="7.5" color="#5C5A5B">--filter=web…  ·  tsc, eslint, vitest (71)</font>>,
+        fillcolor="#E9F4EA", color="#186B22"];
+    w1 -> w2 -> w3;
+  }
+
+  trigger -> a1 [minlen=2];
+  trigger -> w1 [minlen=2];
+}

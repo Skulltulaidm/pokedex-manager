@@ -1,0 +1,364 @@
+% pokedex.sty — document identity for the PokeDex Manager technical manual.
+% Engine: pdflatex. Every dependency ships with TeX Live.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{pokedex}[2026/08/13 PokeDex Manager document identity]
+
+\RequirePackage[T1]{fontenc}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[spanish,es-noquoting,es-noshorthands,es-tabla]{babel}
+\RequirePackage{sourceserifpro}
+\RequirePackage[semibold]{sourcesanspro}
+\RequirePackage[scale=0.86]{sourcecodepro}
+\RequirePackage{microtype}
+\RequirePackage[table]{xcolor}
+\RequirePackage{tikz}
+\RequirePackage{tcolorbox}
+\RequirePackage{tabularray}
+\tcbuselibrary{skins,breakable}
+\RequirePackage{booktabs}
+\RequirePackage{fancyhdr}
+\RequirePackage{titlesec}
+\RequirePackage{tocloft}
+\RequirePackage{enumitem}
+\RequirePackage{caption}
+\RequirePackage{graphicx}
+\RequirePackage{adjustbox}
+\RequirePackage{listings}
+\RequirePackage{lastpage}
+\RequirePackage{needspace}
+\RequirePackage{pdflscape}
+\RequirePackage{array}
+\RequirePackage[hidelinks]{hyperref}
+
+\usetikzlibrary{calc,positioning,shapes.geometric,arrows.meta,backgrounds,fit,decorations.pathreplacing}
+\UseTblrLibrary{booktabs}
+
+% ---------------------------------------------------------------------------
+% Palette. Taken from packages/ui/src/styles/globals.css, converted from OKLCH.
+% ---------------------------------------------------------------------------
+\definecolor{pkRed}{HTML}{DB0016}
+\definecolor{pkRedDeep}{HTML}{BA0000}
+\definecolor{pkInk}{HTML}{0E0D0D}
+\definecolor{pkGraphite}{HTML}{2C2E33}
+\definecolor{pkNight}{HTML}{0F121F}
+\definecolor{pkMuted}{HTML}{5C5A5B}
+\definecolor{pkPaper}{HTML}{FBFAFA}
+\definecolor{pkRaised}{HTML}{F1F0F0}
+\definecolor{pkRule}{HTML}{D8D6D6}
+\definecolor{pkRing}{HTML}{1F7DCF}
+\definecolor{pkStar}{HTML}{C88B00}
+
+% Text-safe variants. The app's red has too little luminance to sit on the dark
+% cover (3.6:1) and the mid greens/blues fail AA at body sizes, so anything that
+% is read rather than merely seen uses these. Every pair in this document was
+% measured against WCAG AA: 4.5:1 normal, 3:1 for large type.
+\definecolor{pkRedLight}{HTML}{FF6B6B}
+\definecolor{pkString}{HTML}{146018}
+
+% Type accents, used to colour-code families of material.
+% Darkened one step from the app's own tokens so white type sits on them at AA.
+\definecolor{tFire}{HTML}{B93800}
+\definecolor{tWater}{HTML}{0063B4}
+\definecolor{tGrass}{HTML}{186B22}
+\definecolor{tElectric}{HTML}{8A6300}
+\definecolor{tPsychic}{HTML}{A82A69}
+\definecolor{tSteel}{HTML}{4C6874}
+\definecolor{tDragon}{HTML}{4038B8}
+\definecolor{tGhost}{HTML}{5F3596}
+
+% Font switches. `sourcesanspro` only remaps \sfdefault; it exposes no family
+% command of its own, so the document declares the two it uses.
+% Long unbreakable identifiers in running text; let TeX stretch rather than
+% push a line into the margin.
+\setlength{\emergencystretch}{2.5em}
+
+\newcommand{\pksans}{\sffamily}
+\newcommand{\pksb}{\sffamily\fontseries{sb}\selectfont}
+
+% ---------------------------------------------------------------------------
+% Document metadata, set once in the main file.
+% ---------------------------------------------------------------------------
+\newcommand{\pkdocname}{}
+\newcommand{\pkversion}{}
+\newcommand{\pkdate}{}
+\newcommand{\pkstatus}{}
+\newcommand{\pkclass}{}
+\newcommand{\pkproject}{}
+\newcommand{\setpkmeta}[6]{%
+  \renewcommand{\pkdocname}{#1}\renewcommand{\pkproject}{#2}%
+  \renewcommand{\pkversion}{#3}\renewcommand{\pkdate}{#4}%
+  \renewcommand{\pkstatus}{#5}\renewcommand{\pkclass}{#6}}
+
+% ---------------------------------------------------------------------------
+% Page furniture
+% ---------------------------------------------------------------------------
+\RequirePackage[a4paper,top=2.9cm,bottom=2.7cm,left=2.5cm,right=2.5cm,
+                headheight=15pt,headsep=16pt,footskip=26pt]{geometry}
+
+\newcommand{\pkheadfont}{\pksb\footnotesize}
+
+\fancypagestyle{pokedex}{%
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+  \fancyhead[L]{\pkheadfont\color{pkGraphite}\pkdocname}
+  \fancyhead[R]{\pkheadfont\color{pkMuted}\MakeUppercase{\pkclass}}
+  \fancyfoot[L]{\pkheadfont\color{pkMuted}\pkproject\ \textperiodcentered\ v\pkversion}
+  \fancyfoot[R]{\pkheadfont\color{pkGraphite}\thepage\,/\,\pageref{LastPage}}
+  % A hairline under the header, with the red tick the cover uses.
+  \fancyhead[C]{%
+    \begin{tikzpicture}[remember picture,overlay]
+      \draw[pkRule,line width=0.4pt]
+        ($(current page.north west)+(2.5cm,-2.35cm)$) --
+        ($(current page.north east)+(-2.5cm,-2.35cm)$);
+      \draw[pkRed,line width=1.4pt]
+        ($(current page.north west)+(2.5cm,-2.35cm)$) --
+        ($(current page.north west)+(3.4cm,-2.35cm)$);
+    \end{tikzpicture}}
+  \fancyfoot[C]{%
+    \begin{tikzpicture}[remember picture,overlay]
+      \draw[pkRule,line width=0.4pt]
+        ($(current page.south west)+(2.5cm,2.0cm)$) --
+        ($(current page.south east)+(-2.5cm,2.0cm)$);
+    \end{tikzpicture}}
+}
+\pagestyle{pokedex}
+
+\fancypagestyle{plain}{\pagestyle{pokedex}}
+
+% ---------------------------------------------------------------------------
+% Headings. Chapter numbers are set in red at display size beside the title.
+% ---------------------------------------------------------------------------
+\titleformat{\chapter}[display]
+  {\sffamily\bfseries\color{pkInk}}
+  {\normalfont\sffamily\fontsize{54}{54}\selectfont\color{pkRed}\thechapter
+   \hspace{0.35em}\textcolor{pkRule}{\rule[0.12em]{1.6cm}{1.2pt}}}
+  {8pt}
+  {\fontsize{24}{28}\selectfont\raggedright}
+  [\vspace{-6pt}{\color{pkRule}\rule{\textwidth}{0.4pt}}]
+
+\titleformat{\section}
+  {\sffamily\bfseries\large\color{pkInk}}
+  {\color{pkRed}\thesection}{0.7em}{}
+\titleformat{\subsection}
+  {\pksb\normalsize\color{pkGraphite}}
+  {\color{pkRed}\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}
+  {\pksb\small\color{pkGraphite}}
+  {\color{pkRedDeep}\thesubsubsection}{0.6em}{}
+
+\titlespacing*{\chapter}{0pt}{0pt}{22pt}
+\titlespacing*{\section}{0pt}{18pt}{6pt}
+\titlespacing*{\subsection}{0pt}{13pt}{4pt}
+\titlespacing*{\subsubsection}{0pt}{11pt}{3pt}
+
+% ---------------------------------------------------------------------------
+% Table of contents: dotted leaders everywhere, chapters in sans.
+% ---------------------------------------------------------------------------
+\renewcommand{\cfttoctitlefont}{\sffamily\bfseries\LARGE\color{pkInk}}
+\renewcommand{\cftchapfont}{\pksb\color{pkInk}}
+\renewcommand{\cftchappagefont}{\pksb\color{pkInk}}
+\renewcommand{\cftsecfont}{\color{pkGraphite}}
+\renewcommand{\cftsubsecfont}{\color{pkMuted}}
+\renewcommand{\cftsecpagefont}{\color{pkGraphite}}
+\renewcommand{\cftsubsecpagefont}{\color{pkMuted}}
+\renewcommand{\cftchapleader}{\cftdotfill{\cftdotsep}}
+\renewcommand{\cftchapdotsep}{\cftdotsep}
+\setlength{\cftbeforechapskip}{3.5pt}
+\setlength{\cftbeforesecskip}{0pt}
+\renewcommand{\cftfigfont}{\color{pkGraphite}}
+\renewcommand{\cfttabfont}{\color{pkGraphite}}
+
+% ---------------------------------------------------------------------------
+% Captions
+% ---------------------------------------------------------------------------
+\captionsetup{
+  font={small,color=pkMuted},
+  labelfont={color=pkRed,sf,bf},
+  labelsep=quad,
+  justification=raggedright,
+  singlelinecheck=false,
+  skip=8pt}
+
+% ---------------------------------------------------------------------------
+% Tables. One house style: graphite header row, striped body, no vertical rules.
+% ---------------------------------------------------------------------------
+% `pktable` breaks across pages and repeats its header; `pkbox` stays on one page.
+\NewTblrEnviron{pktable}
+\SetTblrInner[pktable]{
+  row{1}={bg=pkGraphite,fg=white,font=\pksb\scriptsize},
+  row{2-Z}={font=\scriptsize},
+  row{even}={bg=pkRaised},
+  rowsep=2.4pt, colsep=5pt,
+  hlines={0.3pt,pkRule},
+  rowhead=1,
+  width=\linewidth}
+\SetTblrOuter[pktable]{long}
+% tabularray's default continuation strings are English.
+\DefTblrTemplate{contfoot-text}{normal}{\footnotesize\itshape\color{pkMuted}Continúa en la página siguiente}
+\SetTblrTemplate{contfoot-text}{normal}
+\DefTblrTemplate{conthead-text}{normal}{\footnotesize\itshape\color{pkMuted}(continuación)}
+\SetTblrTemplate{conthead-text}{normal}
+\DefTblrTemplate{caption-sep}{normal}{.\enskip}
+\SetTblrTemplate{caption-sep}{normal}
+
+\NewTblrEnviron{pkbox}
+\SetTblrInner[pkbox]{
+  row{1}={bg=pkGraphite,fg=white,font=\pksb\scriptsize},
+  row{2-Z}={font=\scriptsize},
+  row{even}={bg=pkRaised},
+  rowsep=2.4pt, colsep=5pt,
+  hlines={0.3pt,pkRule},
+  width=\linewidth}
+
+% ---------------------------------------------------------------------------
+% Callouts
+% ---------------------------------------------------------------------------
+\tcbset{
+  pkbase/.style={
+    enhanced, breakable, boxrule=0pt, arc=1.5pt, left=10pt, right=10pt,
+    top=7pt, bottom=7pt, fontupper=\small,
+    parbox=false,
+    borderline west={2pt}{0pt}{pkRed},
+    colback=pkRaised, colframe=pkRaised,
+    fonttitle=\pksb\footnotesize,
+    coltitle=pkGraphite, before skip=9pt, after skip=9pt}}
+
+\newtcolorbox{pknote}[1][Nota]{pkbase, title={#1}}
+\newtcolorbox{pkdecision}[1][Decisión]{pkbase,
+  borderline west={2pt}{0pt}{tWater}, title={#1}}
+\newtcolorbox{pkwarn}[1][Atención]{pkbase,
+  borderline west={2pt}{0pt}{tElectric}, title={#1}}
+
+% ---------------------------------------------------------------------------
+% Code
+% ---------------------------------------------------------------------------
+\lstdefinestyle{pk}{
+  basicstyle=\ttfamily\scriptsize\color{pkInk},
+  keywordstyle=\color{pkRedDeep}\bfseries,
+  commentstyle=\color{pkMuted}\itshape,
+  stringstyle=\color{pkString},
+  numberstyle=\ttfamily\tiny\color{pkRule},
+  backgroundcolor=\color{pkRaised},
+  frame=leftline, framerule=2pt, rulecolor=\color{pkRule},
+  framesep=8pt, xleftmargin=10pt, xrightmargin=0pt,
+  aboveskip=9pt, belowskip=9pt,
+  breaklines=true, breakatwhitespace=false,
+  postbreak=\mbox{\textcolor{pkRedDeep}{$\hookrightarrow$}\space},
+  showstringspaces=false, tabsize=2,
+  columns=fullflexible, keepspaces=true,
+  literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+           {ñ}{{\~n}}1 {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1
+           {Ú}{{\'U}}1 {Ñ}{{\~N}}1 {¿}{{?`}}1 {¡}{{!`}}1 {°}{{\textdegree}}1
+           {→}{{$\rightarrow$}}1 {…}{{...}}1 {≥}{{$\geq$}}1 {≤}{{$\leq$}}1}
+\lstset{style=pk}
+
+\lstdefinelanguage{jsonpk}{
+  morestring=[b]", morecomment=[l]{//},
+  keywords={true,false,null}, sensitive=true}
+
+% Inline literals. Identifiers in this codebase are long and unbreakable, and a
+% narrow table column has nowhere to put them: `\_` is redefined inside the group
+% so every underscore becomes a break opportunity.
+\DeclareRobustCommand{\pkus}{\textunderscore\allowbreak}
+\DeclareRobustCommand{\pkcode}[1]{{\ttfamily\small\color{pkRedDeep}\let\_\pkus #1}}
+\DeclareRobustCommand{\pkpath}[1]{{\ttfamily\small\color{pkGraphite}\let\_\pkus #1}}
+
+% An identifier badge for requirement tables.
+\newcommand{\pkid}[1]{{\pksb\footnotesize\color{pkRedDeep}#1}}
+
+% ---------------------------------------------------------------------------
+% The pokeball, drawn once and reused at any size. `#1` is the radius.
+% ---------------------------------------------------------------------------
+\newcommand{\pkball}[4]{%
+  % #1 radius, #2 top colour, #3 bottom colour, #4 line colour
+  \begin{scope}
+    \clip (0,0) circle (#1);
+    \fill[#3] (-#1,-#1) rectangle (#1,#1);
+    \fill[#2] (-#1,0) rectangle (#1,#1);
+    \draw[#4,line width=#1*0.11] (-#1,0) -- (#1,0);
+  \end{scope}
+  \draw[#4,line width=#1*0.055] (0,0) circle (#1);
+  \fill[#4] (0,0) circle (#1*0.30);
+  \fill[#2] (0,0) circle (#1*0.20);
+  \draw[#4,line width=#1*0.045] (0,0) circle (#1*0.20);
+}
+
+% ---------------------------------------------------------------------------
+% Cover
+% ---------------------------------------------------------------------------
+\newcommand{\pkcover}[2]{%
+  % #1 title, #2 subtitle
+  \begin{titlepage}
+  \thispagestyle{empty}
+  \begin{tikzpicture}[remember picture,overlay]
+    \fill[pkNight] (current page.south west) rectangle (current page.north east);
+
+    % Geometry: an oversized pokeball bled off the lower-right corner, plus the
+    % flat bands the cover of the reference document uses.
+    \begin{scope}[shift={($(current page.south east)+(-1.2cm,3.2cm)$)}]
+      \pkball{7.4cm}{pkRed!88!black}{pkNight!85!white}{pkNight!60!white}
+    \end{scope}
+    \begin{scope}[opacity=0.55]
+      \fill[pkRed] ($(current page.north west)+(0,-0.9cm)$)
+        rectangle ($(current page.north west)+(4.2cm,-1.05cm)$);
+      \fill[white!35!pkNight] ($(current page.north west)+(4.6cm,-0.9cm)$)
+        rectangle ($(current page.north west)+(6.0cm,-1.05cm)$);
+    \end{scope}
+    \draw[white,opacity=0.10,line width=0.5pt]
+      ($(current page.north west)+(2.4cm,0)$) -- ($(current page.south west)+(2.4cm,0)$);
+
+    % Eyebrow, title, rule, subtitle.
+    \node[anchor=north west, align=left, inner sep=0]
+      at ($(current page.north west)+(2.4cm,-4.6cm)$)
+      {\pksb\footnotesize
+       \textcolor{pkRedLight}{\MakeUppercase{Documentación de ingeniería}}\;%
+       \textcolor{white!55!pkNight}{|}\;%
+       \textcolor{white!72!pkNight}{\MakeUppercase{\pkclass}}};
+
+    \node[anchor=north west, align=left, inner sep=0, text width=13cm]
+      at ($(current page.north west)+(2.4cm,-5.4cm)$)
+      {\sffamily\bfseries\fontsize{40}{44}\selectfont\color{white}#1};
+
+    \fill[pkRed] ($(current page.north west)+(2.4cm,-8.6cm)$)
+      rectangle ($(current page.north west)+(4.0cm,-8.72cm)$);
+
+    \node[anchor=north west, align=left, inner sep=0, text width=11cm]
+      at ($(current page.north west)+(2.4cm,-9.4cm)$)
+      {\sffamily\fontsize{13}{18}\selectfont\color{white!70!pkNight}\raggedright #2\par};
+
+    % The stack, set small in mono: it tells an engineer what this is before
+    % the contents page does.
+    % `align=left` without a text width uses TeX's alignment machinery, where a
+    % font or colour set inside the first row does not survive the row break.
+    % Both go on the node instead.
+    \node[anchor=north west, align=left, inner sep=0,
+          font=\ttfamily\scriptsize, text=white!62!pkNight]
+      at ($(current page.north west)+(2.4cm,-11.4cm)$)
+      {FastAPI\;\textperiodcentered\;SQLAlchemy\;\textperiodcentered\;PostgreSQL~18\\[3pt]
+       Next.js~16\;\textperiodcentered\;React~19\;\textperiodcentered\;TanStack~Query\\[3pt]
+       Model~Context~Protocol\;\textperiodcentered\;Turborepo};
+
+    % Metadata block, ruled like a spec sheet.
+    \node[anchor=south west, inner sep=0] at ($(current page.south west)+(2.4cm,3.1cm)$)
+      {\begin{minipage}{9.2cm}
+        \color{white}
+        \sffamily\footnotesize
+        \setlength{\tabcolsep}{0pt}
+        \renewcommand{\arraystretch}{1.75}
+        \begin{tabular}{@{}p{3.1cm}p{6.0cm}@{}}
+          \arrayrulecolor{white!35!pkNight}\hline
+          \textcolor{white!62!pkNight}{PROYECTO} & \pkproject \\ \hline
+          \textcolor{white!62!pkNight}{VERSIÓN}  & \pkversion \\ \hline
+          \textcolor{white!62!pkNight}{FECHA}    & \pkdate \\ \hline
+          \textcolor{white!62!pkNight}{ESTADO}   & \pkstatus \\ \hline
+        \end{tabular}
+      \end{minipage}};
+
+    \node[anchor=south west, inner sep=0] at ($(current page.south west)+(2.4cm,1.6cm)$)
+      {\sffamily\scriptsize\color{white!58!pkNight}
+       \MakeUppercase{\pkdocname}};
+  \end{tikzpicture}
+  \end{titlepage}}
+
+\endinput

@@ -1,0 +1,109 @@
+\chapter{Flujos}
+\label{cap:flujos}
+
+Tres recorridos completos, elegidos porque cada uno atraviesa una frontera
+distinta: el modelo de visión, el protocolo MCP y la concurrencia sobre una fila
+de la base de datos. Los tres diagramas se generan con PlantUML desde
+\pkpath{diagramas/src/}.
+
+\section{Escaneo de una carta}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=\linewidth,height=0.84\textheight,keepaspectratio]{seq-escaneo.pdf}
+  \caption{\pkcode{POST /api/v1/scans} y la confirmación posterior.}
+  \label{fig:seq-escaneo}
+\end{figure}
+
+Tres decisiones separadas, y sólo la primera es del modelo:
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=3pt,topsep=3pt]
+  \item \textbf{El modelo lee lo impreso.} El \emph{prompt} de visión dice
+        explícitamente «no infieras ni identifiques de qué carta se trata; otro
+        sistema hace eso». Devuelve nombre, número, total del set y HP.
+  \item \textbf{El código decide qué carta es.} \pkpath{services/resolve.py}
+        puntúa cada señal (figura~\ref{fig:resolve}) en lugar de filtrar por
+        ninguna, y clasifica el resultado en \pkcode{resolved},
+        \pkcode{ambiguous} o \pkcode{failed}.
+  \item \textbf{La persona decide qué se guarda}, y sólo cuando la ambigüedad es
+        real.
+\end{enumerate}
+
+Dos detalles operativos: la imagen se guarda \emph{antes} de llamar al modelo,
+para que un fallo de visión deje algo que reintentar; y si no hay modelo
+configurado, \pkcode{create\_scan} captura el error y sigue con un
+\pkcode{CardReading} vacío, de modo que el escaneo degrada a entrada manual en
+vez de fallar.
+
+\section{Un turno del asistente sobre MCP}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=\linewidth,height=0.84\textheight,keepaspectratio]{seq-chat-mcp.pdf}
+  \caption{\pkcode{POST /api/v1/chat}: un turno completo, con sesión MCP propia y
+    respuesta en streaming.}
+  \label{fig:seq-chat}
+\end{figure}
+
+Lo importante del diagrama es que la aplicación se llama a sí misma por el
+protocolo público. El chat no consulta \pkpath{services/} directamente: abre una
+sesión MCP contra su propio servidor, con \emph{el token del usuario}, y de ahí
+en adelante es un cliente MCP más. Las consecuencias:
+
+\begin{itemize}[leftmargin=1.1em,itemsep=3pt,topsep=3pt]
+  \item El agente no puede hacer nada que un asistente externo no pueda hacer.
+        No hay una ruta privilegiada.
+  \item El agente actúa \emph{como el llamante}, no como una identidad de
+        servicio: el aislamiento por usuario lo aplica la misma verificación de
+        token que protege el REST.
+  \item Un turno está acotado: ocho llamadas a herramienta y diez peticiones al
+        modelo. «Un turno que no termina nunca es peor que una respuesta
+        incompleta.»
+  \item El historial se recorta a veinte turnos y se descartan los viejos en
+        lugar de resumirlos, porque las herramientas releen datos vivos en cada
+        turno.
+\end{itemize}
+
+\section{Tomar una publicación del tablón}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=\linewidth,height=0.84\textheight,keepaspectratio]{seq-tablon.pdf}
+  \caption{\pkcode{POST /api/v1/trades/listings/\{id\}/accept}: la reserva
+    atómica y el trato que queda escrito.}
+  \label{fig:seq-tablon}
+\end{figure}
+
+Este es el único punto del sistema con competencia real por un recurso: una
+publicación la puede tomar cualquiera, y sólo una vez. La reserva es una sola
+sentencia:
+
+\begin{lstlisting}[language=Python]
+claimed = (await db.execute(
+    update(TradeListing)
+    .where(TradeListing.id == listing.id,
+           TradeListing.status == ListingStatus.OPEN)
+    .values(status=ListingStatus.TAKEN, taken_at=func.now())
+    .returning(TradeListing.id)
+)).scalar_one_or_none()
+
+if claimed is None:
+    raise ListingError("This listing was already taken")
+\end{lstlisting}
+
+La condición sobre el estado dentro del \pkcode{WHERE} es el cerrojo: dos
+peticiones simultáneas producen un ganador —el que ve una fila en el
+\pkcode{RETURNING}— y la otra recibe 409. No hace falta bloqueo explícito ni un
+nivel de aislamiento especial.
+
+Antes de la reserva, ambos lados se revalidan contra los sobrantes de
+\emph{ahora}, no contra los de cuando se publicó. Después, se escribe una
+\pkcode{trade\_offer} ya aceptada y la publicación queda enlazada a ella, con lo
+que un trato del tablón y uno negociado son la misma cosa desde ese momento.
+
+\begin{pkdecision}[Aceptar no mueve cartas]
+Ni aquí ni al aceptar una oferta cambia una sola fila de \pkcode{collection\_item}.
+La colección es lo que alguien tiene físicamente, y sólo quien tiene la carta
+sabe si el intercambio ocurrió. Es exactamente la misma regla que impide al
+asistente archivar cartas.
+\end{pkdecision}

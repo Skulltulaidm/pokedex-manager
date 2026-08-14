@@ -1,0 +1,88 @@
+// ER - capa de colección. Derivado de db/models/{collection,share}.py
+digraph er_coleccion {
+  rankdir = LR;
+  bgcolor = "transparent";
+  splines = spline;
+  nodesep = 0.32;
+  ranksep = 1.10;
+  fontname = "Helvetica";
+
+  node [shape=plain, fontname="Helvetica", fontsize=9];
+  edge [color="#5C5A5B", arrowhead=none, penwidth=0.9,
+        fontname="Helvetica", fontsize=8, fontcolor="#5C5A5B"];
+
+  card [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#DB0016">
+      <tr><td bgcolor="#DB0016" align="center"><font color="white"><b>card</b></font></td></tr>
+      <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font>  id · varchar(64)</td></tr>
+      <tr><td bgcolor="#FDECEE" align="center"><font point-size="8" color="#DB0016">catálogo · figura 4.1</font></td></tr>
+    </table>>];
+
+  authuser [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#0063B4">
+      <tr><td bgcolor="#0063B4" align="center"><font color="white"><b>auth."user"</b></font></td></tr>
+      <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font>  id · text</td></tr>
+      <tr><td bgcolor="#E8F1FB" align="center"><font point-size="8" color="#0063B4">otro esquema · Better Auth</font></td></tr>
+    </table>>];
+
+  collection_item [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#186B22">
+        <tr><td bgcolor="#186B22" align="center" colspan="2"><font color="white"><b>collection_item</b></font></td></tr>
+        <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font></td><td align="left">id · uuid</td></tr>
+        <tr><td align="left" port="u"><font color="#0063B4"><b>FK</b></font></td><td align="left">user_id → auth."user"</td></tr>
+        <tr><td align="left" port="c"><font color="#0063B4"><b>FK</b></font></td><td align="left">card_id → card</td></tr>
+        <tr><td align="left"></td><td align="left">condition · enum card_condition</td></tr>
+        <tr><td align="left"></td><td align="left">language · varchar(8)</td></tr>
+        <tr><td align="left"></td><td align="left">is_graded · bool</td></tr>
+        <tr><td align="left"></td><td align="left">grade · numeric(3,1)</td></tr>
+        <tr><td align="left"></td><td align="left">quantity · int  <font color="#DB0016">CK &gt; 0</font></td></tr>
+        <tr><td align="left"></td><td align="left">notes · text</td></tr>
+        <tr><td align="left"></td><td align="left">acquired_at · date</td></tr>
+        <tr><td align="left"></td><td align="left">unit_cost_usd · numeric(10,2)</td></tr>
+        <tr><td align="left" colspan="2"><font color="#DB0016"><b>UQ</b></font> (user_id, card_id, condition,<br align="left"/>language, is_graded, grade)<br align="left"/><i>NULLS NOT DISTINCT</i></td></tr>
+      </table>>];
+
+  wishlist_item [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#186B22">
+        <tr><td bgcolor="#186B22" align="center" colspan="2"><font color="white"><b>wishlist_item</b></font></td></tr>
+        <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font></td><td align="left">id · uuid</td></tr>
+        <tr><td align="left" port="u"><font color="#0063B4"><b>FK</b></font></td><td align="left">user_id → auth."user"</td></tr>
+        <tr><td align="left" port="c"><font color="#0063B4"><b>FK</b></font></td><td align="left">card_id → card</td></tr>
+        <tr><td align="left"></td><td align="left">priority · smallint</td></tr>
+        <tr><td align="left"></td><td align="left">reason · text</td></tr>
+        <tr><td align="left"></td><td align="left">added_by · enum (user | agent)</td></tr>
+        <tr><td align="left" colspan="2"><font color="#DB0016"><b>UQ</b></font> (user_id, card_id)</td></tr>
+      </table>>];
+
+  scan [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#186B22">
+        <tr><td bgcolor="#186B22" align="center" colspan="2"><font color="white"><b>scan</b></font></td></tr>
+        <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font></td><td align="left">id · uuid</td></tr>
+        <tr><td align="left" port="u"><font color="#0063B4"><b>FK</b></font></td><td align="left">user_id → auth."user"</td></tr>
+        <tr><td align="left" port="c"><font color="#0063B4"><b>FK</b></font></td><td align="left">resolved_card_id → card</td></tr>
+        <tr><td align="left"></td><td align="left">image_key · text</td></tr>
+        <tr><td align="left"></td><td align="left">extracted · jsonb</td></tr>
+        <tr><td align="left"></td><td align="left">candidate_ids · text[]</td></tr>
+        <tr><td align="left"></td><td align="left">status · enum scan_status</td></tr>
+        <tr><td align="left"></td><td align="left">model · varchar(128)</td></tr>
+      </table>>];
+
+  share_link [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#186B22">
+        <tr><td bgcolor="#186B22" align="center" colspan="2"><font color="white"><b>share_link</b></font></td></tr>
+        <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font></td><td align="left">id · uuid</td></tr>
+        <tr><td align="left" port="u"><font color="#0063B4"><b>FK</b></font></td><td align="left">user_id → auth."user"</td></tr>
+        <tr><td align="left"></td><td align="left">token · varchar(64) UQ</td></tr>
+        <tr><td align="left"></td><td align="left">created_at · timestamp</td></tr>
+        <tr><td align="left"></td><td align="left">revoked_at · timestamp</td></tr>
+      </table>>];
+
+  card:id:e -> collection_item:c:w [label="1 : N"];
+  card:id:e -> wishlist_item:c:w [label="1 : N"];
+  card:id:e -> scan:c:w [label="0 : 1"];
+
+  authuser:id:e -> collection_item:u:w [label="1 : N", color="#0063B4", fontcolor="#0063B4"];
+  authuser:id:e -> wishlist_item:u:w [color="#0063B4"];
+  authuser:id:e -> scan:u:w [color="#0063B4"];
+  authuser:id:e -> share_link:u:w [label="1 : N  (0 : 1 vivo)", color="#0063B4", fontcolor="#0063B4"];
+}

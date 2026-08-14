@@ -1,0 +1,82 @@
+// ER - capa de catálogo. Derivado de db/models/{catalog,trivia}.py
+digraph er_catalogo {
+  rankdir = TB;
+  bgcolor = "transparent";
+  splines = spline;
+  nodesep = 0.32;
+  ranksep = 0.85;
+  fontname = "Helvetica";
+
+  node [shape=plain, fontname="Helvetica", fontsize=9];
+  edge [color="#5C5A5B", arrowhead=none, penwidth=0.9,
+        fontname="Helvetica", fontsize=8, fontcolor="#5C5A5B"];
+
+  card_set [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#D8D6D6">
+        <tr><td bgcolor="#2C2E33" align="center" colspan="2"><font color="white"><b>card_set</b></font></td></tr>
+        <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font></td><td align="left">id · varchar(64)</td></tr>
+        <tr><td align="left"></td><td align="left">name · text</td></tr>
+        <tr><td align="left"></td><td align="left">series · text</td></tr>
+        <tr><td align="left"></td><td align="left">printed_total · smallint</td></tr>
+        <tr><td align="left"></td><td align="left">total · smallint</td></tr>
+        <tr><td align="left"></td><td align="left">release_date · date</td></tr>
+        <tr><td align="left"></td><td align="left">symbol_url · text</td></tr>
+        <tr><td align="left"></td><td align="left">logo_url · text</td></tr>
+        <tr><td align="left"></td><td align="left">fetched_at · timestamp</td></tr>
+      </table>>];
+
+  species [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#D8D6D6">
+        <tr><td bgcolor="#2C2E33" align="center" colspan="2"><font color="white"><b>species</b></font></td></tr>
+        <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font></td><td align="left">id · int  (dexId del origen)</td></tr>
+        <tr><td align="left"></td><td align="left">name · varchar(64) UQ</td></tr>
+        <tr><td align="left"></td><td align="left">generation · smallint</td></tr>
+        <tr><td align="left"></td><td align="left">types · text[]  (índice GIN)</td></tr>
+        <tr><td align="left"></td><td align="left">stats · jsonb</td></tr>
+        <tr><td align="left"></td><td align="left">evolution_chain_id · int</td></tr>
+        <tr><td align="left"></td><td align="left">sprite_url · text</td></tr>
+        <tr><td align="left"></td><td align="left">fetched_at · timestamp</td></tr>
+      </table>>];
+
+  card [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#DB0016">
+        <tr><td bgcolor="#DB0016" align="center" colspan="2"><font color="white"><b>card</b></font></td></tr>
+        <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font></td><td align="left">id · varchar(64)</td></tr>
+        <tr><td align="left" port="set"><font color="#0063B4"><b>FK</b></font></td><td align="left">set_id → card_set</td></tr>
+        <tr><td align="left" port="sp"><font color="#0063B4"><b>FK</b></font></td><td align="left">species_id → species  (nulo)</td></tr>
+        <tr><td align="left"></td><td align="left">category · varchar(16)</td></tr>
+        <tr><td align="left"></td><td align="left">number · varchar(16)</td></tr>
+        <tr><td align="left"></td><td align="left">number_prefix · varchar(16)</td></tr>
+        <tr><td align="left"></td><td align="left">name · text</td></tr>
+        <tr><td align="left"></td><td align="left">name_normalized · text  (GIN trgm)</td></tr>
+        <tr><td align="left"></td><td align="left">rarity · varchar(64)</td></tr>
+        <tr><td align="left"></td><td align="left">variants · jsonb</td></tr>
+        <tr><td align="left"></td><td align="left">hp · smallint</td></tr>
+        <tr><td align="left"></td><td align="left">image_small_url · text</td></tr>
+        <tr><td align="left"></td><td align="left">image_large_url · text</td></tr>
+        <tr><td align="left"></td><td align="left">price_usd · numeric(10,2)</td></tr>
+        <tr><td align="left"></td><td align="left">price_updated_at · timestamp</td></tr>
+      </table>>];
+
+  card_price [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#D8D6D6">
+        <tr><td bgcolor="#2C2E33" align="center" colspan="2"><font color="white"><b>card_price</b></font></td></tr>
+        <tr><td align="left" port="card"><font color="#DB0016"><b>PK</b></font> <font color="#0063B4"><b>FK</b></font></td><td align="left">card_id → card  (CASCADE)</td></tr>
+        <tr><td align="left"><font color="#DB0016"><b>PK</b></font></td><td align="left">recorded_on · date</td></tr>
+        <tr><td align="left"></td><td align="left">price_usd · numeric(10,2)</td></tr>
+      </table>>];
+
+  species_trivia [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#D8D6D6">
+        <tr><td bgcolor="#2C2E33" align="center" colspan="2"><font color="white"><b>species_trivia</b></font></td></tr>
+        <tr><td align="left" port="sp"><font color="#DB0016"><b>PK</b></font> <font color="#0063B4"><b>FK</b></font></td><td align="left">species_id → species</td></tr>
+        <tr><td align="left"></td><td align="left">text · text</td></tr>
+        <tr><td align="left"></td><td align="left">model · text</td></tr>
+        <tr><td align="left"></td><td align="left">created_at · timestamp</td></tr>
+      </table>>];
+
+  card_set:id -> card:set [label="1 : N"];
+  species:id -> card:sp [label="1 : N"];
+  species:id -> species_trivia:sp [label="1 : 1"];
+  card:id -> card_price:card [label="1 : N\nuna fila por día", color="#DB0016", fontcolor="#DB0016", penwidth=1.3];
+}

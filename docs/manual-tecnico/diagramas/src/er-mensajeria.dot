@@ -1,0 +1,78 @@
+// ER - conversación con el asistente y mensajería directa.
+digraph er_mensajeria {
+  rankdir = TB;
+  bgcolor = "transparent";
+  splines = spline;
+  nodesep = 0.32;
+  ranksep = 0.85;
+  fontname = "Helvetica";
+
+  node [shape=plain, fontname="Helvetica", fontsize=9];
+  edge [color="#5C5A5B", arrowhead=none, penwidth=0.9,
+        fontname="Helvetica", fontsize=8, fontcolor="#5C5A5B"];
+
+  authuser [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#0063B4">
+      <tr><td bgcolor="#0063B4" align="center"><font color="white"><b>auth."user"</b></font></td></tr>
+      <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font>  id · text</td></tr>
+      <tr><td bgcolor="#E8F1FB" align="center"><font point-size="8" color="#0063B4">otro esquema · Better Auth</font></td></tr>
+    </table>>];
+
+  conversation [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#A82A69">
+        <tr><td bgcolor="#A82A69" align="center" colspan="2"><font color="white"><b>conversation</b></font></td></tr>
+        <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font></td><td align="left">id · uuid</td></tr>
+        <tr><td align="left" port="u"><font color="#0063B4"><b>FK</b></font></td><td align="left">user_id → auth."user"</td></tr>
+        <tr><td align="left"></td><td align="left">title · varchar(200)</td></tr>
+        <tr><td align="left"></td><td align="left">updated_at · timestamp</td></tr>
+      </table>>];
+
+  message [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#A82A69">
+        <tr><td bgcolor="#A82A69" align="center" colspan="2"><font color="white"><b>message</b></font></td></tr>
+        <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font></td><td align="left">id · uuid</td></tr>
+        <tr><td align="left" port="cv"><font color="#0063B4"><b>FK</b></font></td><td align="left">conversation_id</td></tr>
+        <tr><td align="left"></td><td align="left">role · enum message_role</td></tr>
+        <tr><td align="left"></td><td align="left">content · jsonb  <i>payload íntegro</i></td></tr>
+        <tr><td align="left"></td><td align="left">text · text  <i>desnormalizado</i></td></tr>
+      </table>>];
+
+  user_preference [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#A82A69">
+        <tr><td bgcolor="#A82A69" align="center" colspan="2"><font color="white"><b>user_preference</b></font></td></tr>
+        <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font></td><td align="left">id · uuid</td></tr>
+        <tr><td align="left" port="u"><font color="#0063B4"><b>FK</b></font></td><td align="left">user_id → auth."user"</td></tr>
+        <tr><td align="left"></td><td align="left">key · varchar(64)</td></tr>
+        <tr><td align="left"></td><td align="left">value · jsonb</td></tr>
+        <tr><td align="left" colspan="2"><font color="#DB0016"><b>UQ</b></font> (user_id, key)</td></tr>
+      </table>>];
+
+  direct_thread [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#A82A69">
+        <tr><td bgcolor="#A82A69" align="center" colspan="2"><font color="white"><b>direct_thread</b></font></td></tr>
+        <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font></td><td align="left">id · uuid</td></tr>
+        <tr><td align="left" port="u1"><font color="#0063B4"><b>FK</b></font></td><td align="left">first_user_id → auth."user"</td></tr>
+        <tr><td align="left" port="u2"><font color="#0063B4"><b>FK</b></font></td><td align="left">second_user_id → auth."user"</td></tr>
+        <tr><td align="left" colspan="2"><font color="#DB0016"><b>CK</b></font> first &lt; second · <font color="#DB0016"><b>UQ</b></font> (par)</td></tr>
+      </table>>];
+
+  direct_message [label=<
+      <table border="0" cellborder="1" cellspacing="0" cellpadding="3" color="#A82A69">
+        <tr><td bgcolor="#A82A69" align="center" colspan="2"><font color="white"><b>direct_message</b></font></td></tr>
+        <tr><td align="left" port="id"><font color="#DB0016"><b>PK</b></font></td><td align="left">id · uuid</td></tr>
+        <tr><td align="left" port="t"><font color="#0063B4"><b>FK</b></font></td><td align="left">thread_id → direct_thread</td></tr>
+        <tr><td align="left" port="s"><font color="#0063B4"><b>FK</b></font></td><td align="left">sender_id → auth."user"</td></tr>
+        <tr><td align="left"></td><td align="left">body · text</td></tr>
+        <tr><td align="left"></td><td align="left">created_at · clock_timestamp()</td></tr>
+        <tr><td align="left"></td><td align="left">read_at · timestamp</td></tr>
+      </table>>];
+
+  authuser:id -> conversation:u [color="#0063B4"];
+  authuser:id -> user_preference:u [color="#0063B4"];
+  authuser:id -> direct_thread:u1 [label="par ordenado", color="#0063B4", fontcolor="#0063B4"];
+  authuser:id -> direct_thread:u2 [color="#0063B4"];
+  authuser:id -> direct_message:s [color="#0063B4"];
+
+  conversation:id -> message:cv [label="1 : N"];
+  direct_thread:id -> direct_message:t [label="1 : N"];
+}

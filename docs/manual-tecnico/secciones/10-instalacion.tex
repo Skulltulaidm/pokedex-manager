@@ -1,0 +1,194 @@
+\chapter{Manual de instalación}
+\label{cap:instalacion}
+
+Los pasos de este capítulo se ejecutaron desde cero, sobre un clon limpio del
+repositorio y una base de datos vacía, mientras se escribía este documento. Las
+salidas que se citan son las que produjeron.
+
+\section{Requisitos previos}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1.2,l]X[0.9,l]X[3,l]}}
+  Herramienta & Versión & Para qué \\
+  Docker & cualquiera reciente & PostgreSQL 18 (y, opcionalmente, toda la pila) \\
+  Node.js & $\geq$ 20 & Frontend y Better Auth; CI usa 24 \\
+  npm & 11.x & Gestor de workspaces del monorepo \\
+  uv & reciente & Entorno y dependencias de Python \\
+  Python & 3.13 & Lo instala \pkcode{uv} si no está \\
+\end{pkbox}\par\addvspace{8pt}
+
+Opcional: una clave de Google Gemini para el chat y el escaneo, o bien
+\href{https://ollama.com}{Ollama} para ejecutar visión en local.
+
+\section{Puesta en marcha, paso a paso}
+
+\subsection{1 · Clonar y preparar el entorno}
+
+\begin{lstlisting}[language=bash]
+git clone https://github.com/Skulltulaidm/pokedex-manager.git
+cd pokedex-manager     # la rama por omision es main
+
+cp .env.example .env
+cp apps/api/.env.example apps/api/.env
+\end{lstlisting}
+
+El \pkpath{.env} de la raíz lo leen Docker Compose y la web; el de
+\pkpath{apps/api} lo lee la API cuando se ejecuta fuera de contenedor. Si el
+puerto 5432 ya está ocupado, cambie \pkcode{POSTGRES\_PORT} en el primero y el
+puerto de \pkcode{DATABASE\_URL} en el segundo: tienen que coincidir.
+
+\subsection{2 · Levantar la base de datos}
+
+\begin{lstlisting}[language=bash]
+docker compose up -d db
+\end{lstlisting}
+
+El contenedor se publica \emph{sólo} en \pkcode{127.0.0.1}, porque las
+credenciales por omisión son débiles. Al inicializarse ejecuta
+\pkpath{db/init/01-schemas.sql}, que crea los dos esquemas y la extensión de
+trigramas. Comprobación:
+
+\begin{lstlisting}[language=bash]
+$ docker compose exec db psql -U pokedex -d pokedex -c "\dn"
+  Name   |       Owner
+---------+-------------------
+ auth    | pokedex
+ pokedex | pokedex
+ public  | pg_database_owner
+\end{lstlisting}
+
+\begin{pkwarn}[Si el volumen ya existía]
+\pkpath{db/init} sólo se ejecuta la primera vez, con el volumen vacío. Si la
+base ya existía sin esquemas, créelos a mano:
+\begin{lstlisting}[language=bash,xleftmargin=0pt,framerule=0pt,backgroundcolor=\color{white}]
+docker compose exec db psql -U pokedex -d pokedex \
+  -f /docker-entrypoint-initdb.d/01-schemas.sql
+\end{lstlisting}
+\end{pkwarn}
+
+\subsection{3 · Instalar dependencias de JavaScript}
+
+\begin{lstlisting}[language=bash]
+npm install
+\end{lstlisting}
+
+\subsection{4 · Migrar el esquema \pkcode{auth}}
+
+\textbf{Este paso va antes que el siguiente}, siempre: las tablas de dominio
+tienen claves foráneas hacia \pkcode{auth."user"}.
+
+\begin{lstlisting}[language=bash]
+npx @better-auth/cli@latest migrate -c apps/web --yes
+\end{lstlisting}
+
+Crea cinco tablas —\pkcode{user}, \pkcode{session}, \pkcode{account},
+\pkcode{verification} y \pkcode{jwks}— y termina con
+\pkcode{migration was completed successfully!}. La alternativa, y es la que usan
+la imagen de Docker y CI, es el script del repositorio:
+
+\begin{lstlisting}[language=bash]
+DATABASE_URL=postgresql://pokedex:pokedex@localhost:5432/pokedex \
+  node apps/web/scripts/migrate-auth.mjs
+\end{lstlisting}
+
+\subsection{5 · Migrar el esquema \pkcode{pokedex} y sembrar el catálogo}
+
+\begin{lstlisting}[language=bash]
+cd apps/api
+uv sync
+uv run alembic upgrade head
+uv run pokedex-sync base1
+cd ../..
+\end{lstlisting}
+
+Las catorce revisiones dejan la base en \pkcode{d7a41f0c92be (head)}. La
+sincronización de \pkcode{base1} tardó \textbf{6.9 s} y reportó
+\pkcode{base1: 102 cards, 69 species}. Para más sets, añada identificadores:
+\pkcode{pokedex-sync base1 base2 base3}. La lista está en
+\pkcode{https://api.tcgdex.net/v2/en/sets}.
+
+\subsection{6 · Arrancar}
+
+\begin{lstlisting}[language=bash]
+npm run dev        # web en :3000, api en :8010
+\end{lstlisting}
+
+Abra \pkcode{http://localhost:3000} y cree una cuenta.
+
+\subsection{7 · El modelo (opcional)}
+
+\begin{lstlisting}[language=bash]
+# en .env de la raiz
+GOOGLE_API_KEY=...
+\end{lstlisting}
+
+Sin clave, todo funciona salvo dos cosas: el chat responde 503 y el escaneo
+degrada a entrada manual. Para ejecutar visión en local:
+
+\begin{lstlisting}[language=bash]
+ollama pull qwen2.5vl:7b
+echo 'VISION_MODEL=ollama:qwen2.5vl:7b' >> .env
+\end{lstlisting}
+
+El contenedor de la API alcanza un Ollama del anfitrión por
+\pkcode{host.docker.internal}, que ya está cableado en el fichero de compose.
+
+\section{Verificación de la instalación}
+
+\begin{lstlisting}[language=bash]
+$ curl -s http://localhost:8010/health
+{"status":"ok"}
+
+$ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8010/openapi.json
+200
+
+$ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8010/api/v1/collection
+401
+\end{lstlisting}
+
+El 401 sin token es la comprobación importante: significa que la verificación de
+JWT está activa. La referencia interactiva de la API está en
+\pkcode{http://localhost:8010/scalar}.
+
+Suites completas:
+
+\begin{lstlisting}[language=bash]
+npm run test        # 292 casos de API + 71 de web
+npm run typecheck   # mypy --strict + tsc
+npm run lint
+\end{lstlisting}
+
+\section{Datos de ejemplo}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1.6,l]X[3,l]}}
+  Comando & Qué hace \\
+  \pkcode{pokedex-sync base1 base2 base3} & Sincroniza sets del catálogo desde TCGdex y PokeAPI. \\
+  \pkcode{pokedex-seed --count 1000} & Escribe un mercado de coleccionistas reproducible: colecciones, deseos, ofertas y publicaciones. Todo desciende de una sola semilla (\pkcode{--seed}, por omisión \pkcode{20260813}), así que repetirlo no escribe nada nuevo. \pkcode{--reset} borra sólo lo sembrado, identificado por el prefijo \pkcode{seed-}. \\
+  \pkcode{pokedex-demo} & Da de alta tres cuentas de demostración por HTTP —una por cada pregunta que responde la aplicación— usando el propio servicio web para el registro. \\
+\end{pkbox}\par\addvspace{8pt}
+
+\section{Todo en contenedores}
+
+\begin{lstlisting}[language=bash]
+# BETTER_AUTH_SECRET es obligatorio; compose falla rapido sin el
+docker compose up -d --build
+\end{lstlisting}
+
+Las tres imágenes se orquestan solas: la web migra \pkcode{auth} antes de
+servir, y la API reintenta \pkcode{alembic upgrade head} hasta treinta veces
+esperando ese esquema. Recuerde que \pkcode{NEXT\_PUBLIC\_API\_URL} se pasa como
+argumento de construcción (\pkcode{http://localhost:\$\{API\_PORT\}}), así que
+cambiar el puerto publicado obliga a reconstruir la imagen de la web.
+
+\section{Problemas frecuentes}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1.5,l]X[3,l]}}
+  Síntoma & Causa y remedio \\
+  \pkcode{relation "auth.user" does not exist} al migrar & Se saltó el paso 4. Ejecute la migración de Better Auth y repita \pkcode{alembic upgrade head}. \\
+  \pkcode{schema "pokedex" does not exist} & El volumen de Postgres ya existía cuando se añadió \pkpath{db/init}. Ejecute el SQL a mano (véase el aviso del paso 2). \\
+  \pkcode{operator does not exist: text \% text} & Falta la extensión \pkcode{pg\_trgm} en \pkcode{public}. \pkcode{CREATE EXTENSION IF NOT EXISTS pg\_trgm SCHEMA public;} \\
+  El chat responde 503 & No hay \pkcode{GOOGLE\_API\_KEY}. Es el comportamiento esperado, no un fallo. \\
+  El navegador da error de CORS & \pkcode{CORS\_ORIGINS} no incluye el origen desde el que se abre la aplicación. \\
+  Peticiones a la API sin token & Falta \pkcode{\{ client: \{ client: apiClient \} \}} en el sitio de llamada del hook generado. \\
+  Puerto 5432 ocupado & Ajuste \pkcode{POSTGRES\_PORT} en \pkpath{.env} \emph{y} el puerto de \pkcode{DATABASE\_URL} en \pkpath{apps/api/.env}. \\
+  Kubb no genera nada & La API tiene que estar sirviendo: la entrada por omisión es \pkcode{http://localhost:8010/openapi.json}. \\
+\end{pkbox}\par\addvspace{8pt}

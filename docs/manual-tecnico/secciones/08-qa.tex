@@ -1,0 +1,206 @@
+\chapter{Calidad}
+\label{cap:qa}
+
+\section{Estrategia}
+
+Dos suites con filosofías distintas, elegidas por lo que cada lado puede
+equivocarse.
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1,l]X[2.4,l]X[2.4,l]}}
+   & API (pytest) & Web (Vitest) \\
+  Unidad bajo prueba & Un módulo de \pkpath{services/} & Un componente o un módulo de \pkpath{lib/} \\
+  Dependencia real & \textbf{Postgres de verdad} & \textbf{El cliente HTTP de verdad} \\
+  Lo que se simula & Sólo las APIs externas (TCGdex, PokeAPI, el modelo) & Sólo la red, y en la frontera de \pkcode{fetch} \\
+  Aislamiento & Una transacción por prueba, siempre revertida & \pkcode{cleanup()} y reinicio de manejadores tras cada prueba \\
+  Qué \emph{no} cubre & El cableado de rutas HTTP & El árbol generado \pkpath{lib/api/**} \\
+\end{pkbox}\par\addvspace{8pt}
+
+\section{Las pruebas de la API}
+
+274 funciones de prueba en 23 archivos que, con los cuatro casos
+parametrizados, pytest recoge como \textbf{292 casos}. Todas corren contra un
+PostgreSQL real; ninguna deja una fila detrás.
+
+\begin{lstlisting}[language=Python]
+@pytest.fixture
+async def db() -> AsyncIterator[AsyncSession]:
+    """Session bound to an open transaction that is always rolled back.
+
+    Every test sees a real Postgres - enums, check constraints and ON CONFLICT
+    behave as in production - while leaving no rows behind.
+    """
+    engine = create_engine()
+    connection = await engine.connect()
+    transaction = await connection.begin()
+    session = AsyncSession(bind=connection, expire_on_commit=False)
+    try:
+        yield session
+    finally:
+        await session.close()
+        await transaction.rollback()
+        await connection.close()
+        await engine.dispose()
+\end{lstlisting}
+
+La sesión se ata a una conexión con una transacción ya abierta \emph{desde
+fuera}. Cualquier \pkcode{session.commit()} dentro del código bajo prueba
+confirma sólo la unidad interna; el \pkcode{rollback} del \pkcode{finally}
+descarta todo. No hay truncados ni recreación de esquema entre pruebas, así que
+son independientes del orden y rápidas —los 292 casos tardan menos de catorce
+segundos.
+
+\begin{pkwarn}[La suite es de capa de servicio, no de ruta]
+No hay \pkcode{TestClient} ni transporte ASGI en ninguna prueba: se ejercita
+\pkpath{services/}, no \pkpath{api/v1/}. El cableado de rutas —incluido
+\pkcode{CommittingRoute}, que es justo la pieza menos evidente del
+backend— no está cubierto directamente. Quien toque esa capa debería verificarla
+a mano o añadir la prueba que hoy falta.
+\end{pkwarn}
+
+Lo que se gana con ello es exactamente lo que un doble de prueba no puede dar:
+los enums de Postgres, los \pkcode{CHECK}, el
+\pkcode{ON CONFLICT … NULLS NOT DISTINCT} y la semántica de \pkcode{RETURNING} se
+comportan como en producción. Los usuarios de prueba se insertan en
+\pkcode{auth."user"} con SQL crudo, porque esa tabla es de Better Auth y
+duplicar su modelo sería inventar una segunda fuente de verdad.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[font=\scriptsize]
+  \def\scale{0.215}
+  \foreach \i/\n/\file/\c in {
+      0/47/{test\_trade\_service}/pkRed,
+      1/44/{test\_market\_service}/pkRed,
+      2/22/{test\_collection\_service}/tGrass,
+      3/17/{test\_seed}/pkMuted,
+      4/16/{test\_news\_service}/tPsychic,
+      5/15/{test\_direct\_service}/tPsychic,
+      6/14/{test\_resolve\_service}/tWater,
+      7/12/{test\_storage}/tWater,
+      8/9/{test\_evolutions}/tSteel,
+      9/9/{test\_gaps\_service}/tGrass,
+      10/9/{test\_tcgdex}/tSteel,
+      11/7/{test\_pokeapi}/tSteel,
+      12/7/{test\_preferences\_service}/tPsychic,
+      13/7/{test\_share\_service}/tGrass} {
+    \fill[\c] (0,-\i*0.36) rectangle ++(\n*\scale,0.26);
+    \node[anchor=west, color=pkMuted, font=\scriptsize\ttfamily]
+      at (-4.35,-\i*0.36+0.13) {\file};
+    \node[anchor=west, color=pkGraphite, font=\scriptsize\sffamily]
+      at (\n*\scale+0.12,-\i*0.36+0.13) {\n};
+  }
+  \node[anchor=west, color=pkMuted, font=\scriptsize\itshape]
+    at (-4.35,-14*0.36+0.13) {…y 9 archivos más (36 casos)};
+\end{tikzpicture}
+\caption{Dónde está el esfuerzo de prueba en la API: intercambio y mercado son
+  la mitad de la suite, que es también donde está la aritmética delicada.}
+\label{fig:tests-api}
+\end{figure}
+
+\section{Las pruebas de la web}
+
+71 casos en 7 archivos. La decisión de diseño está escrita en
+\pkpath{apps/web/test/server.ts}:
+
+\begin{quote}\small\itshape
+La red se simula en la frontera de \pkcode{fetch} en vez de sustituyendo el
+cliente generado, para que \pkcode{apiClient} —la capa que convierte un cuerpo
+4xx en un \pkcode{ApiError}— se ejecute de verdad en cada prueba de componente.
+\end{quote}
+
+Sustituir el cliente generado dejaría sin probar precisamente el código propio:
+el orden de las cabeceras, la caché del token, la traducción de errores de
+FastAPI. Con MSW, un componente que renderiza un estado de error lo hace
+recorriendo la misma ruta que en producción.
+
+El servidor MSW arranca con \pkcode{onUnhandledRequest: "error"}: cualquier
+petición que una prueba no haya declarado \emph{falla} la prueba, en lugar de
+colarse a la red. El único manejador global es
+\pkcode{GET */api/auth/token}, que devuelve \pkcode{"test-token"}; todo lo demás
+se declara por prueba.
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[2.1,l]X[0.35,r]X[2.6,l]}}
+  Archivo & Casos & Qué asegura \\
+  \pkpath{lib/format.test.ts} & 16 & Plurales, moneda en formato en-US, cuotas, «ahora»/«Hoy»/«Ayer» contados por día natural y no por horas transcurridas. \\
+  \pkpath{lib/api-client.test.ts} & 12 & 304 pasa sin lanzar; \pkcode{detail} en sus dos formas; el token se acuña una sola vez; un 401 al acuñar deja la petición anónima; \pkcode{FormData} no lleva \pkcode{Content-Type}; una cabecera del llamante no puede desplazar al token. \\
+  \pkpath{lib/url-state.test.tsx} & 9 & Los valores por defecto sólo rellenan huecos; se escribe con \pkcode{replaceState} y no \pkcode{pushState}; \pkcode{""} y \pkcode{undefined} borran; \pkcode{popstate} relee; el escucha se retira. \\
+  \pkpath{components/card-image.test.tsx} & 10 & El recorte a ventana apaisada sea cual sea la forma del origen, la proporción impresa 63×88, el escaneo bloqueado en gris. \\
+  \pkpath{components/dialog-toolbar.test.tsx} & 9 & Búsqueda, marcado del filtro activo y paginación que se oculta cuando todo cabe. \\
+  \pkpath{components/wish-button.test.tsx} & 8 & Se quita por el id de la \emph{entrada de deseo}, no por el de la carta; \pkcode{stopPropagation} para que el toque no abra la carta detrás; deshabilitado mientras la primera pulsación está en vuelo. \\
+  \pkpath{components/}\allowbreak\pkpath{portfolio-simulator.}\allowbreak\pkpath{test.tsx} & 7 & Quién sale ganando, «swap parejo» por debajo de un dólar y el aviso cuando el valor se concentra en una carta. \\
+\end{pkbox}\par\addvspace{8pt}
+
+Tres piezas de infraestructura merecen mención porque explican fallos que, de
+otro modo, cuestan horas: un \pkcode{Environment} propio de Vitest restaura el
+\pkcode{AbortController} de Node sobre el de jsdom —Node \pkcode{fetch} rechaza
+una señal ajena, y React Query pasa una señal a cada consulta—; \pkcode{next/image}
+se sustituye por un doble que conserva \pkcode{fill} y \pkcode{priority} como
+atributos de datos; y \pkcode{esbuild.jsx: "automatic"} está puesto porque el
+\pkcode{tsconfig} de la app deja la transformación de JSX en manos de Next, que
+aquí no interviene.
+
+\section{Análisis estático}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1.1,l]X[1.5,l]X[3,l]}}
+  Herramienta & Ámbito & Configuración \\
+  \pkcode{mypy} & \pkpath{apps/api/src} & \pkcode{strict = true}, Python 3.13, \pkcode{ignore\_missing\_imports} \\
+  \pkcode{ruff} & \pkpath{apps/api} & \pkcode{select = ["E","F","I","N","UP","B","SIM","RUF"]}, línea de 100, excluye \pkpath{alembic/versions} porque esos archivos los escribe la plantilla y se revisan a mano \\
+  \pkcode{tsc --noEmit} & \pkpath{apps/web}, \pkpath{packages/ui} & \pkcode{strict}, \pkcode{noUncheckedIndexedAccess}, \pkcode{isolatedModules} \\
+  \pkcode{eslint} & Todo el workspace & Base + Next + React Hooks + \pkcode{turbo/no-undeclared-env-vars} \\
+\end{pkbox}\par\addvspace{8pt}
+
+\begin{pkwarn}[El lint del frontend nunca falla]
+\pkpath{packages/eslint-config/base.js} carga \pkcode{eslint-plugin-only-warn},
+que degrada \emph{toda} regla a advertencia. La ejecución que acompaña a este
+documento reporta 116 advertencias y 0 errores; el job de CI pasa igualmente. Es
+una elección deliberada de ergonomía, pero significa que el lint es informativo
+y no una puerta.
+\end{pkwarn}
+
+\section{Ejecución de referencia}
+
+Lo siguiente es la salida real obtenida al preparar este manual, en la revisión
+\pkcode{c5d3bd3}, contra el mismo Postgres 18 que usa el entorno local.
+
+\begin{lstlisting}[language=bash]
+$ cd apps/api && uv run pytest -q
+........................................................................ [ 98%]
+....                                                                     [100%]
+292 passed in 13.61s
+
+$ uv run mypy src
+Success: no issues found in 87 source files
+
+$ uv run ruff check .
+All checks passed!
+
+$ npx turbo run test --filter=web...
+ RUN  v3.2.7 /Users/.../apps/web
+ v lib/url-state.test.tsx              (9 tests)   21ms
+ v lib/format.test.ts                  (16 tests)   8ms
+ v lib/api-client.test.ts              (12 tests)  37ms
+ v components/card-image.test.tsx      (10 tests)  73ms
+ v components/wish-button.test.tsx      (8 tests) 133ms
+ v components/dialog-toolbar.test.tsx   (9 tests) 158ms
+ v components/portfolio-simulator.test.tsx (7 tests) 475ms
+
+ Test Files  7 passed (7)
+      Tests  71 passed (71)
+   Duration  1.85s
+
+$ npx turbo run typecheck lint --filter=web...
+x 116 problems (0 errors, 116 warnings)
+ Tasks:    4 successful, 4 total
+\end{lstlisting}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[2,l]X[1,r]X[2,l]}}
+  Medida & Valor & Fuente \\
+  Casos de prueba en la API & 292 & \pkcode{pytest -q} \\
+  Funciones de prueba en la API & 274 & 23 archivos, 4 parametrizados \\
+  Duración de la suite de la API & 13.61 s & \pkcode{pytest -q} \\
+  Casos de prueba en la web & 71 & \pkcode{vitest run} \\
+  Duración de la suite web & 1.85 s & \pkcode{vitest run} \\
+  Archivos bajo \pkcode{mypy --strict} & 87 & \pkcode{mypy src} \\
+  Errores de lint & 0 & \pkcode{ruff}, \pkcode{eslint} \\
+  Advertencias de lint (web) & 116 & \pkcode{eslint} \\
+\end{pkbox}\par\addvspace{8pt}

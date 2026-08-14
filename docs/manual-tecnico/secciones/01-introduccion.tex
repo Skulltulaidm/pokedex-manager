@@ -1,0 +1,44 @@
+\chapter{Introducción}
+
+\section{El problema}
+
+Guardar cartas es fácil; leerlas no. Una caja de zapatos con mil cartas de
+Pokémon no responde ninguna de las tres preguntas que su dueño se hace: qué
+tengo, cuánto vale y qué me falta. El almacenamiento no es la parte
+interesante del problema —una hoja de cálculo almacena— sino convertir un
+montón en algo consultable, valorable e intercambiable.
+
+PokéDex Manager hace eso, y expone los mismos datos por dos caminos: una API
+REST que consume la aplicación web, y un \textbf{servidor MCP} al que puede
+conectarse cualquier asistente. El chat de la propia aplicación es cliente de
+ese servidor MCP, no una segunda ruta hacia los datos. Esa decisión se explica
+en el capítulo~\ref{cap:backend} y se ve en los flujos del capítulo~\ref{cap:flujos}.
+
+\section{Qué hace el sistema}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1.3,l]X[4,l]}}
+  Capacidad & Qué significa técnicamente \\
+  Escaneo & Una foto se normaliza, se guarda, se transcribe con un modelo de visión y se resuelve contra el catálogo puntuando cada señal. El usuario confirma. \\
+  Catálogo & \pkcode{card\_set}, \pkcode{card} y \pkcode{species} espejados de TCGdex y PokeAPI. La carta es una impresión; la especie es el Pokémon que retrata. \\
+  Colección & Grupos homogéneos de copias con condición, idioma, gradeo y coste unitario. \\
+  Portafolio & Coste contra valor de mercado, posición por posición, con concentración y serie temporal a partir de una lectura de precio diaria. \\
+  Intercambio & Emparejamiento entre coleccionistas, ofertas, contraofertas y un tablón abierto donde una propuesta se publica a nadie en particular. \\
+  Mensajería & Hilos directos entre dos coleccionistas, con estado de lectura. \\
+  Asistente & Agente sobre 13 herramientas MCP, con memoria de hechos duraderos, respondiendo en español y en streaming. \\
+  Compartir & Enlace público revocable con una proyección distinta a la del dueño, más exportación CSV y JSON. \\
+\end{pkbox}\par\addvspace{8pt}
+
+\section{Glosario}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1.2,l]X[4,l]}}
+  Término & Definición en este sistema \\
+  Carta (\pkcode{card}) & Una \emph{impresión} concreta: identificador del origen, set, número, rareza, variantes e imagen. \\
+  Especie (\pkcode{species}) & El Pokémon retratado. Se une a la carta por el \pkcode{dexId} del origen, nunca por coincidencia de nombres. \\
+  Sobrante (\emph{spare}) & Copia excedente de una carta: \pkcode{SUM(quantity) > 1} agrupado por usuario y carta. La primera copia es la colección; lo que sobra es inventario. \\
+  Posición & Todas las copias de una misma carta de un usuario colapsadas en una fila, con coste, valor y participación en el portafolio. \\
+  Oferta (\pkcode{trade\_offer}) & Propuesta \emph{con destinatario}. Aceptarla registra el acuerdo; no mueve cartas. \\
+  Publicación (\pkcode{trade\_listing}) & Propuesta \emph{sin destinatario}. Quien pueda cumplirla la toma, y tomarla es el acuerdo. \\
+  MCP & \emph{Model Context Protocol}. El protocolo por el que un asistente externo lee la colección. \\
+  JWKS & Conjunto de claves públicas que publica Better Auth y con el que la API verifica los JWT sin llamar de vuelta. \\
+  Kubb & Generador que convierte el OpenAPI de la API en tipos, clientes y hooks de React Query. \\
+\end{pkbox}\par\addvspace{8pt}

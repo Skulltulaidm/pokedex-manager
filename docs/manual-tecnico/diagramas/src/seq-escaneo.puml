@@ -1,0 +1,54 @@
+@startuml seq-escaneo
+!include estilo.puml
+
+hide footbox
+
+actor Coleccionista as U
+participant "Next.js" as W
+participant "FastAPI\n/api/v1/scans" as A
+participant "vision.read_card" as V
+database "PostgreSQL" as DB
+
+U -> W: elige una foto
+W -> A: POST /scans\nmultipart + Bearer JWT
+activate A
+
+A -> A: images.prepare(bytes)\nstorage.put(key)
+note right of A
+  Rechaza >10 MB y lo que no sea imagen,
+  por firma de bytes; reorienta por EXIF,
+  1600 px, JPEG 88. Se guarda ANTES de
+  llamar al modelo: un fallo de vision
+  deja algo que reintentar.
+end note
+
+A -> V: read_card(bytes)
+V --> A: CardReading\nnombre, numero, total, HP
+
+A -> A: resolve.find_candidates(reading)
+A -> DB: SELECT ... score =\n0.35 total + 0.35 numero\n+ 0.25 trigrama + 0.05 HP
+DB --> A: top 8 candidatos
+
+alt score >= 0.7 y margen >= 0.3
+  A -> DB: INSERT scan (resolved)
+else 0.4 <= score < 0.7
+  A -> DB: INSERT scan (ambiguous)
+else nada plausible
+  A -> DB: INSERT scan (failed)
+end
+
+A --> W: 201 ScanResult
+deactivate A
+note over W, DB
+  CommittingRoute confirma la transaccion antes de que la respuesta salga.
+end note
+
+W -> U: candidatos y por que coincide cada uno
+U -> W: confirma carta y estado
+W -> A: POST /scans/{id}/confirm
+activate A
+A -> DB: UPSERT collection_item\nON CONFLICT uq_collection_item_group
+A --> W: 201 CollectionItemView
+deactivate A
+
+@enduml

@@ -1,0 +1,95 @@
+\chapter{Anexos}
+
+\section{Variables de entorno, completas}
+
+\begin{pktable}[caption={Variables de entorno},label={tab:env}]{colspec={X[1.7,l]X[0.6,l]X[1.4,l]X[2.3,l]}}
+  Variable & Ámbito & Por omisión & Notas \\
+  \pkcode{POSTGRES\_USER} & compose & \pkcode{pokedex} & --- \\
+  \pkcode{POSTGRES\_PASSWORD} & compose & \pkcode{pokedex} & Débil a propósito; por eso el puerto sólo se publica en \pkcode{127.0.0.1}. \\
+  \pkcode{POSTGRES\_DB} & compose & \pkcode{pokedex} & --- \\
+  \pkcode{POSTGRES\_PORT} & compose & \pkcode{5432} & Puerto del anfitrión. \\
+  \pkcode{API\_PORT} / \pkcode{WEB\_PORT} & compose & \pkcode{8010} / \pkcode{3000} & Dentro del contenedor la API siempre escucha en 8000. \\
+  \pkcode{BETTER\_AUTH\_URL} & web & \pkcode{http://localhost:}\allowbreak\pkcode{3000} & Origen público de la web. \\
+  \pkcode{BETTER\_AUTH\_SECRET} & web & \emph{obligatoria} & Compose falla rápido si falta. \\
+  \pkcode{NEXT\_PUBLIC\_API\_URL} & web & \pkcode{http://localhost:}\allowbreak\pkcode{8010} & \textbf{Argumento de construcción.} URL pública de la API. \\
+  \pkcode{API\_INTERNAL\_URL} & web & \pkcode{http://localhost:}\allowbreak\pkcode{8010} & Variable de ejecución; sólo la lee la página pública compartida. \\
+  \pkcode{DATABASE\_URL} & web & \emph{obligatoria} & Forma \pkcode{postgresql://} (node-pg), con \pkcode{search\_path=auth}. \\
+  \pkcode{DATABASE\_URL} & api & \emph{obligatoria} & Forma \pkcode{postgresql+asyncpg://}. \\
+  \pkcode{CORS\_ORIGINS} & api & \pkcode{http://localhost:}\allowbreak\pkcode{3000} & Lista separada por comas. \\
+  \pkcode{AUTH\_JWKS\_URL} & api & \emph{obligatoria} & Cómo alcanza la API el JWKS. \\
+  \pkcode{AUTH\_ISSUER} & api & \emph{obligatoria} & Lo que el token declara. \\
+  \pkcode{AUTH\_AUDIENCE} & api & \emph{obligatoria} & --- \\
+  \pkcode{MCP\_RESOURCE\_URL} & api & \pkcode{http://localhost:}\allowbreak\pkcode{8010/mcp} & URL que se anuncia al descubrimiento externo. \\
+  \pkcode{MCP\_INTERNAL\_URL} & api & vacía & Por dónde se conecta el agente interno; en contenedor, el puerto publicado no existe. \\
+  \pkcode{STORAGE\_ROOT} & api & \pkcode{./data/scans} & En Docker, \pkcode{/data/scans}. \\
+  \pkcode{PRICE\_REFRESH\_ON\_START} & api & \pkcode{true} & Ponerla a falso en pruebas y en ejecuciones sin red. \\
+  \pkcode{AGENT\_MODEL} & api & \pkcode{google-gla:}\allowbreak\pkcode{gemini-flash-latest} & Alias, no versión fijada. \\
+  \pkcode{VISION\_MODEL} & api & \pkcode{google-gla:}\allowbreak\pkcode{gemini-flash-latest} & Prefijo \pkcode{ollama:} para un modelo local. \\
+  \pkcode{GOOGLE\_API\_KEY} & api & vacía & Credencial e interruptor del agente. \\
+  \pkcode{OLLAMA\_URL} & api & \pkcode{http://localhost:}\allowbreak\pkcode{11434/v1} & En contenedor, \pkcode{http://host.}\allowbreak\pkcode{docker.internal:}\allowbreak\pkcode{11434/v1}. \\
+\end{pktable}
+
+\section{Comandos de referencia}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[2,l]X[3,l]}}
+  Comando & Qué hace \\
+  \pkcode{npm run dev} & Web en :3000 y API en :8010, en paralelo. \\
+  \pkcode{npm run test} & Ambas suites vía Turborepo. \\
+  \pkcode{npm run typecheck} & \pkcode{mypy --strict} y \pkcode{tsc --noEmit}. \\
+  \pkcode{npm run lint} & \pkcode{ruff} y \pkcode{eslint}. \\
+  \pkcode{uv run alembic upgrade head} & Aplica las migraciones de dominio. \\
+  \pkcode{uv run alembic revision --autogenerate -m "…"} & Nueva revisión, filtrada al esquema \pkcode{pokedex}. \\
+  \pkcode{uv run pokedex-sync <set-id>…} & Sincroniza sets del catálogo. \\
+  \pkcode{uv run pokedex-seed --count N} & Mercado reproducible. \pkcode{--reset} borra sólo lo sembrado. \\
+  \pkcode{uv run pokedex-demo} & Tres cuentas de demostración por HTTP. \\
+  \pkcode{npx kubb generate} & Regenera \pkpath{apps/web/lib/api} (la API debe estar sirviendo). \\
+  \pkcode{node apps/web/scripts/migrate-auth.mjs} & Migra el esquema \pkcode{auth} sin el CLI. \\
+\end{pkbox}\par\addvspace{8pt}
+
+\section{Conectar un asistente externo por MCP}
+
+Con la sesión iniciada, \pkcode{GET /api/auth/token} devuelve un JWT. Apunte
+cualquier cliente MCP al servidor:
+
+\begin{lstlisting}[language=jsonpk]
+{
+  "mcpServers": {
+    "pokedex": {
+      "url": "http://localhost:8010/mcp",
+      "headers": { "Authorization": "Bearer <token>" }
+    }
+  }
+}
+\end{lstlisting}
+
+Diez herramientas leen, tres escriben, y ninguna de las tres alcanza la
+colección (capítulo~\ref{cap:backend}).
+
+\section{Cómo se construye este documento}
+
+\begin{lstlisting}[language=bash]
+cd docs/manual-tecnico
+make          # genera las figuras y despues el PDF
+make diagramas  # solo las figuras
+make limpiar    # borra todo lo generado
+\end{lstlisting}
+
+Requisitos: \pkcode{pdflatex} y \pkcode{latexmk} de TeX Live, \pkcode{plantuml}
+con un JRE, \pkcode{graphviz} y \pkcode{rsvg-convert} de librsvg. Ninguna figura
+es una captura de pantalla: las nueve se generan desde el código fuente que se
+versiona en \pkpath{diagramas/src/}, y el resto son TikZ dentro del propio
+documento.
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1.7,l]X[1,l]X[2.4,l]}}
+  Fuente & Herramienta & Figura \\
+  \pkpath{c4-contexto.dot} & Graphviz & \ref{fig:contexto} \\
+  \pkpath{er-catalogo.dot} & Graphviz & \ref{fig:er-catalogo} \\
+  \pkpath{er-coleccion.dot} & Graphviz & \ref{fig:er-coleccion} \\
+  \pkpath{er-intercambio.dot} & Graphviz & \ref{fig:er-intercambio} \\
+  \pkpath{er-mensajeria.dot} & Graphviz & \ref{fig:er-mensajeria} \\
+  \pkpath{ci-pipeline.dot} & Graphviz & \ref{fig:ci} \\
+  \pkpath{seq-escaneo.puml} & PlantUML & \ref{fig:seq-escaneo} \\
+  \pkpath{seq-chat-mcp.puml} & PlantUML & \ref{fig:seq-chat} \\
+  \pkpath{seq-tablon.puml} & PlantUML & \ref{fig:seq-tablon} \\
+  Inline & TikZ & \ref{fig:contenedores}, \ref{fig:capas}, \ref{fig:resolve}, \ref{fig:tests-api} \\
+\end{pkbox}\par\addvspace{8pt}

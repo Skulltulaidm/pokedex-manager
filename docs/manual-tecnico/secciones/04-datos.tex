@@ -1,0 +1,256 @@
+\chapter{Modelo de datos}
+\label{cap:datos}
+
+Una base PostgreSQL 18, dos esquemas, dos dueños. \pkcode{auth} tiene cinco
+tablas (\pkcode{user}, \pkcode{session}, \pkcode{account}, \pkcode{verification},
+\pkcode{jwks}) y las escribe Better Auth. \pkcode{pokedex} tiene dieciocho tablas
+de dominio más \pkcode{alembic\_version}, y las escribe Alembic. Los modelos
+viven en \pkpath{apps/api/src/pokedex/db/models/}.
+
+\section{Dos esquemas, dos herramientas de migración}
+\label{sec:migraciones}
+
+La separación no es estética: cada esquema lo define el sistema que sabe cómo
+tiene que ser. Better Auth genera sus tablas desde su propia configuración —si
+mañana se añade un plugin, la tabla que hace falta la crea él— y Alembic genera
+las del dominio desde \pkcode{Base.metadata}. El precio de mezclarlos sería que
+\pkcode{alembic revision --autogenerate} viera tablas ausentes de su metadata y
+propusiera borrarlas.
+
+Ese riesgo se cierra con dos filtros en \pkpath{apps/api/alembic/env.py}, que
+cubren direcciones distintas:
+
+\begin{lstlisting}[language=Python]
+DOMAIN_SCHEMA = "pokedex"
+
+def include_name(name, type_, parent_names):
+    # Without this filter autogenerate reflects Better Auth's `auth` tables and
+    # proposes dropping them, since they are absent from Base.metadata.
+    if type_ == "schema":
+        return name == DOMAIN_SCHEMA
+    return True
+
+def include_object(obj, name, type_, reflected, compare_to):
+    # `auth.user` is registered in Base.metadata only so cross-schema foreign
+    # keys resolve; alembic must never try to create or drop it.
+    if type_ == "table":
+        return bool(getattr(obj, "schema", None) == DOMAIN_SCHEMA)
+    return True
+\end{lstlisting}
+
+\pkcode{include\_name} bloquea lo que se \emph{refleja} desde la base;
+\pkcode{include\_object} bloquea lo que viene de la metadata. La tabla
+\pkcode{auth.user} está declarada en \pkpath{db/models/external.py} como un
+\pkcode{Table} suelto con dos columnas, únicamente para que resuelvan las claves
+foráneas entre esquemas.
+
+Dos cosas no pueden crearse dentro de la cadena de migraciones, porque la
+primera revisión ya las necesita, y por eso se ejecutan antes:
+
+\begin{lstlisting}[language=Python]
+await connection.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{DOMAIN_SCHEMA}"'))
+await connection.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
+\end{lstlisting}
+
+\begin{pkwarn}[El \pkcode{search\_path} está fijado a \pkcode{public}]
+El motor se crea con \pkcode{server\_settings=\{"search\_path": "public"\}}. Con
+el valor por defecto (\pkcode{"\$user", public}) el esquema \pkcode{pokedex}
+pasaría a ser implícito y los filtros de Alembic dejarían de discriminar. Por
+la misma razón \pkcode{pg\_trgm} se instala en \pkcode{public}: un
+\pkcode{gin\_trgm\_ops} instalado en otro esquema sería invisible al crear el
+índice.
+\end{pkwarn}
+
+\section{Catálogo y colección}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=\linewidth,height=0.80\textheight,keepaspectratio]{er-catalogo.pdf}
+  \caption{Capa de catálogo: una carta es una impresión, una especie es lo
+    retratado, y \pkcode{card\_price} es la serie detrás del último precio.
+    Generado desde \pkpath{diagramas/src/er-catalogo.dot}.}
+  \label{fig:er-catalogo}
+\end{figure}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=\linewidth,height=0.80\textheight,keepaspectratio]{er-coleccion.pdf}
+  \caption{Capa de colección: todo cuelga de \pkcode{auth."user"} y del catálogo,
+    y nada de aquí es visible para otro usuario. Generado desde
+    \pkpath{diagramas/src/er-coleccion.dot}.}
+  \label{fig:er-coleccion}
+\end{figure}
+
+\subsection{Por qué \pkcode{card\_price} es una fila por carta y por día}
+
+\pkcode{card.price\_usd} guarda \emph{siempre} la última lectura, y eso hace el
+movimiento inmedible: un portafolio sin serie es un número suelto. La tabla
+\pkcode{card\_price} es la historia detrás de ese número, con clave primaria
+compuesta \pkcode{(card\_id, recorded\_on)}. La escritura es un
+\pkcode{ON CONFLICT DO UPDATE} sobre esa misma clave, así que volver a
+sincronizar el mismo día \emph{sobrescribe} el día en vez de añadir un punto:
+la serie se mantiene en un punto por día y el trabajo es idempotente.
+
+\subsection{Por qué un sobrante es \pkcode{SUM(quantity) > 1}}
+
+No existe una columna «para cambiar». Un sobrante se calcula:
+
+\begin{lstlisting}[language=SQL]
+SELECT user_id, card_id, SUM(quantity) - 1 AS spare
+FROM pokedex.collection_item
+GROUP BY user_id, card_id
+HAVING SUM(quantity) > 1
+\end{lstlisting}
+
+La primera copia es la colección; sólo lo que pasa de ahí es inventario. La
+consecuencia práctica es que nadie tiene que mantener un estado
+«disponible/reservado» coherente con las cantidades reales: al publicar, al
+ofertar y al aceptar se recalcula, así que el tablón nunca puede prometer una
+carta que ya no existe. El agrupamiento es por \pkcode{(user\_id, card\_id)} y no
+por condición: dos copias en estados distintos siguen siendo dos copias.
+
+\subsection{Por qué el único de \pkcode{collection\_item} usa \pkcode{NULLS NOT DISTINCT}}
+
+Una fila no es una carta física: es un grupo homogéneo de copias. El único
+cubre \pkcode{(user\_id, card\_id, condition, language, is\_graded, grade)}, y
+\pkcode{grade} es \pkcode{NULL} para todo lo que no está gradeado. Postgres
+trata los \pkcode{NULL} como distintos por omisión, lo que permitiría insertar
+el mismo grupo una y otra vez e impediría que \pkcode{ON CONFLICT} disparase
+nunca. \pkcode{postgresql\_nulls\_not\_distinct=True} es lo que convierte el alta
+en una fusión real.
+
+El coste se guarda por grupo, no por copia (\pkcode{unit\_cost\_usd}), de modo
+que copias compradas a precios distintos se promedian —\pkcode{\_blended\_cost}
+pondera por cantidad— en lugar de quedar como lotes separados. Si un lado no
+tiene coste conocido, el coste conocido carga el grupo entero.
+
+\section{Intercambio, conversación y mensajería}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=\linewidth,height=0.80\textheight,keepaspectratio]{er-intercambio.pdf}
+  \caption{Intercambio. Una oferta tiene destinatario y una publicación no;
+    tomarla escribe la oferta ya aceptada que las une. Generado desde
+    \pkpath{diagramas/src/er-intercambio.dot}.}
+  \label{fig:er-intercambio}
+\end{figure}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=\linewidth,height=0.80\textheight,keepaspectratio]{er-mensajeria.pdf}
+  \caption{Conversación con el asistente y mensajería entre coleccionistas.
+    Generado desde \pkpath{diagramas/src/er-mensajeria.dot}.}
+  \label{fig:er-mensajeria}
+\end{figure}
+
+\subsection{Una oferta tiene destinatario; una publicación, no}
+
+Esa es toda la diferencia entre \pkcode{trade\_offer} y \pkcode{trade\_listing}.
+Tomar una publicación escribe una \pkcode{trade\_offer} \emph{ya aceptada}, con
+el publicador como emisor y quien la tomó como destinatario, y enlaza ambas por
+\pkcode{trade\_listing.offer\_id}. Desde ese momento, un trato que empezó en el
+tablón y uno que empezó como propuesta son lo mismo, y quien la tomó vive en un
+solo sitio, así que los dos registros no pueden contradecirse.
+
+\subsection{Por qué la condición se copia y la cantidad no se guarda}
+
+\pkcode{trade\_offer\_card} lleva \pkcode{condition} como columna propia en vez de
+apuntar a la fila de colección de la que salió: una oferta es una promesa sobre
+una carta \emph{en un estado}, y tiene que sobrevivir a que su dueño edite o
+borre esa fila. Y la condición no es un detalle —es la mayor parte del precio:
+una carta \emph{near mint} y una \emph{damaged} son la misma fila sin ella, y
+valen varias veces la una a la otra.
+
+La cantidad, en cambio, está deliberadamente ausente: una oferta nombra cartas,
+y cuántas copias cambian de manos se acuerda cuando las dos personas quedan.
+Anotar un número aquí parecería un compromiso que la aplicación no puede exigir
+a nadie.
+
+En \pkcode{trade\_listing\_card} sólo el lado \emph{ofrecido} lleva condición: en
+qué estado llegará una carta pedida lo responde quien tome la publicación, y
+todavía no hay a quién preguntar.
+
+\subsection{Los multiplicadores de condición}
+
+Viven en \pkpath{services/trade.py} y su orden de declaración es además el orden
+de mejor a peor que usa el resto del módulo:
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1.6,l]X[1,r]X[3.4,l]}}
+  Condición & Factor & Uso \\
+  \pkcode{mint} & 1.05 & \SetCell[r=6]{l} \pkcode{adjusted(price, condition)} multiplica y cuantiza a dos decimales. Se aplica al valorar una oferta, una publicación y el simulador. La lista también define el orden «peor copia», que es el que se toma cuando una oferta no declara condición. \\
+  \pkcode{near\_mint} & 1.00 & \\
+  \pkcode{lightly\_played} & 0.85 & \\
+  \pkcode{moderately\_played} & 0.70 & \\
+  \pkcode{heavily\_played} & 0.50 & \\
+  \pkcode{damaged} & 0.35 & \\
+\end{pkbox}\par\addvspace{8pt}
+
+\begin{pknote}[Son ratios del gremio, no una medición]
+El comentario que acompaña a la tabla lo dice sin rodeos: «estas son las
+proporciones con las que negocia la afición, no algo medido aquí, así que toda
+cifra derivada de ellas se rotula como estimación allí donde se muestra». La
+interfaz respeta ese contrato.
+\end{pknote}
+
+\subsection{Un hilo es un par ordenado}
+
+\pkcode{direct\_thread} guarda \pkcode{first\_user\_id} y \pkcode{second\_user\_id}
+ordenados, con \pkcode{CHECK first\_user\_id < second\_user\_id} y único sobre el
+par. Con un par emisor/receptor las mismas dos personas podrían abrir dos hilos
+escribiéndose a la vez, y cada lectura tendría que unir las dos mitades. No hay
+tabla de participantes porque no hay un tercer participante.
+
+\pkcode{direct\_message.read\_at} no necesita dueño: en un hilo de dos, quien no
+escribió el mensaje es la única persona que puede leerlo. Y su
+\pkcode{created\_at} usa \pkcode{clock\_timestamp()} y no \pkcode{now()}, porque
+\pkcode{now()} es el instante en que empezó la transacción: dos mensajes
+escritos en la misma transacción compartirían marca y el hilo se quedaría sin
+orden en el que leerse.
+
+\subsection{El historial del asistente se guarda íntegro}
+
+\pkcode{message.content} es \pkcode{jsonb} con el \emph{payload} del framework tal
+cual, para que una conversación reanudada se reproduzca con sus llamadas a
+herramientas intactas en lugar de como una transcripción con pérdida.
+\pkcode{message.text} está desnormalizado para poder listar una conversación sin
+deserializar cada \emph{payload}.
+
+\pkcode{user\_preference} es la memoria del agente: una fila por clave, única por
+usuario. Las claves con prefijo \pkcode{sys.} son internas y no se exponen por
+la API; \pkcode{sys.notifications\_seen\_at} es la que sostiene el estado
+«visto» del feed de novedades.
+
+\section{Índices y restricciones que importan}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[2.2,l]X[1.1,l]X[2.7,l]}}
+  Objeto & Tipo & Por qué existe \\
+  \pkcode{ix\_card\_name\_normalized\_trgm} & GIN \pkcode{gin\_trgm\_ops} & La resolución de escaneos compara nombres con el operador \pkcode{\%}; sin este índice sería un recorrido completo del catálogo. \\
+  \pkcode{ix\_species\_types} & GIN sobre \pkcode{text[]} & Filtrar la colección por tipo. \\
+  \pkcode{ix\_message\_conversation\_created} & B-tree compuesto & Una conversación se lee siempre en orden y nunca como feed global. \\
+  \pkcode{ix\_direct\_message\_thread\_created} & B-tree compuesto & Lo mismo para un hilo directo. \\
+  \pkcode{uq\_collection\_item\_group} & UNIQUE \emph{nulls not distinct} & Convierte el alta en fusión. \\
+  \pkcode{ck\_collection\_item\_quantity\_positive} & CHECK & Un grupo con cero copias no es un grupo. \\
+  \pkcode{ck\_collection\_item\_grade\_only\_when\_graded} & CHECK & \pkcode{grade} y \pkcode{is\_graded} no pueden discrepar. \\
+  \pkcode{ck\_direct\_thread\_ordered} & CHECK & Hace verificable el par ordenado. \\
+  \pkcode{uq\_trade\_offer\_card} & UNIQUE & La misma carta no puede repetirse en el mismo lado de una oferta. \\
+\end{pkbox}\par\addvspace{8pt}
+
+\section{Migraciones}
+
+Catorce revisiones en \pkpath{apps/api/alembic/versions/}, encadenadas desde
+\pkcode{bb4e34c86509\_init}. La tabla de versión vive en el propio esquema
+(\pkcode{version\_table\_schema="pokedex"}) y \pkcode{compare\_type} está activo,
+así que un cambio de tipo se detecta en el autogenerado.
+
+\begin{lstlisting}[language=bash]
+uv run alembic upgrade head           # aplicar
+uv run alembic revision --autogenerate -m "mensaje en ingles"
+uv run alembic downgrade -1           # revertir una
+\end{lstlisting}
+
+\begin{pkwarn}[Orden de arranque]
+Las tablas de dominio tienen claves foráneas hacia \pkcode{auth."user"}, que crea
+Better Auth. En un despliegue nuevo los dos servicios arrancan a la vez, así que
+la imagen de la API reintenta \pkcode{alembic upgrade head} hasta treinta veces
+con cinco segundos de espera en lugar de entrar en bucle de caída.
+\end{pkwarn}

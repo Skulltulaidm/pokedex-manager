@@ -1,0 +1,54 @@
+@startuml seq-tablon
+!include estilo.puml
+
+hide footbox
+
+actor "Quien toma" as T
+participant "Next.js\nlisting-board" as W
+participant "POST .../accept\ntrade.accept_listing" as A
+database "PostgreSQL" as DB
+
+T -> W: pulsa «tomar»
+W -> A: POST /trades/listings/{id}/accept
+activate A
+
+A -> DB: SELECT trade_listing + cards
+DB --> A: publicacion
+alt no existe o no esta abierta
+  A --> W: 404 / 409
+end
+
+A -> DB: SUM(quantity) > 1\nGROUP BY (user_id, card_id)
+note right of DB
+  Los sobrantes se recalculan AHORA, no como
+  estaban al publicar: el lado pedido contra el
+  inventario de quien toma, el ofrecido contra
+  el de quien publico.
+end note
+DB --> A: sobrantes de ambos lados
+
+A -> DB: UPDATE trade_listing\nSET status='taken', taken_at=now()\nWHERE id=? AND status='open'\nRETURNING id
+note right of DB
+  El WHERE sobre el estado es el cerrojo: dos
+  personas a la vez dan un ganador y la otra
+  recibe 409. Sin bloqueo explicito.
+end note
+
+alt RETURNING vacio
+  DB --> A: 0 filas
+  A --> W: 409 «already taken»
+else
+  DB --> A: id
+  A -> DB: INSERT trade_offer (accepted)\nfrom = quien publico, to = quien toma
+  A -> DB: INSERT trade_offer_card x n\ncon la condicion copiada
+  A -> DB: UPDATE trade_listing SET offer_id
+  A --> W: 200 TradeOfferView
+end
+deactivate A
+
+note over W, DB
+  Ninguna carta cambia de dueno en la base: la coleccion
+  es lo que alguien tiene fisicamente en la mano.
+end note
+
+@enduml

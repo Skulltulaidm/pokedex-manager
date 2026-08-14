@@ -1,0 +1,211 @@
+\chapter{Arquitectura}
+\label{cap:arquitectura}
+
+\section{Vista de contexto}
+
+El sistema es una pieza con dos públicos —una persona con un navegador y un
+asistente con un cliente MCP— y tres dependencias externas, dos obligatorias
+para tener catálogo y una opcional para tener modelo.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{c4-contexto.pdf}
+  \caption{Diagrama de contexto (C4 nivel 1). Generado desde
+    \pkpath{diagramas/src/c4-contexto.dot}.}
+  \label{fig:contexto}
+\end{figure}
+
+\section{Vista de contenedores}
+
+Dos ejecutables y una base de datos. Lo que hay que mirar en la
+figura~\ref{fig:contenedores} es la arista roja: el navegador habla con Next.js
+para su sesión, pero habla con FastAPI \emph{directamente}, cruzando origen, con
+un \emph{bearer} en la cabecera. No hay reescrituras ni proxy en
+\pkpath{next.config.ts}; esa ausencia es deliberada y es lo que obliga al
+esquema de token en vez de reenviar la cookie.
+
+\begin{figure}[p]
+\centering
+\begin{tikzpicture}[
+  x=1cm, y=1cm,
+  every node/.style={font=\scriptsize},
+  cont/.style={draw=pkRule, fill=pkRaised, rounded corners=3pt,
+               minimum width=4.3cm, minimum height=1.35cm, align=center, inner sep=4pt},
+  web/.style={cont, draw=tWater, fill=tWater!8},
+  api/.style={cont, draw=pkRed, fill=pkRed!8},
+  agt/.style={cont, draw=tGrass, fill=tGrass!8},
+  grp/.style={draw=pkRule, dashed, rounded corners=5pt, inner sep=9pt},
+  lbl/.style={font=\scriptsize\sffamily, color=pkMuted, inner sep=2pt, fill=white},
+  fl/.style={-{Stealth[length=4.2pt]}, pkMuted, line width=0.6pt,
+             font=\tiny, color=pkMuted},
+  hot/.style={fl, pkRed, text=pkRedDeep, line width=0.9pt}]
+
+  % ---- actores
+  \node[cont, draw=pkRed, fill=pkRed!8, minimum width=3.6cm, minimum height=1.0cm] (nav) at (2.6,0)
+    {\textbf{Navegador}\\[1pt]\textcolor{pkMuted}{coleccionista}};
+  \node[cont, minimum width=3.6cm, minimum height=1.0cm] (mcpc) at (12.9,0)
+    {\textbf{Cliente MCP externo}\\[1pt]\textcolor{pkMuted}{cualquier asistente}};
+
+  % ---- apps/web
+  \node[web] (next) at (2.8,-2.6) {\textbf{Next.js 16 · App Router}\\[1pt]
+     \textcolor{pkMuted}{React 19 · TanStack Query}\\
+     \textcolor{pkMuted}{cliente tipado de Kubb}};
+  \node[web] (auth) at (8.0,-2.6) {\textbf{Better Auth}\\[1pt]
+     \textcolor{pkMuted}{\texttt{/api/auth/*}}\\
+     \textcolor{pkMuted}{sesión · JWT EdDSA · JWKS}};
+  \node[grp, fit=(next)(auth)] (gweb) {};
+  \node[lbl, anchor=west] at ($(gweb.north west)+(0.35,0)$)
+    {\textbf{apps/web} · imagen Node 22};
+
+  % ---- apps/api
+  \node[api] (rest) at (2.8,-6.2) {\textbf{FastAPI · \texttt{/api/v1}}\\[1pt]
+     \textcolor{pkMuted}{59 rutas · CommittingRoute}};
+  \node[api] (mcp) at (8.0,-6.2) {\textbf{Servidor MCP · \texttt{/mcp}}\\[1pt]
+     \textcolor{pkMuted}{13 herramientas}\\
+     \textcolor{pkMuted}{streamable HTTP}};
+  \node[agt] (agent) at (2.8,-8.4) {\textbf{agent/}\\[1pt]
+     \textcolor{pkMuted}{pydantic-ai · cliente}\\
+     \textcolor{pkMuted}{de su propio MCP}};
+  \node[cont] (prices) at (8.0,-8.4) {\textbf{Lectura diaria de precios}\\[1pt]
+     \textcolor{pkMuted}{\texttt{asyncio.Task} al arrancar}};
+  \node[cont, minimum width=9.5cm, minimum height=1.0cm] (svc) at (5.4,-10.4)
+    {\textbf{services/} — 21 módulos, toda la regla de negocio};
+  \node[grp, fit=(rest)(mcp)(agent)(prices)(svc)] (gapi) {};
+  \node[lbl, anchor=west] at ($(gapi.north west)+(0.35,0)$)
+    {\textbf{apps/api} · imagen Python 3.13};
+
+  % ---- base de datos
+  \node[cont, draw=tWater, fill=tWater!8, minimum height=1.2cm] (sauth) at (2.8,-13.1)
+    {\textbf{esquema \texttt{auth}}\\[1pt]
+     \textcolor{pkMuted}{5 tablas · migra Better Auth}};
+  \node[cont, draw=pkRed, fill=pkRed!8, minimum height=1.2cm] (spok) at (8.0,-13.1)
+    {\textbf{esquema \texttt{pokedex}}\\[1pt]
+     \textcolor{pkMuted}{18 tablas · migra Alembic}};
+  \node[grp, fit=(sauth)(spok)] (gdb) {};
+  \node[lbl, anchor=west] at ($(gdb.north west)+(0.35,0)$)
+    {\textbf{PostgreSQL 18} · una base, dos esquemas};
+
+  % ---- laterales
+  \node[cont, minimum width=3.1cm, minimum height=1.1cm] (disco) at (13.1,-8.4)
+    {\textbf{Volumen de escaneos}\\[1pt]\textcolor{pkMuted}{\texttt{/data/scans}}};
+  \node[cont, minimum width=3.1cm, minimum height=1.1cm, dashed] (ext) at (13.1,-10.6)
+    {\textbf{TCGdex · PokeAPI}\\\textbf{Gemini / Ollama}};
+
+  % ---- aristas
+  \draw[fl] (nav) -- node[right,pos=0.45]{HTTPS} (next);
+  \draw[fl] (nav.east) -- node[above,pos=0.42,align=center,inner sep=1.5pt]{cookie de sesión\\(mismo origen)} (auth.north west);
+  % La arista que cruza origen baja por el margen izquierdo; su etiqueta va
+  % girada para no invadir la caja de texto.
+  \draw[hot] (nav.west) -- ++(-1.05,0) coordinate (bend)
+    -- (bend |- rest.west) -- (rest.west);
+  \node[rotate=90, anchor=south, font=\tiny, text=pkRedDeep, align=center]
+    at ($(bend)+(-0.10,-3.1)$) {\texttt{Authorization: Bearer <JWT>} · cruza origen};
+  \draw[fl] (mcpc.south) -- node[right,pos=0.55]{el mismo JWT} ++(0,-5.4) -| (mcp.east);
+  \draw[fl,dashed] (rest.north east) -- node[right,pos=0.5,align=left]{JWKS} (auth.south);
+  \draw[fl] (rest.south) -- node[left,pos=0.5]{SSE} (agent.north);
+  \draw[fl,dashed,tGrass,text=tGrass] (agent.east) -- node[above,pos=0.45,align=center,yshift=1pt]{sesión MCP por turno\\con el token del llamante} (mcp.south west);
+  \draw[fl] (rest.east) -- ++(0.6,0) |- (svc.north);
+  \draw[fl] (mcp.south east) -- ++(0.5,-0.9) node[right,pos=0.6,align=left]{mismo servicio,\\otro protocolo} |- (svc.east);
+  \draw[fl,dashed] (prices.south) -- (svc.north east);
+  \draw[fl] (svc.south) -- node[right,pos=0.35,inner sep=2pt]{SQLAlchemy async / asyncpg} (spok.north);
+  \draw[fl] (svc.east) -- node[above,pos=0.45]{httpx} (ext.west);
+  \draw[fl] (svc.east) -- node[above,pos=0.55]{escaneos} (disco.west);
+  \draw[fl,dashed] (spok.south) -- ++(0,-0.34) -- node[below,pos=0.5,inner sep=1.5pt]{FK \texttt{user\_id}} ($(sauth.south)+(0,-0.34)$) -- (sauth.south);
+\end{tikzpicture}
+\caption{Diagrama de contenedores (C4 nivel 2). La arista roja es la importante:
+  el navegador toma su sesión de Next.js pero llama a FastAPI directamente,
+  cruzando origen, con un \emph{bearer} en la cabecera.}
+\label{fig:contenedores}
+\end{figure}
+
+\begin{pkdecision}[La autenticación cruza el límite una sola vez]
+Better Auth firma un JWT Ed25519 a partir de la cookie de sesión; FastAPI lo
+verifica \emph{sin conexión} contra el JWKS y nunca llama de vuelta. El emisor
+(\pkcode{AUTH\_ISSUER}) es lo que el token declara y lo que el navegador ve; la
+URL del JWKS (\pkcode{AUTH\_JWKS\_URL}) es cómo el contenedor de la API alcanza al
+de la web. En Docker son distintas a propósito: \pkcode{http://localhost:3000}
+frente a \pkcode{http://web:3000/api/auth/jwks}.
+\end{pkdecision}
+
+\section{El monorepo}
+
+Turborepo con \emph{npm workspaces}. Cada tarea (\pkcode{build}, \pkcode{lint},
+\pkcode{typecheck}, \pkcode{test}) se declara en \pkpath{turbo.json} con
+\pkcode{dependsOn: ["\^{}build"]} y se lanza desde la raíz; el filtrado
+(\pkcode{--filter=web...}) es lo que permite que CI corra sólo el subárbol del
+frontend en un job y el de Python en otro.
+
+\begin{lstlisting}[language=bash]
+pokedex-manager/
+|- apps/
+|  |- api/          FastAPI + SQLAlchemy + MCP + agente   (gestionado por uv)
+|  |  |- src/pokedex/{api,services,db,agent,mcp,schemas,...}
+|  |  |- alembic/   migraciones del esquema `pokedex`
+|  |  `- tests/     292 casos contra Postgres real
+|  `- web/          Next.js 16 App Router                 (workspace npm)
+|     |- app/       rutas; grupo (app) = superficie autenticada
+|     |- lib/api/   cliente tipado GENERADO por Kubb (no editar a mano)
+|     |- scripts/   migrate-auth.mjs, paquete npm aparte
+|     `- test/      setup de Vitest, servidor MSW
+|- packages/
+|  |- ui/           25 componentes shadcn sobre Base UI + tokens de diseno
+|  |- eslint-config/
+|  `- typescript-config/
+|- db/init/         01-schemas.sql (esquemas + extension pg_trgm)
+|- .github/workflows/ci.yml
+`- docker-compose.yml
+\end{lstlisting}
+
+\begin{pknote}[Por qué \pkpath{packages/ui} no se compila]
+El paquete se consume como fuente: no tiene \pkcode{build}, exporta un archivo
+por subruta (\pkcode{./components/*}) y Next lo procesa vía
+\pkcode{transpilePackages}. \pkpath{apps/web/tsconfig.json} apunta el alias
+\pkcode{@workspace/ui/*} directamente a \pkpath{packages/ui/src/*}, así que no
+hay artefacto intermedio que pueda quedar desincronizado.
+\end{pknote}
+
+\section{Tecnologías}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1.5,l]X[1.1,l]X[3,l]}}
+  Pieza & Versión & Papel \\
+  Python & $\geq$ 3.13 & Sintaxis de genéricos PEP 695 (\pkcode{class Page[T]}) \\
+  FastAPI & $\geq$ 0.141.1 & Rutas, validación, OpenAPI, \pkcode{StreamingResponse} \\
+  SQLAlchemy & $\geq$ 2.0.52 & ORM asíncrono, \pkcode{Mapped[...]} tipado \\
+  asyncpg & $\geq$ 0.31.0 & Driver \\
+  Alembic & $\geq$ 1.19.1 & Migraciones del esquema \pkcode{pokedex} \\
+  mcp & $\geq$ 2.0.0 & Servidor MCP y sesión cliente \\
+  pydantic-ai-slim & $\geq$ 1.47.0 & Agente, visión, salida estructurada \\
+  PyJWT[crypto] & $\geq$ 2.13.0 & Verificación EdDSA contra JWKS \\
+  Pillow + pillow-heif & $\geq$ 12.3 / 1.5 & Normalización de la foto (HEIC incluido) \\
+  uv & --- & Resolución, bloqueo y ejecución del entorno Python \\
+  PostgreSQL & 18-alpine & Base única, dos esquemas, \pkcode{pg\_trgm} \\
+  Node & $\geq$ 20 (CI: 24) & Runtime del frontend \\
+  Next.js & 16.2.6 & App Router, \pkcode{output: "standalone"} \\
+  React & 19.2.4 & --- \\
+  TanStack Query & 5.101.4 & Caché de servidor en el cliente \\
+  Better Auth & 1.6.27 & Sesión, esquema \pkcode{auth}, plugin \pkcode{jwt()} \\
+  Kubb & 4.39.3 & Generación de tipos, clientes y hooks desde OpenAPI \\
+  Tailwind CSS & 4 & Sin archivo de configuración: tokens en CSS \\
+  Base UI & 1.7.0 & Primitivas accesibles (no Radix) \\
+  Vitest + RTL + MSW & 3.2.7 / 16.3 / 2.15 & Pruebas del frontend \\
+  Turborepo & 2.9.18 & Orquestación y caché de tareas \\
+\end{pkbox}\par\addvspace{8pt}
+
+\section{Reglas de arquitectura}
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=4pt,topsep=3pt]
+  \item \textbf{Una sola capa de lógica.} REST y MCP son dos superficies sobre
+        los mismos 21 módulos de \pkpath{services/}. Ninguna herramienta MCP
+        escribe SQL propio. Un cambio de regla de negocio se hace una vez.
+  \item \textbf{La carta y la especie son capas distintas.} Una carta es una
+        impresión; una especie es el Pokémon retratado. Se unen por el
+        \pkcode{dexId} del origen, nunca comparando nombres.
+  \item \textbf{Cada esquema tiene un dueño y una herramienta.} Better Auth
+        migra \pkcode{auth}; Alembic migra \pkcode{pokedex}; ninguno toca el del
+        otro (sección~\ref{sec:migraciones}).
+  \item \textbf{La colección sólo la escribe su dueño.} Ni el agente ni aceptar
+        un intercambio mueven cartas: lo que alguien tiene en la mano sólo lo
+        sabe quien la tiene.
+  \item \textbf{Lo que se puede verificar se verifica en la base.} Unicidad,
+        rangos y coherencia son restricciones, no comprobaciones en Python.
+\end{enumerate}

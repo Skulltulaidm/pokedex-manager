@@ -1,0 +1,222 @@
+\chapter{Frontend}
+\label{cap:frontend}
+
+Next.js 16 con App Router, React 19 y TanStack Query. El cliente HTTP no se
+escribe: se genera del OpenAPI de la API.
+
+\section{Estructura de rutas}
+
+Un solo grupo de rutas, \pkcode{(app)}, tres \emph{layouts} y una regla simple:
+toda la superficie autenticada es cliente y consulta con TanStack Query; la
+única página con obtención de datos en servidor es la vista pública compartida.
+
+\begin{lstlisting}[language=bash]
+app/
+|- layout.tsx                    servidor  lang="es", fuentes, providers
+|- page.tsx                      servidor  redirect("/collection")
+|- sign-in/page.tsx              cliente
+|- s/[token]/page.tsx            servidor  RSC asincrono, SIN autenticacion
+|- api/auth/[...all]/route.ts    manejador de ruta -> Better Auth
+`- (app)/                        la superficie autenticada
+   |- layout.tsx                 cliente   el porton de sesion
+   |- collection/[id|add]        cliente
+   |- cards/[cardId]             cliente
+   |- chat, scan, stats, compare cliente
+   |- collectors/[id]            cliente
+   |- trades/[new|publish]       cliente
+   |- messages/[partnerId]       cliente   layout propio: la lista sobrevive
+   `- notifications, profile     cliente
+\end{lstlisting}
+
+\begin{pkwarn}[No hay \pkcode{middleware.ts}]
+La redirección a \pkcode{/sign-in} vive en un efecto de
+\pkpath{app/(app)/layout.tsx}. Es decir: el HTML del grupo \pkcode{(app)} se
+sirve a cualquiera, y lo que protege los \emph{datos} es que la API rechace toda
+petición sin JWT válido, no el frontend. Es una decisión coherente con el modelo
+—el frontend no es una frontera de confianza— pero conviene tenerla explícita.
+\end{pkwarn}
+
+La página pública \pkpath{app/s/[token]/page.tsx} es la excepción: hace
+\pkcode{fetch} en servidor contra \pkcode{API\_INTERNAL\_URL} —la dirección del
+contenedor, no la del navegador— con \pkcode{cache: "no-store"}, y llama a
+\pkcode{notFound()} si la respuesta no es correcta.
+
+\section{Autenticación en el cliente}
+
+La cookie de sesión nunca sale del origen de Next. El recorrido completo:
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
+  \item El navegador guarda la cookie de Better Auth para \pkcode{localhost:3000}.
+  \item \pkcode{getAccessToken()} llama a \pkcode{/api/auth/token} con
+        \pkcode{credentials: "include"} —mismo origen, la cookie viaja— y recibe
+        un JWT.
+  \item Ese JWT se cachea en un módulo y se manda como
+        \pkcode{Authorization: Bearer …} a FastAPI, en otro origen.
+  \item FastAPI lo verifica contra el JWKS. Nunca ve la cookie.
+\end{enumerate}
+
+\begin{lstlisting}[language=Java]
+let cachedToken: string | null = null;
+
+export async function getAccessToken(): Promise<string | null> {
+  if (cachedToken) return cachedToken;
+  // Better Auth mints the JWT from the session cookie; the API never sees the cookie.
+  const response = await fetch("/api/auth/token", { credentials: "include" });
+  if (!response.ok) return null;
+  const { token } = (await response.json()) as { token?: string };
+  cachedToken = token ?? null;
+  return cachedToken;
+}
+\end{lstlisting}
+
+\pkcode{clearAccessToken()} se invoca al iniciar sesión, al cerrarla y al cambiar
+de cuenta desde el perfil.
+
+\section{El envoltorio del cliente generado}
+
+Kubb genera funciones que aceptan un \pkcode{client}; la aplicación inyecta el
+suyo, que hace tres cosas y ninguna más:
+
+\begin{lstlisting}[language=Java]
+const response = await client<TResponseData, TError, TRequestData>({
+  ...config,
+  headers: {
+    ...(isJsonBody ? { "Content-Type": "application/json" } : {}),
+    ...(config.headers as Record<string, string> | undefined),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  },
+});
+
+if (response.status >= 400) {
+  throw new ApiError(response.status, detailOf(response.data));
+}
+\end{lstlisting}
+
+El orden de los tres \emph{spreads} es intencionado y está cubierto por pruebas:
+\pkcode{Content-Type} va primero para que quien llama pueda sobrescribirlo,
+\pkcode{Authorization} va último para que un encabezado obsoleto de quien llama
+no pueda desplazar al token vivo, y un cuerpo \pkcode{FormData} se queda sin
+\pkcode{Content-Type} a propósito, para que el navegador escriba el
+\emph{boundary} del multipart.
+
+\pkcode{ApiError} traduce las dos formas que FastAPI usa para \pkcode{detail}
+—cadena, o lista cuyo primer elemento trae \pkcode{msg}— y cae a un mensaje en
+español cuando el cuerpo no es ninguna de las dos.
+
+\begin{pkwarn}[El envoltorio se inyecta por llamada]
+\pkpath{kubb.config.ts} sólo elige \pkcode{fetch} sobre axios; el envoltorio se
+pasa en cada sitio de llamada como \pkcode{\{ client: \{ client: apiClient \} \}}.
+Aparece en 39 archivos. Olvidarlo no rompe la compilación: simplemente salta el
+token \emph{y} el manejo de errores.
+\end{pkwarn}
+
+\section{Regeneración del cliente tipado}
+
+\begin{lstlisting}[language=bash]
+# 1. la API tiene que estar sirviendo, porque la entrada por omision es su URL
+npm run dev            # o docker compose up -d api
+
+# 2. desde apps/web
+npx kubb generate      # o: OPENAPI_URL=./openapi.json npx kubb generate
+\end{lstlisting}
+
+\pkpath{kubb.config.ts} declara cinco plugins y cuatro destinos bajo
+\pkpath{apps/web/lib/api/}: \pkpath{types/} (tipos TypeScript), \pkpath{zod/}
+(esquemas de validación), \pkpath{clients/} (una función \pkcode{fetch} por
+operación) y \pkpath{hooks/} (un \pkcode{useX} y un \pkcode{useXSuspense} por
+operación). \pkcode{output.clean: true} borra el directorio antes de escribir,
+por lo que cualquier retoque manual se pierde; cada archivo generado lleva
+escrito \emph{«Do not edit manually»}.
+
+\begin{pknote}[Detalles que ahorran una tarde]
+No hay script de \pkcode{npm} para esto: la invocación es el binario de
+\pkcode{@kubb/cli}, que sí está en \pkcode{devDependencies}. El árbol generado
+\emph{se versiona} en git, y está excluido de las pruebas por
+\pkpath{vitest.config.ts}. La opción \pkcode{extension: \{ ".ts": "" \}} existe
+porque Kubb emite la extensión en las importaciones y TypeScript la rechaza sin
+\pkcode{allowImportingTsExtensions}.
+\end{pknote}
+
+\section{TanStack Query}
+
+\begin{lstlisting}[language=Java]
+export function QueryProvider({ children }: { children: ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient());
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
+\end{lstlisting}
+
+Sin opciones. El comportamiento de producción es por tanto el de fábrica de
+TanStack Query v5: \pkcode{staleTime: 0}, \pkcode{gcTime} de cinco minutos,
+tres reintentos con retroceso exponencial y refetch al enfocar la ventana, al
+montar y al reconectar. El inicializador perezoso del \pkcode{useState} es la
+protección estándar del App Router contra compartir un cliente entre peticiones.
+
+Que \pkcode{staleTime} sea cero es precisamente lo que hace importante a
+\pkcode{CommittingRoute} (sección~\ref{cap:backend}): una mutación seguida de
+invalidación provoca un refetch inmediato, y ese refetch no puede adelantarse al
+commit.
+
+\section{La URL como estado}
+
+\pkpath{apps/web/lib/url-state.ts} evita deliberadamente \pkcode{useRouter} y
+\pkcode{useSearchParams}:
+
+\begin{quote}\small\itshape
+\pkcode{router.replace} es una navegación aunque sólo se mueva un parámetro de
+consulta: Next vuelve a pedir el payload de la ruta y el árbol se vuelve a
+montar, así que cada clic en un filtro parpadeaba con un esqueleto y volvía a
+pedir lo que ya estaba en pantalla. La History API escribe la misma URL sin ida
+y vuelta\dots{} El precio es que el estado ahora es de React, así que todo lo que
+lea la URL tiene que pasar por este hook.
+\end{quote}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1.2,l]X[3.4,l]}}
+  Parte de la API & Comportamiento \\
+  \pkcode{useUrlState(initial)} & Devuelve \pkcode{[params, set]}. \pkcode{params} es un \pkcode{URLSearchParams} sembrado desde \pkcode{window.location.search} (a prueba de SSR) y completado con \pkcode{initial} \emph{sólo} en las claves que la URL no traiga. \\
+  \pkcode{set(next)} & Fusiona; \pkcode{undefined} o \pkcode{""} borran la clave; escribe con \pkcode{history.replaceState}, sin entrada de historial y sin navegación. \\
+  \pkcode{popstate} & Un escucha relee la URL, así que el botón «atrás» funciona; se retira al desmontar. \\
+\end{pkbox}\par\addvspace{8pt}
+
+Lo usan diez pantallas. El patrón habitual es fijar un filtro y limpiar la
+página en la misma escritura: \pkcode{setParam(\{ q: next, p: undefined \})}.
+
+\section{El sistema de diseño}
+
+\pkpath{packages/ui} son 25 componentes shadcn construidos sobre \textbf{Base
+UI}, no sobre Radix, más un archivo de \emph{tokens}. Tailwind~4 sin archivo de
+configuración: todo vive en CSS.
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1.3,l]X[3.4,l]}}
+  Decisión & Razón, tal como está comentada en el CSS \\
+  \pkcode{--primary: oklch(0.56 0.23 27)} & El rojo de la pokédex. Es el único color saturado del sistema fuera del arte de las cartas. \\
+  \pkcode{--ring: oklch(0.58 0.15 250)} & Azul \emph{a propósito}: «primario y destructivo son ambos rojos, así que un anillo de foco rojo sobre un campo es indistinguible de que ese campo sea inválido». \\
+  18 tokens \pkcode{--type-*} & Un color por tipo de Pokémon, re-exportados al tema de Tailwind. \\
+  \pkcode{TYPE\_VAR} en TS & Mapea tipo → \emph{nombre de variable} y no a una clase: «un color de tipo se usa como relleno, resplandor, anillo y parada de degradado, y sólo una variable cruda sirve para las cuatro». \\
+  \pkcode{@utility slab / glass / aura / foil} & Utilidades propias de Tailwind~4 para la superficie, la cromática flotante, el resplandor teñido por tipo y el holográfico. \\
+  \pkcode{forcedTheme="light"} & La aplicación es clara y sólo clara: un tema por omisión seguiría al sistema operativo y dejaría a quien lo tenga oscuro en un tema que ya no se mantiene. \\
+  \pkcode{prefers-reduced-motion} & Todas las animaciones y transiciones se recortan a 0.01~ms. \\
+\end{pkbox}\par\addvspace{8pt}
+
+El paquete no se compila: exporta un archivo por subruta
+(\pkcode{@workspace/ui/components/button}) y \pkpath{apps/web/tsconfig.json}
+apunta el alias directamente a \pkpath{packages/ui/src}, así que no existe
+artefacto intermedio que pueda quedar viejo.
+
+\section{Empaquetado}
+
+\pkcode{output: "standalone"} traza el grafo de dependencias en un paquete
+autocontenido, de modo que la imagen de ejecución no lleva \pkpath{node\_modules}.
+Esa elección obliga a copiar a mano \pkpath{.next/static} y \pkpath{public} en la
+etapa final, y a instalar aparte las dependencias de \pkpath{apps/web/scripts},
+que es un paquete npm propio: Next empaqueta \pkcode{better-auth} dentro de sus
+\emph{chunks} de servidor en vez de copiar el paquete, así que la migración no
+puede tomarlo prestado del árbol trazado.
+
+\begin{pkwarn}[\pkcode{NEXT\_PUBLIC\_API\_URL} es argumento de construcción, no variable de ejecución]
+Se hornea en el \emph{bundle} del cliente al compilar, así que tiene que ser la
+URL que alcanza un navegador del anfitrión, no la que usa el contenedor.
+Cambiarla exige reconstruir la imagen, no reiniciarla. Su contraparte
+\pkcode{API\_INTERNAL\_URL} sí es una variable de ejecución normal, y sólo la lee
+el servidor en la página pública compartida.
+\end{pkwarn}

@@ -1,0 +1,38 @@
+\chapter{Bitácora de decisiones}
+\label{cap:decisiones}
+
+Las decisiones que un lector nuevo cuestionaría, con la alternativa que se
+descartó y por qué. La mayoría están argumentadas en los mensajes de commit y en
+los comentarios del propio código, que es de donde salen.
+
+\begin{pktable}[caption={Decisiones de arquitectura},label={tab:adr}]{colspec={X[0.55,l]X[2,l]X[1.6,l]X[2.6,l]}}
+  ID & Decisión & Alternativa descartada & Razón \\
+  \pkid{AD-01} & Dos esquemas en una base, migrados por herramientas distintas. & Un solo esquema y un solo migrador. & Cada esquema lo define el sistema que sabe cómo debe ser. Better Auth crea la tabla que un plugin nuevo necesita; Alembic no puede saberlo. El riesgo (que autogenerate proponga borrar lo ajeno) se cierra con dos filtros. \\
+  \pkid{AD-02} & Carta y especie son capas separadas, unidas por el \pkcode{dexId} del origen. & Una tabla con el nombre del Pokémon dentro de la carta. & Una carta es una impresión y una especie es lo retratado; unirlas por nombre falla con formas regionales, cartas de entrenador y traducciones. \\
+  \pkid{AD-03} & El escaneo puntúa todas las señales en lugar de filtrar por alguna. & Filtrar por número de colector o por set. & Un campo mal leído descartaría la carta correcta. Puntuando, un HP erróneo cuesta 0.05 y la respuesta sigue apareciendo. \\
+  \pkid{AD-04} & \pkcode{CommittingRoute} confirma antes de que la respuesta salga. & Confiar en el commit de la dependencia \pkcode{yield}. & Ese commit ocurre \emph{después} de responder, así que un refetch inmediato puede leer la base antes que él y devolver el estado viejo. Con \pkcode{staleTime: 0} en el cliente, esa carrera es la norma y no la excepción. \\
+  \pkid{AD-05} & El chat de la aplicación es un cliente MCP más. & Que el endpoint de chat llame a \pkpath{services/} directamente. & Una sola superficie de datos y un solo modelo de permisos. El agente no puede hacer nada que un asistente externo no pueda, y actúa con el token del usuario, no como servicio. \\
+  \pkid{AD-06} & Aceptar un intercambio registra el acuerdo pero no mueve cartas. & Transferir filas de \pkcode{collection\_item}. & La colección es lo que alguien tiene físicamente; sólo esa persona sabe si el intercambio ocurrió. Mover filas convertiría un acuerdo en una mentira sobre el mundo. \\
+  \pkid{AD-07} & Un sobrante se calcula (\pkcode{SUM(quantity) > 1}), no se marca. & Una columna «disponible para cambio». & Un estado marcado se desincroniza de las cantidades reales. Calculado, el tablón nunca puede prometer una carta que ya no existe, y se revalida al publicar, al ofertar y al aceptar. \\
+  \pkid{AD-08} & \pkcode{card\_price} guarda una fila por carta y por día. & Guardar sólo el último precio en \pkcode{card}. & «Un portafolio sin serie es un número suelto»: todo panel de variación reportaba +0.0\% sobre un único punto. El upsert sobre \pkcode{(card\_id, recorded\_on)} mantiene un punto por día y hace el trabajo idempotente. \\
+  \pkid{AD-09} & La lectura de precios es una tarea suelta al arrancar, no un planificador. & Cron, o un worker aparte. & «Un catálogo inalcanzable es una serie desactualizada, no una aplicación que no arranca.» La deduplicación por día de calendario hace irrelevante cuántas veces se reinicie el servicio. \\
+  \pkid{AD-10} & Una publicación es una oferta sin destinatario; tomarla escribe una oferta ya aceptada. & Un modelo de subasta o de reserva. & Tomarla \emph{es} el acuerdo. La reserva atómica (\pkcode{UPDATE … WHERE status='open' … RETURNING}) resuelve la concurrencia sin bloqueos, y desde ahí un trato del tablón es idéntico a uno negociado. \\
+  \pkid{AD-11} & La condición se copia sobre la carta de la oferta. & Referenciar la fila de colección de origen. & Una oferta es una promesa sobre una carta en un estado, y debe sobrevivir a que su dueño edite o borre esa fila. \\
+  \pkid{AD-12} & Un hilo directo es un par ordenado con \pkcode{CHECK}. & Emisor y destinatario, o una tabla de participantes. & Con un par no ordenado, dos personas escribiéndose a la vez abren dos hilos y cada lectura tiene que unirlos. No hay tabla de participantes porque no hay un tercero. \\
+  \pkid{AD-13} & Los filtros escriben la URL con la History API. & \pkcode{router.replace}. & En Next eso es una navegación aunque sólo cambie un parámetro: refetch del payload de ruta y remontado del árbol. Cada clic en un filtro parpadeaba con un esqueleto y volvía a pedir lo que ya estaba en pantalla. El precio —que \pkcode{useSearchParams} deja de enterarse— se paga concentrando la lectura en un solo hook. \\
+  \pkid{AD-14} & El cliente HTTP se genera del OpenAPI y se versiona en git. & Escribirlo a mano, o generarlo en tiempo de construcción. & El contrato lo fija el servidor; el frontend no puede desviarse en silencio. Versionarlo hace que un cambio de API aparezca como diff revisable. Su envoltorio se inyecta por llamada porque es lo que Kubb permite. \\
+  \pkid{AD-15} & Las pruebas de la API corren contra Postgres real con rollback por prueba. & SQLite en memoria, o dobles del repositorio. & La mitad de las invariantes viven en la base: enums, \pkcode{CHECK}, \pkcode{ON CONFLICT … NULLS NOT DISTINCT}, \pkcode{RETURNING}. Un doble las daría todas por buenas. Y son rápidas igualmente: 292 casos en 13.6 s. \\
+  \pkid{AD-16} & Las pruebas de la web simulan la red en la frontera de \pkcode{fetch}. & Sustituir el cliente generado. & Sustituirlo dejaría sin probar el único código propio de esa capa: el orden de cabeceras, la caché del token y la traducción de errores de FastAPI. \\
+  \pkid{AD-17} & El \emph{toolset} MCP del agente está escrito a mano. & Usar el cliente MCP de pydantic-ai. & Ese cliente apunta al SDK 1.x y ni siquiera importa contra 2.0, que renombró los campos del protocolo y movió \pkcode{RequestContext}. \\
+  \pkid{AD-18} & Las imágenes de escaneo van a un volumen local tras un \pkcode{Protocol}. & MinIO o S3. & «Añadiría un cuarto contenedor a algo que sólo corre en local.» La costura está puesta: cambiar de backend es implementar tres métodos. \\
+  \pkid{AD-19} & \pkcode{operationId} es el nombre de la función manejadora. & El identificador por omisión de FastAPI. & El de fábrica produce ganchos como \pkcode{useListCollectionApiV1CollectionGet}. \\
+  \pkid{AD-20} & Un solo tema, claro, forzado. & Tema oscuro, o seguir al sistema operativo. & Se retiró el tema oscuro a petición del usuario, y \emph{forzarlo} en vez de poner un valor por omisión: un valor por omisión sigue obedeciendo al sistema operativo y dejaría a una máquina en oscuro dentro de un tema que la aplicación ya no tiene. Costó un bloque de variables porque la paleta estaba escrita como tokens semánticos —superficies y bordes, nunca un gris literal. \\
+\end{pktable}
+
+\begin{pknote}[Una nota de mantenimiento]
+El bloque \pkcode{:root} de \pkpath{packages/ui/src/styles/globals.css} conserva
+un comentario de la etapa anterior («dark is the designed state») que los
+valores de debajo ya contradicen. No afecta a nada en ejecución, pero conviene
+saberlo antes de leer ese archivo buscando la intención de diseño: la intención
+vigente es la de \pkid{AD-20}.
+\end{pknote}

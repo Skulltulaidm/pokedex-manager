@@ -1,0 +1,101 @@
+\chapter{Requisitos}
+\label{cap:requisitos}
+
+Los requisitos de este capítulo están \textbf{derivados del código}, no
+redactados antes de él: cada uno corresponde a una ruta, un servicio o una
+restricción que existe en la revisión documentada. No se enuncia nada que el
+sistema no cumpla.
+
+\section{Requisitos funcionales}
+
+\begin{pktable}[caption={Requisitos funcionales},label={tab:rf}]{colspec={X[0.7,l]X[3.4,l]X[2.4,l]}}
+  ID & Requisito & Realización \\
+  \pkid{RF-01} & El sistema debe permitir crear una cuenta con correo y contraseña, iniciar y cerrar sesión. & Better Auth en \pkpath{apps/web/lib/auth.ts}, montado en \pkcode{/api/auth/*} \\
+  \pkid{RF-02} & El sistema debe emitir, a partir de la sesión, un JWT que la API acepte, y publicar las claves para verificarlo. & Plugin \pkcode{jwt()}; \pkcode{GET /api/auth/token} y \pkcode{/api/auth/jwks} \\
+  \pkid{RF-03} & El sistema debe aceptar la foto de una carta, normalizarla, transcribir lo impreso y proponer candidatos del catálogo con su puntuación y las señales que coincidieron. & \pkcode{POST /api/v1/scans}; \pkpath{services/scan.py}, \pkpath{services/resolve.py} \\
+  \pkid{RF-04} & El usuario debe poder confirmar qué carta era y en qué estado, y que eso ingrese a su colección. & \pkcode{POST /api/v1/scans/\{id\}/confirm} \\
+  \pkid{RF-05} & El sistema debe permitir dar de alta una carta manualmente, fusionándola con el grupo idéntico si ya existe. & \pkcode{POST /api/v1/collection}; \pkcode{ON CONFLICT uq\_collection\_item\_group} \\
+  \pkid{RF-06} & El sistema debe listar la colección paginada, filtrable por tipo, generación y set, y ordenable por reciente, nombre, número o valor de posición. & \pkcode{GET /api/v1/collection} con \pkcode{CollectionFilters} \\
+  \pkid{RF-07} & El usuario debe poder editar y eliminar un grupo de copias. & \pkcode{PATCH} y \pkcode{DELETE /api/v1/collection/\{id\}} \\
+  \pkid{RF-08} & El sistema debe reportar composición por tipo y generación, cobertura por set y valor estimado, indicando cuántas cartas tienen precio. & \pkcode{GET /api/v1/stats}; \pkpath{services/stats.py} \\
+  \pkid{RF-09} & El sistema debe permitir buscar en el catálogo publicado, abrir la ficha de una carta, ver su línea evolutiva y una reseña de la especie. & Router \pkcode{catalog}; \pkpath{services/catalog.py}, \pkpath{services/trivia.py} \\
+  \pkid{RF-10} & El sistema debe presentar la colección como portafolio: resumen, posiciones ordenables, concentración del valor y rendimiento contra coste. & \pkcode{/catalog/market/*}; \pkpath{services/market.py} \\
+  \pkid{RF-11} & El sistema debe simular un intercambio sobre las tenencias y precios de hoy sin escribir ni reservar nada. & \pkcode{POST /catalog/market/simulate} \\
+  \pkid{RF-12} & El sistema debe desglosar el mercado por set, ordenado por el valor de lo que falta. & \pkcode{GET /catalog/market/sets} \\
+  \pkid{RF-13} & El usuario debe poder marcar cartas deseadas, y el asistente sugerirlas, distinguiendo el origen de cada entrada. & \pkcode{/wishlist}; columna \pkcode{added\_by} \\
+  \pkid{RF-14} & El sistema debe señalar qué falta \emph{sólo} en los sets ya empezados. & \pkcode{GET /api/v1/gaps}; \pkpath{services/gaps.py} \\
+  \pkid{RF-15} & El sistema debe emparejar coleccionistas cuando el intercambio funciona en ambas direcciones. & \pkcode{GET /api/v1/trades} \\
+  \pkid{RF-16} & El sistema debe ofrecer un directorio de coleccionistas, su perfil y sus sobrantes. & \pkcode{/trades/collectors[/\{id\}[/spares]]} \\
+  \pkid{RF-17} & El sistema debe permitir crear, responder, retirar y contraofertar propuestas de intercambio, validando cada lado contra los sobrantes reales. & \pkcode{/trades/offers*}; \pkpath{services/trade.py} \\
+  \pkid{RF-18} & El sistema debe permitir publicar un intercambio sin destinatario, listar el tablón indicando cuáles se pueden cumplir, tomar una publicación y cancelarla. & \pkcode{/trades/listings*} \\
+  \pkid{RF-19} & Dos coleccionistas deben poder conversar en un hilo directo, con estado de leído. & \pkcode{/api/v1/messages*}; \pkpath{services/direct.py} \\
+  \pkid{RF-20} & El sistema debe informar qué ocurrió mientras el usuario no estaba, derivándolo de las filas existentes, y recordar hasta dónde leyó. & \pkcode{/api/v1/news}; \pkpath{services/news.py} \\
+  \pkid{RF-21} & El usuario debe poder preguntar en lenguaje natural sobre su colección y recibir la respuesta en streaming. & \pkcode{POST /api/v1/chat} (SSE); \pkpath{agent/} \\
+  \pkid{RF-22} & El asistente debe recordar hechos duraderos del usuario, y el usuario debe poder consultarlos y borrarlos. & \pkcode{/api/v1/preferences}; herramientas \pkcode{remember} / \pkcode{forget} \\
+  \pkid{RF-23} & El usuario debe poder publicar su colección con un enlace revocable, y esa vista debe ocultar notas y fechas de adquisición. & \pkcode{/api/v1/share}, \pkcode{GET /api/v1/public/\{token\}} \\
+  \pkid{RF-24} & El sistema debe exportar la colección en CSV y JSON. & \pkcode{GET /api/v1/collection/export} \\
+  \pkid{RF-25} & El sistema debe exponer la colección a asistentes externos por MCP, con la misma autenticación y la misma capa de servicio. & \pkcode{/mcp}; \pkpath{mcp/server.py} \\
+  \pkid{RF-26} & El sistema debe poder sembrar y actualizar el catálogo desde los orígenes externos. & \pkcode{pokedex-sync <set-id>…} \\
+  \pkid{RF-27} & El sistema debe registrar una lectura de precio por carta y por día. & \pkcode{take\_todays\_prices()} en el arranque; tabla \pkcode{card\_price} \\
+  \pkid{RF-28} & El sistema debe poder poblarse con un mercado de coleccionistas reproducible para desarrollo y demostración. & \pkcode{pokedex-seed}, \pkcode{pokedex-demo} \\
+\end{pktable}
+
+\section{Requisitos no funcionales}
+
+\begin{pktable}[caption={Requisitos no funcionales},label={tab:rnf}]{colspec={X[0.8,l]X[1.3,l]X[4,l]}}
+  ID & Atributo & Requisito y cómo se cumple \\
+  \pkid{RNF-01} & Seguridad & Los JWT se verifican con el algoritmo \pkcode{EdDSA} \emph{fijado en código}, no leído de la cabecera del token, contra JWKS y comprobando emisor, audiencia, expiración y sujeto no vacío. La API nunca llama de vuelta al servicio de sesión. \\
+  \pkid{RNF-02} & Aislamiento & Toda consulta de dominio se acota por \pkcode{user\_id}. Una herramienta MCP que no puede resolver a su usuario lanza \pkcode{UnauthenticatedError} en lugar de recurrir a un valor por defecto. \\
+  \pkid{RNF-03} & Integridad & Las invariantes viven en la base: claves foráneas, \pkcode{CHECK quantity > 0}, \pkcode{CHECK} de gradeo coherente, \pkcode{CHECK first\_user\_id < second\_user\_id}, únicos y enums de Postgres. \\
+  \pkid{RNF-04} & Consistencia & Una mutación queda confirmada \emph{antes} de que su respuesta salga, para que un refetch inmediato no pueda adelantarse al commit (\pkcode{CommittingRoute}). \\
+  \pkid{RNF-05} & Idempotencia & Catálogo, precios y altas de colección se escriben con \pkcode{INSERT … ON CONFLICT DO UPDATE}. El sembrado deriva todas sus claves de una semilla, así que repetirlo no escribe nada nuevo. \\
+  \pkid{RNF-06} & Concurrencia & Tomar una publicación del tablón es un \pkcode{UPDATE … WHERE status='open' … RETURNING id}: dos personas simultáneas producen un ganador y un 409. \\
+  \pkid{RNF-07} & Degradación & Sin \pkcode{GOOGLE\_API\_KEY} el chat responde 503 y el escaneo degrada a entrada manual; ninguna otra función se ve afectada. CI corre en verde sin ninguna clave. \\
+  \pkid{RNF-08} & Tipado & \pkcode{mypy --strict} sobre 87 archivos y TypeScript \pkcode{strict} con \pkcode{noUncheckedIndexedAccess}, ambos exigidos en CI. \\
+  \pkid{RNF-09} & Verificabilidad & Las pruebas de la API corren contra un Postgres real, cada una dentro de una transacción que siempre se revierte, así que enums, \pkcode{CHECK} y \pkcode{ON CONFLICT} se comportan como en producción. \\
+  \pkid{RNF-10} & Portabilidad & Cada imagen levanta el esquema que le pertenece antes de servir; la API espera al esquema \pkcode{auth} porque sus claves foráneas apuntan ahí. \\
+  \pkid{RNF-11} & Límites de recurso & Subida máxima de 10 MB, imagen reescalada a 1600 px de lado largo, turno del agente acotado a 8 llamadas de herramienta y 10 peticiones, y un tope de paginación por endpoint. \\
+  \pkid{RNF-12} & Privacidad & La proyección pública es un esquema distinto al del dueño: notas y fechas de adquisición no salen de la cuenta. Un enlace revocado responde 404 igual que uno que nunca existió. \\
+  \pkid{RNF-13} & Rendimiento & Índice GIN de trigramas para la resolución por nombre, GIN sobre \pkcode{species.types}, índices compuestos para leer un hilo o una conversación en orden, y subconsulta escalar correlacionada en las posiciones para no romper el \pkcode{joinedload}. \\
+  \pkid{RNF-14} & Accesibilidad & La hoja de estilo anula animaciones y transiciones bajo \pkcode{prefers-reduced-motion}. \\
+  \pkid{RNF-15} & Idioma & La interfaz y las respuestas del agente van en español; el código, los identificadores y los mensajes de commit, en inglés. \\
+\end{pktable}
+
+\section{Historias de usuario}
+
+\begin{pktable}[caption={Historias de usuario},label={tab:hu}]{colspec={X[0.7,l]X[3.2,l]X[2.6,l]}}
+  ID & Historia & Criterio de aceptación \\
+  \pkid{HU-01} & Como coleccionista quiero fotografiar una carta para no teclear sus datos. & El sistema muestra candidatos ordenados y por qué coincide cada uno; si está seguro, propone uno solo. (\pkid{RF-03}) \\
+  \pkid{HU-02} & Como coleccionista quiero decidir yo qué se guarda, porque la foto puede ser ambigua. & Nada entra a la colección sin confirmación explícita. (\pkid{RF-04}) \\
+  \pkid{HU-03} & Como coleccionista quiero buscar y filtrar lo que tengo para encontrar una carta sin recorrer todo. & Filtro por tipo, generación y set, con orden y paginación estables. (\pkid{RF-06}) \\
+  \pkid{HU-04} & Como coleccionista quiero saber cuánto vale lo que tengo y cuánto me costó. & Valor de mercado, coste, ganancia y participación por posición, con el número de cartas sin precio a la vista. (\pkid{RF-10}) \\
+  \pkid{HU-05} & Como coleccionista quiero saber si mi valor depende de pocas cartas. & Concentración por tramos y cuántas cartas cargan la mitad del portafolio. (\pkid{RF-10}) \\
+  \pkid{HU-06} & Como coleccionista quiero probar un intercambio antes de proponerlo. & El simulador informa diferencia de valor y efecto sobre la concentración sin escribir nada. (\pkid{RF-11}) \\
+  \pkid{HU-07} & Como coleccionista quiero encontrar a alguien con quien el cambio funcione en ambos sentidos. & Sólo se listan emparejamientos con material en las dos direcciones. (\pkid{RF-15}) \\
+  \pkid{HU-08} & Como coleccionista quiero publicar un cambio sin dirigirlo a nadie. & La publicación queda en el tablón e indica a quién le cuadra; tomarla la cierra. (\pkid{RF-18}) \\
+  \pkid{HU-09} & Como coleccionista quiero negociar con palabras, no sólo con listas de cartas. & Hilo directo entre dos personas, con estado de leído. (\pkid{RF-19}) \\
+  \pkid{HU-10} & Como coleccionista quiero enterarme de lo que pasó mientras no estaba. & Feed derivado con las ofertas por responder, los tratos cerrados, los mensajes sin leer y los movimientos de precio de lo que quiero. (\pkid{RF-20}) \\
+  \pkid{HU-11} & Como coleccionista quiero preguntar en mi idioma en vez de aprender la interfaz. & El asistente responde en español, cita cartas enlazables y no inventa datos: sólo repite lo que le devolvieron las herramientas. (\pkid{RF-21}) \\
+  \pkid{HU-12} & Como coleccionista quiero enseñar mi colección sin dar acceso a mi cuenta. & Enlace público revocable, sin notas ni fechas de adquisición. (\pkid{RF-23}) \\
+  \pkid{HU-13} & Como usuario de un asistente propio quiero consultar mi colección desde él. & Servidor MCP con el mismo token y las mismas reglas; una sola herramienta escribe y no alcanza la colección. (\pkid{RF-25}) \\
+\end{pktable}
+
+\section{Trazabilidad}
+
+\par\addvspace{8pt}\noindent\begin{pkbox}{colspec={X[1,l]X[2.2,l]X[2,l]}}
+  Requisito & Módulo & Prueba \\
+  RF-03, RF-04 & \pkpath{services/scan.py}, \pkpath{services/resolve.py} & \pkpath{test\_scan\_service.py} (6), \pkpath{test\_resolve\_service.py} (14) \\
+  RF-05 – RF-07 & \pkpath{services/collection.py} & \pkpath{test\_collection\_service.py} (22) \\
+  RF-08 & \pkpath{services/stats.py} & \pkpath{test\_stats\_service.py} (5) \\
+  RF-09 & \pkpath{services/catalog.py}, \pkpath{trivia.py} & \pkpath{test\_catalog\_service.py} (5), \pkpath{test\_evolutions.py} (9), \pkpath{test\_trivia\_service.py} (2) \\
+  RF-10 – RF-12 & \pkpath{services/market.py} & \pkpath{test\_market\_service.py} (44) \\
+  RF-13, RF-14 & \pkpath{services/wishlist.py}, \pkpath{gaps.py} & \pkpath{test\_gaps\_service.py} (9) \\
+  RF-15 – RF-18 & \pkpath{services/trade.py} & \pkpath{test\_trade\_service.py} (47) \\
+  RF-19 & \pkpath{services/direct.py} & \pkpath{test\_direct\_service.py} (15) \\
+  RF-20 & \pkpath{services/news.py} & \pkpath{test\_news\_service.py} (16) \\
+  RF-21, RF-22 & \pkpath{agent/}, \pkpath{services/conversation.py}, \pkpath{preferences.py} & \pkpath{test\_agent\_toolset.py} (4), \pkpath{test\_conversation\_service.py} (3), \pkpath{test\_preferences\_service.py} (7) \\
+  RF-23, RF-24 & \pkpath{services/share.py}, \pkpath{export.py} & \pkpath{test\_share\_service.py} (7), \pkpath{test\_export\_service.py} (3) \\
+  RF-26, RF-27 & \pkpath{services/sync.py}, \pkpath{prices.py}, \pkpath{integrations/} & \pkpath{test\_catalog\_sync.py} (6), \pkpath{test\_prices.py} (5), \pkpath{test\_tcgdex.py} (9), \pkpath{test\_pokeapi.py} (7) \\
+  RF-28 & \pkpath{seed.py} & \pkpath{test\_seed.py} (17) \\
+  RNF-11 & \pkpath{storage/} & \pkpath{test\_storage.py} (12) \\
+\end{pkbox}\par\addvspace{8pt}
