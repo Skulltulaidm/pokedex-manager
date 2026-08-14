@@ -2,12 +2,13 @@
 
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import { ActivityFeed } from "@/components/activity-feed";
 import { BinderMark } from "@/components/binder-mark";
 import { CardRow } from "@/components/card-row";
 import { CardsDialog, type DialogCard } from "@/components/cards-dialog";
+import { DialogToolbar } from "@/components/dialog-toolbar";
 import { TypeSpectrum } from "@/components/coverage-strip";
 import { PanelSkeleton, RowsSkeleton } from "@/components/pokeball";
 import { ConcentrationPanel } from "@/components/portfolio-concentration";
@@ -47,6 +48,8 @@ const TABS = [
   { value: "simulador", label: "Simulador" },
   { value: "deseos", label: "Deseos" },
 ];
+
+const LIST_PER_PAGE = 18;
 
 export default function StatsPage() {
   return (
@@ -485,8 +488,9 @@ function Empty() {
 /**
  * The two lists on this screen, in the dialog the sets already use.
  *
- * Both are short enough to arrive whole, so neither brings a toolbar: searching
- * five holdings is a control nobody needs.
+ * Same toolbar as a set, because they are the same question asked of a
+ * different list: a want list of sixty cards needs narrowing exactly as much.
+ * Holdings page and search in the API; wishes arrive whole and do it here.
  */
 function ListDialog({
   which,
@@ -495,14 +499,34 @@ function ListDialog({
   which: "holdings" | "wishes" | null;
   onClose: () => void;
 }) {
-  const { data: holdings } = useListCollection(
-    { sort: "price" as never, limit: 20 },
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    setPage(1);
+    setSearch("");
+  }, [which]);
+
+  const { data: holdings, isPending: holdingsPending } = useListCollection(
+    {
+      sort: "price" as never,
+      search: search || undefined,
+      limit: LIST_PER_PAGE,
+      offset: (page - 1) * LIST_PER_PAGE,
+    },
     { client: { client: apiClient }, query: { enabled: which === "holdings" } },
   );
-  const { data: wishes } = useListWishlist({
+  const { data: wishes, isPending: wishesPending } = useListWishlist({
     client: { client: apiClient },
     query: { enabled: which === "wishes" },
   });
+
+  const matchingWishes = (wishes ?? []).filter((wish) =>
+    wish.card.name.toLowerCase().includes(search.trim().toLowerCase()),
+  );
+
+  const total = which === "holdings" ? (holdings?.total ?? 0) : matchingWishes.length;
+  const lastPage = Math.max(1, Math.ceil(total / LIST_PER_PAGE));
 
   const cards: DialogCard[] =
     which === "holdings"
@@ -516,26 +540,55 @@ function ListDialog({
           price: item.card.price_usd === null ? null : Number(item.card.price_usd),
           owned: item.quantity,
         }))
-      : (wishes ?? []).map((wish) => ({
-          id: wish.card.id,
-          name: wish.card.name,
-          number: wish.card.number,
-          printedTotal: wish.card.card_set.printed_total,
-          imageUrl: wish.card.image_small_url,
-          category: wish.card.category,
-          price: wish.card.price_usd === null ? null : Number(wish.card.price_usd),
-          owned: wish.owned ?? 0,
-          note: (wish.owned ?? 0) > 0 ? `Ya tienes ${wish.owned}` : (wish.reason ?? undefined),
-        }));
+      : matchingWishes
+          .slice((page - 1) * LIST_PER_PAGE, page * LIST_PER_PAGE)
+          .map((wish) => ({
+            id: wish.card.id,
+            name: wish.card.name,
+            number: wish.card.number,
+            printedTotal: wish.card.card_set.printed_total,
+            imageUrl: wish.card.image_small_url,
+            category: wish.card.category,
+            price: wish.card.price_usd === null ? null : Number(wish.card.price_usd),
+            owned: wish.owned ?? 0,
+            note:
+              (wish.owned ?? 0) > 0 ? `Ya tienes ${wish.owned}` : (wish.reason ?? undefined),
+          }));
+
+  const wishing = which === "wishes";
 
   return (
     <CardsDialog
       open={which !== null}
       onClose={onClose}
-      title={which === "wishes" ? "Tus deseos" : "Tus cartas más valiosas"}
-      count={cards.length}
+      title={wishing ? "Tus deseos" : "Tus cartas más valiosas"}
+      count={total}
       cards={cards}
-      loading={which !== null && cards.length === 0}
+      loading={which !== null && (wishing ? wishesPending : holdingsPending)}
+      empty={
+        <p className="text-muted-foreground py-12 text-center text-sm">
+          {search
+            ? "Ninguna carta coincide."
+            : wishing
+              ? "Tu lista de deseos está vacía."
+              : "Todavía no tienes ninguna carta."}
+        </p>
+      }
+      toolbar={
+        <DialogToolbar
+          search={search}
+          onSearch={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
+          placeholder={wishing ? "Buscar en tus deseos…" : "Buscar en tus cartas…"}
+          searchLabel={wishing ? "Buscar en tus deseos" : "Buscar en tus cartas"}
+          page={page}
+          lastPage={lastPage}
+          onPage={setPage}
+        />
+      }
     />
   );
 }
+

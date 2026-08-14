@@ -1,18 +1,11 @@
 "use client";
 
-import { Search, X } from "lucide-react";
 import { useState } from "react";
 
 import { CardsDialog, type DialogCard } from "@/components/cards-dialog";
-import { Pager } from "@/components/pager";
+import { DialogToolbar } from "@/components/dialog-toolbar";
 import { apiClient } from "@/lib/api-client";
 import { useMarketCards } from "@/lib/api/hooks/useMarketCards";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@workspace/ui/components/input-group";
-import { cn } from "@workspace/ui/lib/utils";
 
 const PER_PAGE = 18;
 
@@ -22,13 +15,14 @@ const FILTERS = [
   { value: "missing", label: "Te faltan" },
 ] as const;
 
+type Owned = (typeof FILTERS)[number]["value"];
+
 /**
  * The cards behind a set's coverage strip.
  *
  * The strip answers how much of a set is held; the only next question is which
  * ones, and until now that meant leaving the page and rebuilding the filter by
- * hand in the catalog. A set is the one list long enough to need searching and
- * paging, so it brings its own controls to the shared dialog.
+ * hand in the catalog.
  */
 export function SetCardsDialog({
   setId,
@@ -43,7 +37,7 @@ export function SetCardsDialog({
 }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [owned, setOwned] = useState<(typeof FILTERS)[number]["value"]>("all");
+  const [owned, setOwned] = useState<Owned>("all");
 
   const { data, isPending } = useMarketCards(
     {
@@ -57,11 +51,6 @@ export function SetCardsDialog({
   );
 
   const lastPage = data ? Math.max(1, Math.ceil(data.total / PER_PAGE)) : 1;
-
-  const change = (next: () => void) => {
-    next();
-    setPage(1);
-  };
 
   const cards: DialogCard[] =
     data?.items.map((entry) => ({
@@ -93,46 +82,24 @@ export function SetCardsDialog({
         </p>
       }
       toolbar={
-        <>
-          <InputGroup className="bg-secondary h-9 max-w-[15rem] min-w-0 flex-1 rounded-full border-transparent">
-            <InputGroupAddon>
-              <Search className="size-3.5" />
-            </InputGroupAddon>
-            <InputGroupInput
-              value={search}
-              placeholder="Buscar en el set…"
-              aria-label={`Buscar en ${setName}`}
-              onChange={(event) => change(() => setSearch(event.target.value))}
-            />
-            {search && (
-              <InputGroupAddon align="inline-end">
-                <button onClick={() => change(() => setSearch(""))} aria-label="Limpiar">
-                  <X className="size-3.5" />
-                </button>
-              </InputGroupAddon>
-            )}
-          </InputGroup>
-
-          <div className="flex gap-1.5">
-            {FILTERS.map((filter) => (
-              <button
-                key={filter.value}
-                onClick={() => change(() => setOwned(filter.value))}
-                aria-pressed={owned === filter.value}
-                className={cn(
-                  "rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors",
-                  owned === filter.value
-                    ? "bg-foreground text-background"
-                    : "bg-secondary text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {filter.label}
-              </button>
-            ))}
-          </div>
-
-          <Pager page={page} lastPage={lastPage} onChange={setPage} />
-        </>
+        <DialogToolbar
+          search={search}
+          onSearch={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
+          placeholder="Buscar en el set…"
+          searchLabel={`Buscar en ${setName}`}
+          filters={FILTERS}
+          filter={owned}
+          onFilter={(value) => {
+            setOwned(value);
+            setPage(1);
+          }}
+          page={page}
+          lastPage={lastPage}
+          onPage={setPage}
+        />
       }
     />
   );
