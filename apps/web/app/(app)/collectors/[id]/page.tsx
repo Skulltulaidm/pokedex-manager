@@ -8,6 +8,7 @@ import { useUrlState } from "@/lib/url-state";
 import { Suspense, useState } from "react";
 
 import { CardImage } from "@/components/card-image";
+import { PanelSkeleton } from "@/components/pokeball";
 import { Pager } from "@/components/pager";
 import { ScreenHeader } from "@/components/screen-header";
 import { UserAvatar } from "@/components/user-avatar";
@@ -22,14 +23,13 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@workspace/ui/components/input-group";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
 
 const PER_PAGE = 18;
 
 export default function CollectorPage() {
   return (
-    <Suspense fallback={<Skeleton className="h-96 rounded-2xl" />}>
+    <Suspense fallback={<PanelSkeleton className="h-96" />}>
       <Collector />
     </Suspense>
   );
@@ -41,7 +41,7 @@ function Collector() {
     client: { client: apiClient },
   });
 
-  if (isPending) return <Skeleton className="h-96 rounded-2xl" />;
+  if (isPending) return <PanelSkeleton className="h-96" />;
   if (!profile) {
     return (
       <p className="text-muted-foreground ring-edge bg-surface/60 rounded-2xl px-6 py-12 text-center text-sm ring-1">

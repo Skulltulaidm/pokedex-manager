@@ -27,7 +27,6 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@workspace/ui/components/input-group";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
 
 // Rows per page. The page size itself is the column count times this, so a
@@ -351,8 +350,8 @@ function PocketSkeleton() {
       {Array.from({ length: 8 }).map((_, index) => (
         <li key={index} className="space-y-2">
           <CardSkeleton />
-          <Skeleton className="h-3.5 w-3/4" />
-          <Skeleton className="h-3 w-1/2" />
+          <div className="bg-muted h-3.5 w-3/4 rounded" />
+          <div className="bg-muted h-3 w-1/2 rounded" />
         </li>
       ))}
     </ul>

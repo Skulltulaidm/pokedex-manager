@@ -5,7 +5,6 @@ import { SquarePen } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useListConversations } from "@/lib/api/hooks/useListConversations";
 import { Button } from "@workspace/ui/components/button";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 
 /**
  * Reads the conversation list and hands a selection back through the URL, so
@@ -18,7 +17,7 @@ export function ChatHistory() {
     return (
       <div className="space-y-1.5">
         {Array.from({ length: 5 }).map((_, index) => (
-          <Skeleton key={index} className="h-8 rounded-lg" />
+          <div key={index} className="bg-muted h-8 rounded-lg" />
         ))}
       </div>
     );

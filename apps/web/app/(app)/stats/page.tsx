@@ -8,6 +8,7 @@ import { ActivityFeed } from "@/components/activity-feed";
 import { BinderMark } from "@/components/binder-mark";
 import { CardRow } from "@/components/card-row";
 import { TypeSpectrum } from "@/components/coverage-strip";
+import { PanelSkeleton, RowsSkeleton } from "@/components/pokeball";
 import { PriceDelta } from "@/components/price-delta";
 import { ReturnSummary } from "@/components/return-summary";
 import { ScreenHeader } from "@/components/screen-header";
@@ -26,7 +27,6 @@ import {
 } from "@/lib/api/hooks/useListWishlist";
 import { useRemoveFromWishlist } from "@/lib/api/hooks/useRemoveFromWishlist";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 import {
   Tabs,
   TabsContent,
@@ -47,9 +47,8 @@ export default function StatsPage() {
 function StatsSkeleton() {
   return (
     <div className="space-y-6">
-      <Skeleton className="h-10 w-48" />
-      <Skeleton className="h-24 w-full rounded-xl" />
-      <Skeleton className="h-40 w-full rounded-xl" />
+      <PanelSkeleton className="h-24" />
+      <PanelSkeleton className="h-40" />
     </div>
   );
 }
@@ -250,7 +249,7 @@ function TopHoldings({ total }: { total: number }) {
     { client: { client: apiClient } },
   );
 
-  if (isPending) return <RowsSkeleton />;
+  if (isPending) return <RowsSkeleton count={5} height="h-[76px]" />;
 
   const priced = data?.items.filter((item) => item.card.price_usd != null) ?? [];
   if (priced.length === 0) return null;
@@ -315,7 +314,7 @@ function Wishlist() {
     },
   });
 
-  if (isPending) return <RowsSkeleton />;
+  if (isPending) return <RowsSkeleton count={5} height="h-[76px]" />;
   if (!data?.length) {
     return (
       <div className="py-10 text-center">
@@ -412,18 +411,6 @@ function Wishlist() {
         ))}
       </ul>
     </>
-  );
-}
-
-function RowsSkeleton() {
-  return (
-    <ul className="space-y-2.5">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <li key={index}>
-          <Skeleton className="h-[76px] w-full rounded-2xl" />
-        </li>
-      ))}
-    </ul>
   );
 }
 

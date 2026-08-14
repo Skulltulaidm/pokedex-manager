@@ -105,6 +105,75 @@ export function CardSkeleton({ className }: { className?: string }) {
 }
 
 /**
+ * A block the size of what is coming, with a ball turning in it.
+ *
+ * Placeholders keep the shape of the thing they stand for so the page does not
+ * jump when it arrives; the ball is what says the wait is deliberate rather
+ * than a panel that failed to draw.
+ */
+export function PanelSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "ring-edge bg-surface/60 grid w-full place-items-center rounded-xl ring-1",
+        className,
+      )}
+    >
+      <Pokeball size={22} className="opacity-30" />
+    </div>
+  );
+}
+
+/** A grid of card-shaped holes, for anywhere cards are about to arrive. */
+export function CardGridSkeleton({
+  count = 12,
+  min = 104,
+  className,
+}: {
+  count?: number;
+  min?: number;
+  className?: string;
+}) {
+  return (
+    <ul
+      className={cn("grid gap-3", className)}
+      style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${min}px, 1fr))` }}
+    >
+      {Array.from({ length: count }).map((_, index) => (
+        <li key={index}>
+          <CardSkeleton />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Stacked rows, for lists that are not made of cards. */
+export function RowsSkeleton({
+  count = 4,
+  height = "h-12",
+}: {
+  count?: number;
+  height?: string;
+}) {
+  return (
+    <ul className="space-y-2">
+      {Array.from({ length: count }).map((_, index) => (
+        <li
+          key={index}
+          className={cn(
+            "ring-edge bg-surface/60 flex items-center rounded-lg px-3 ring-1",
+            height,
+          )}
+        >
+          <Pokeball size={16} className="opacity-25" />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
  * What a request that failed looks like: the ball open, and what went wrong.
  */
 export function LoadFailed({

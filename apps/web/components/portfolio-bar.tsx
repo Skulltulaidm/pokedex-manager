@@ -1,9 +1,9 @@
 "use client";
 
 import { apiClient } from "@/lib/api-client";
+import { PanelSkeleton } from "@/components/pokeball";
 import { useCollectionStats } from "@/lib/api/hooks/useCollectionStats";
 import { formatUsd } from "@/lib/format";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 
 /**
  * The numbers a marketplace puts above its grid. Every one is derived from what
@@ -12,7 +12,7 @@ import { Skeleton } from "@workspace/ui/components/skeleton";
 export function PortfolioBar() {
   const { data, isPending } = useCollectionStats({ client: { client: apiClient } });
 
-  if (isPending) return <Skeleton className="h-[70px] w-full rounded-xl" />;
+  if (isPending) return <PanelSkeleton className="h-[70px]" />;
   if (!data || data.total_groups === 0) return null;
 
   const total = Number(data.value.total_usd);

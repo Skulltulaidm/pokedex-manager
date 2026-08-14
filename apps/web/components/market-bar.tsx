@@ -1,10 +1,10 @@
 "use client";
 
 import { PriceDelta } from "@/components/price-delta";
+import { PanelSkeleton } from "@/components/pokeball";
 import { apiClient } from "@/lib/api-client";
 import { useMarketSummary } from "@/lib/api/hooks/useMarketSummary";
 import { formatUsd } from "@/lib/format";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 
 /**
  * The catalog as a single object you own a fraction of.
@@ -16,7 +16,7 @@ import { Skeleton } from "@workspace/ui/components/skeleton";
 export function MarketBar() {
   const { data, isPending } = useMarketSummary({ client: { client: apiClient } });
 
-  if (isPending) return <Skeleton className="mb-5 h-[104px] w-full rounded-xl" />;
+  if (isPending) return <PanelSkeleton className="mb-5 h-[104px]" />;
   if (!data) return null;
 
   const catalog = Number(data.catalog_value);

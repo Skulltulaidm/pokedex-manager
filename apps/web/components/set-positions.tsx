@@ -3,12 +3,12 @@
 import { useState } from "react";
 
 import { CoverageStrip } from "@/components/coverage-strip";
+import { PanelSkeleton } from "@/components/pokeball";
 import { SetCardsDialog } from "@/components/set-cards-dialog";
 import { apiClient } from "@/lib/api-client";
 import { useCollectionStats } from "@/lib/api/hooks/useCollectionStats";
 import { useMarketSets } from "@/lib/api/hooks/useMarketSets";
 import { formatUsd } from "@/lib/format";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 
 /**
  * Each set as a position rather than a progress bar.
@@ -22,7 +22,7 @@ export function SetPositions() {
   const { data: stats } = useCollectionStats({ client: { client: apiClient } });
   const [openSet, setOpenSet] = useState<{ id: string; name: string } | null>(null);
 
-  if (isPending) return <Skeleton className="h-64 w-full rounded-xl" />;
+  if (isPending) return <PanelSkeleton className="h-64" />;
   if (!sets?.length) return null;
 
   const coverage = new Map(stats?.sets.map((set) => [set.set_id, set]) ?? []);

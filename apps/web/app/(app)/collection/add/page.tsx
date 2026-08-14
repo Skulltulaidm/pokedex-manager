@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { TypeDots } from "@/components/type-dot";
+import { CardSkeleton } from "@/components/pokeball";
 import { apiClient } from "@/lib/api-client";
 import { useAddCard } from "@/lib/api/hooks/useAddCard";
 import { useAddToWishlist } from "@/lib/api/hooks/useAddToWishlist";
@@ -24,7 +25,6 @@ import {
   InputGroupInput,
 } from "@workspace/ui/components/input-group";
 import { Label } from "@workspace/ui/components/label";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Spinner } from "@workspace/ui/components/spinner";
 import { cn } from "@workspace/ui/lib/utils";
 
@@ -345,12 +345,12 @@ function ResultsSkeleton() {
     <ul className="divide-edge mt-4 divide-y">
       {Array.from({ length: 6 }).map((_, index) => (
         <li key={index} className="flex items-center gap-3 px-1.5 py-2.5">
-          <Skeleton className="h-16 w-[46px] shrink-0 rounded-md" />
+          <CardSkeleton className="w-[46px] shrink-0" />
           <div className="flex-1 space-y-1.5">
-            <Skeleton className="h-4 w-2/5" />
-            <Skeleton className="h-3 w-1/4" />
+            <div className="bg-muted h-4 w-2/5 rounded" />
+            <div className="bg-muted h-3 w-1/4 rounded" />
           </div>
-          <Skeleton className="h-3 w-12 shrink-0" />
+          <div className="bg-muted h-3 w-12 shrink-0 rounded" />
         </li>
       ))}
     </ul>

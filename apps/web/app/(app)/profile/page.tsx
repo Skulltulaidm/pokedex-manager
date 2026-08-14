@@ -18,6 +18,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { ScreenHeader } from "@/components/screen-header";
+import { PanelSkeleton, RowsSkeleton } from "@/components/pokeball";
 import { UserAvatar } from "@/components/user-avatar";
 import { clearAccessToken, apiClient } from "@/lib/api-client";
 import { useUrlState } from "@/lib/url-state";
@@ -30,7 +31,6 @@ import { authClient } from "@/lib/auth-client";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
 
 const SECTIONS = [
@@ -42,7 +42,7 @@ const SECTIONS = [
 
 export default function AccountPage() {
   return (
-    <Suspense fallback={<Skeleton className="h-96 rounded-2xl" />}>
+    <Suspense fallback={<PanelSkeleton className="h-96" />}>
       <Account />
     </Suspense>
   );
@@ -53,7 +53,7 @@ function Account() {
   const [params, setParam] = useUrlState();
   const section = params.get("s") ?? "cuenta";
 
-  if (isPending) return <Skeleton className="h-96 rounded-2xl" />;
+  if (isPending) return <PanelSkeleton className="h-96" />;
 
   const user = session?.user;
 
@@ -298,7 +298,7 @@ function AgentMemory() {
       title="Lo que sabe el asistente"
       hint="Datos que guardó de tus conversaciones para no volver a preguntártelos."
     >
-      {isPending && <div className="py-6"><Skeleton className="h-16" /></div>}
+      {isPending && <div className="py-6"><RowsSkeleton count={2} /></div>}
 
       {memories?.length === 0 && (
         <p className="text-muted-foreground py-8 text-center text-sm">

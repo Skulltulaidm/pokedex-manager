@@ -1,10 +1,10 @@
 "use client";
 
 import { PriceDelta } from "@/components/price-delta";
+import { PanelSkeleton } from "@/components/pokeball";
 import { apiClient } from "@/lib/api-client";
 import { useCardMarketContext } from "@/lib/api/hooks/useCardMarketContext";
 import { formatUsd } from "@/lib/format";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 
 function rankLabel(rank: number, priced: number): string {
   if (rank === 1) return `La más cara de las ${priced} con precio`;
@@ -28,7 +28,7 @@ export function MarketPosition({
     client: { client: apiClient },
   });
 
-  if (isPending) return <Skeleton className="h-[104px] w-full rounded-xl" />;
+  if (isPending) return <PanelSkeleton className="h-[104px]" />;
   if (!data) return null;
 
   const setValue = Number(data.set_value);

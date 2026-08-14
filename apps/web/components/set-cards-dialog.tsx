@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { CardImage } from "@/components/card-image";
-import { CardSkeleton } from "@/components/pokeball";
+import { CardSkeleton, PanelSkeleton } from "@/components/pokeball";
 import { StatRadar } from "@/components/stat-radar";
 import { TypeChip, typeColor } from "@/components/type-dot";
 import { Pager } from "@/components/pager";
@@ -26,7 +26,6 @@ import {
   InputGroupInput,
 } from "@workspace/ui/components/input-group";
 import { Button } from "@workspace/ui/components/button";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
 
 const PER_PAGE = 18;
@@ -245,7 +244,7 @@ function CardDetail({ cardId, onClose }: { cardId: string; onClose: () => void }
   if (isPending || !card) {
     return (
       <div className="p-5">
-        <Skeleton className="h-72 rounded-xl" />
+        <PanelSkeleton className="h-72" />
       </div>
     );
   }

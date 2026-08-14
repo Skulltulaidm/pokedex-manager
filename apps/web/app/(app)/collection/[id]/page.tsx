@@ -8,6 +8,7 @@ import { CalendarDays, Heart, Layers, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { CardSkeleton, PanelSkeleton } from "@/components/pokeball";
 import { CardImage } from "@/components/card-image";
 import { InfoTile } from "@/components/info-tile";
 import { MarketPosition } from "@/components/market-position";
@@ -33,7 +34,6 @@ import {
   InputGroupInput,
 } from "@workspace/ui/components/input-group";
 import { Label } from "@workspace/ui/components/label";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
 
 export default function ItemDetailPage() {
@@ -75,10 +75,8 @@ export default function ItemDetailPage() {
   if (isPending) {
     return (
       <div className="space-y-5">
-        <Skeleton className="h-5 w-24" />
-        <Skeleton className="mx-auto aspect-[63/88] w-56 rounded-lg" />
-        <Skeleton className="h-8 w-2/3" />
-        <Skeleton className="h-40 w-full rounded-lg" />
+        <CardSkeleton className="mx-auto w-56" />
+        <PanelSkeleton className="h-40" />
       </div>
     );
   }

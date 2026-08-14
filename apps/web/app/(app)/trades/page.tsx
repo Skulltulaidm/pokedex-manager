@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { CardImage } from "@/components/card-image";
+import { PanelSkeleton } from "@/components/pokeball";
 import { CardPreview, type PreviewCard, type PreviewSides } from "@/components/card-preview";
 import { OfferList } from "@/components/offer-list";
 import { Pager } from "@/components/pager";
@@ -25,7 +26,6 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@workspace/ui/components/input-group";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
 
 const PER_PAGE = 5;
@@ -430,7 +430,7 @@ function MatchesSkeleton() {
   return (
     <div className="space-y-4">
       {Array.from({ length: 2 }).map((_, index) => (
-        <Skeleton key={index} className="h-64 rounded-2xl" />
+        <PanelSkeleton key={index} className="h-64" />
       ))}
     </div>
   );

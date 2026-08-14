@@ -7,6 +7,7 @@ import { Suspense } from "react";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { CardImage } from "@/components/card-image";
+import { CardSkeleton, RowsSkeleton } from "@/components/pokeball";
 import { TypeChip } from "@/components/type-dot";
 import { apiClient } from "@/lib/api-client";
 import { useGetCard } from "@/lib/api/hooks/useGetCard";
@@ -15,7 +16,6 @@ import type { CardView, CollectionItemView } from "@/lib/api/types";
 import { formatUsd } from "@/lib/format";
 import { conditionLabel } from "@/lib/labels";
 import { buttonVariants } from "@workspace/ui/components/button";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
 
 type Side = {
@@ -188,11 +188,11 @@ function ComparisonSkeleton() {
   return (
     <div className="mx-auto max-w-3xl space-y-3">
       <div className="grid grid-cols-2 gap-4 sm:gap-8">
-        <Skeleton className="mx-auto aspect-[63/88] w-full max-w-[190px] rounded-xl" />
-        <Skeleton className="mx-auto aspect-[63/88] w-full max-w-[190px] rounded-xl" />
+        <CardSkeleton />
+        <CardSkeleton />
       </div>
       {Array.from({ length: 5 }).map((_, index) => (
-        <Skeleton key={index} className="h-11 rounded-lg" />
+        <div key={index} className="bg-muted h-11 rounded-lg" />
       ))}
     </div>
   );

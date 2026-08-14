@@ -10,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { CardImage } from "@/components/card-image";
-import { CardSkeleton } from "@/components/pokeball";
+import { CardSkeleton, PanelSkeleton, RowsSkeleton } from "@/components/pokeball";
 import { Pager } from "@/components/pager";
 import { ScreenHeader } from "@/components/screen-header";
 import { UserAvatar } from "@/components/user-avatar";
@@ -30,14 +30,13 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@workspace/ui/components/input-group";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
 
 const PER_PAGE = 12;
 
 export default function NewTradePage() {
   return (
-    <Suspense fallback={<Skeleton className="h-96 rounded-2xl" />}>
+    <Suspense fallback={<PanelSkeleton className="h-96" />}>
       <Builder />
     </Suspense>
   );
@@ -203,7 +202,7 @@ function CollectorPicker() {
         <Pager page={page} lastPage={lastPage} onChange={(next) => setParam({ p: String(next) })} />
       </div>
 
-      {isPending && <Skeleton className="h-40 rounded-2xl" />}
+      {isPending && <RowsSkeleton count={3} height="h-16" />}
 
       {data?.total === 0 && (
         <p className="text-muted-foreground ring-edge bg-surface/60 rounded-2xl px-6 py-12 text-center text-sm ring-1">

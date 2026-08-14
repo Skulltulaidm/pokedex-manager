@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusCircle, ScanLine, Sparkles } from "lucide-react";
+import { RowsSkeleton } from "@/components/pokeball";
 import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
 
@@ -8,7 +9,6 @@ import { apiClient } from "@/lib/api-client";
 import { useCollectionActivity } from "@/lib/api/hooks/useCollectionActivity";
 import type { ActivityEntry } from "@/lib/api/types";
 import { formatUsd } from "@/lib/format";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 
 const KIND: Record<string, { icon: LucideIcon; label: string }> = {
   added: { icon: PlusCircle, label: "Añadida" },
@@ -28,15 +28,7 @@ const SCAN_STATUS: Record<string, string> = {
 export function ActivityFeed() {
   const { data, isPending } = useCollectionActivity({ client: { client: apiClient } });
 
-  if (isPending) {
-    return (
-      <div className="space-y-2.5">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <Skeleton key={index} className="h-12 rounded-lg" />
-        ))}
-      </div>
-    );
-  }
+  if (isPending) return <RowsSkeleton count={4} />;
 
   if (!data?.length) return null;
 

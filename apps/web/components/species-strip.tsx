@@ -6,8 +6,8 @@ import { apiClient } from "@/lib/api-client";
 import { useOwnedCardIds } from "@/lib/api/hooks/useOwnedCardIds";
 import { useSearchCards } from "@/lib/api/hooks/useSearchCards";
 import { CardImage } from "@/components/card-image";
+import { CardSkeleton } from "@/components/pokeball";
 import { ScrollRow } from "@/components/scroll-row";
-import { Skeleton } from "@workspace/ui/components/skeleton";
 
 /**
  * Every printing of the same species, owned ones in colour and the rest greyed
@@ -32,7 +32,7 @@ export function SpeciesStrip({
     return (
       <div className="flex gap-2.5">
         {Array.from({ length: 4 }).map((_, index) => (
-          <Skeleton key={index} className="aspect-[63/88] w-16 rounded-lg" />
+          <CardSkeleton key={index} className="w-16" />
         ))}
       </div>
     );
