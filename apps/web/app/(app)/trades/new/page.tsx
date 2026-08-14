@@ -22,7 +22,7 @@ import { useListOffers } from "@/lib/api/hooks/useListOffers";
 import { useListSpares } from "@/lib/api/hooks/useListSpares";
 import { authClient } from "@/lib/auth-client";
 import type { SpareCard } from "@/lib/api/types";
-import { formatUsd } from "@/lib/format";
+import { formatUsd, plural } from "@/lib/format";
 import { conditionLabel, conditionShort } from "@/lib/labels";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
 import {
@@ -185,7 +185,7 @@ function CollectorPicker() {
 
   return (
     <>
-      <ScreenHeader title="Armar un trueque" meta={`${data?.total ?? 0} coleccionistas`} />
+      <ScreenHeader title="Armar un trueque" meta={plural(data?.total ?? 0, "coleccionista", "coleccionistas")} />
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <InputGroup className="bg-secondary h-10 max-w-xs flex-1 rounded-full border-transparent">
@@ -224,9 +224,10 @@ function CollectorPicker() {
                   {collector.name ?? "Coleccionista"}
                 </p>
                 <p className="text-muted-foreground text-xs">
-                  {collector.spares} repetidas
+                  {plural(collector.spares, "repetida", "repetidas")}
                   {collector.you_want > 0 && ` · ${collector.you_want} que buscas`}
-                  {collector.they_want > 0 && ` · quiere ${collector.they_want} tuyas`}
+                  {collector.they_want > 0 &&
+                    ` · quiere ${plural(collector.they_want, "tuya", "tuyas")}`}
                 </p>
               </div>
             </Link>

@@ -133,15 +133,17 @@
     transform-origin: 50% 50%;
 }
 
+/* It settles upright: a ball left permanently tilted reads as a broken image,
+   and the halves already carry the opening. */
 @keyframes escaped {
     0% {
-        transform: rotate(0deg) scale(1);
+        transform: rotate(0deg) scale(0.94);
     }
-    30% {
-        transform: rotate(-6deg) scale(1.06);
+    35% {
+        transform: rotate(-5deg) scale(1.06);
     }
     100% {
-        transform: rotate(-14deg) scale(0.98);
+        transform: rotate(0deg) scale(1);
     }
 }
 

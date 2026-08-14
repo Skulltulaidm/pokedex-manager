@@ -45,22 +45,34 @@ export function Pokeball({
       </defs>
 
       {state === "escaped" ? (
-        /* Both halves keep their outline and their flat edge; a red shape
-           floating over a white one reads as a rendering fault rather than as
-           a ball that opened. */
+        /* Each half keeps its share of the band, and the button rides the top
+           one. Without them it is a red shape floating over a white one, which
+           reads as a rendering fault rather than as a ball that opened. */
         <g>
-          <path
-            d="M3 24a21 21 0 0 1 42 0Z"
-            className="fill-destructive stroke-foreground/25"
-            strokeWidth="1.5"
-            transform="translate(0 -8) rotate(-10 24 24)"
-          />
-          <path
-            d="M45 24a21 21 0 0 1-42 0Z"
-            className="fill-surface stroke-foreground/25"
-            strokeWidth="1.5"
-            transform="translate(0 8) rotate(7 24 24)"
-          />
+          <g transform="translate(0 -6) rotate(-6 24 24)">
+            <path
+              d="M3 24a21 21 0 0 1 42 0Z"
+              className="fill-destructive stroke-foreground/20"
+              strokeWidth="1.5"
+            />
+            <circle
+              cx="24"
+              cy="24"
+              r="7.5"
+              className="fill-surface stroke-foreground/85"
+              strokeWidth="3"
+              clipPath="url(#pokeball-top)"
+            />
+            <rect x="3" y="21" width="42" height="3" className="fill-foreground/85" />
+          </g>
+          <g transform="translate(0 6) rotate(5 24 24)">
+            <path
+              d="M45 24a21 21 0 0 1-42 0Z"
+              className="fill-surface stroke-foreground/20"
+              strokeWidth="1.5"
+            />
+            <rect x="3" y="24" width="42" height="3" className="fill-foreground/85" />
+          </g>
         </g>
       ) : (
         <>

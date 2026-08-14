@@ -21,3 +21,7 @@ export function formatShare(part: number, whole: number): string {
   if (whole <= 0) return "—";
   return `${((part / whole) * 100).toFixed(1)}%`;
 }
+
+export function plural(count: number, one: string, many: string): string {
+  return `${count} ${count === 1 ? one : many}`;
+}

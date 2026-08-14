@@ -19,7 +19,7 @@ import { useCreateOffer } from "@/lib/api/hooks/useCreateOffer";
 import { useListOffers } from "@/lib/api/hooks/useListOffers";
 import { useListTrades } from "@/lib/api/hooks/useListTrades";
 import type { TradeCard, TradeMatch } from "@/lib/api/types";
-import { formatUsd } from "@/lib/format";
+import { formatUsd, plural } from "@/lib/format";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
 import {
   InputGroup,
@@ -89,7 +89,7 @@ function Trades() {
     <>
       <ScreenHeader
         title="Trueques"
-        meta={open && open.total > 0 ? `${open.total} abiertas` : undefined}
+        meta={open && open.total > 0 ? plural(open.total, "abierta", "abiertas") : undefined}
       >
         <Link href="/trades/new" className={buttonVariants({ size: "sm" })}>
           <Handshake />
