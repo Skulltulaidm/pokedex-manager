@@ -5,17 +5,39 @@
 
 import type { HTTPValidationError } from "./HTTPValidationError"
 import type { OfferStatus } from "./OfferStatus"
-import type { TradeOfferView } from "./TradeOfferView"
+import type { PageTradeOfferView } from "./PageTradeOfferView"
+
+export const listOffersQueryParamsDirectionEnum = {
+  sent: "sent",
+  received: "received",
+} as const
+
+export type ListOffersQueryParamsDirectionEnumKey =
+  (typeof listOffersQueryParamsDirectionEnum)[keyof typeof listOffersQueryParamsDirectionEnum]
 
 export type ListOffersQueryParams = {
   status_filter?: OfferStatus | null
+  direction?: ListOffersQueryParamsDirectionEnumKey | null
+  /**
+   * @minLength 1
+   * @maxLength 50
+   * @default 10
+   * @type integer | undefined
+   */
+  limit?: number
+  /**
+   * @minLength 0
+   * @default 0
+   * @type integer | undefined
+   */
+  offset?: number
 }
 
 /**
- * Response List Offers
+ * Page[TradeOfferView]
  * @description Successful Response
  */
-export type ListOffers200 = TradeOfferView[]
+export type ListOffers200 = PageTradeOfferView
 
 /**
  * HTTPValidationError

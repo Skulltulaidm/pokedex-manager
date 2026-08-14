@@ -3,11 +3,28 @@
  * Do not edit manually.
  */
 
+import { offerCardInputSchema } from "./offerCardInputSchema"
 import { z } from "zod/v4"
 
 export const createOfferRequestSchema = z.object({
   to_user_id: z.string(),
-  offered: z.array(z.string()).min(1),
-  requested: z.array(z.string()).min(1),
+  get offered() {
+    return z
+      .array(
+        offerCardInputSchema.describe(
+          "A card put on the table, in a state.\n\nLeaving the condition out lets the service pick the worst copy its owner\nholds, which is the one a collector parts with."
+        )
+      )
+      .min(1)
+  },
+  get requested() {
+    return z
+      .array(
+        offerCardInputSchema.describe(
+          "A card put on the table, in a state.\n\nLeaving the condition out lets the service pick the worst copy its owner\nholds, which is the one a collector parts with."
+        )
+      )
+      .min(1)
+  },
   message: z.optional(z.union([z.string(), z.null()])),
 })

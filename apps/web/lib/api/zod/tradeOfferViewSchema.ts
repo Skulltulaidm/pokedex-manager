@@ -22,14 +22,14 @@ export const tradeOfferViewSchema = z
     get you_give() {
       return z.array(
         offerCardViewSchema.describe(
-          "A card named in an offer.\n\nNo copy count, unlike a match: a match reports what is available to trade,\nan offer names which cards are on the table."
+          "A card named in an offer.\n\nNo copy count, unlike a match: a match reports what is available to trade,\nan offer names which cards are on the table.\n\n`price_usd` is the market price of a near mint copy, and `adjusted_usd`\ndiscounts it for the condition actually offered. They differ, and the gap is\nthe reason condition belongs on an offer at all."
         )
       )
     },
     get you_get() {
       return z.array(
         offerCardViewSchema.describe(
-          "A card named in an offer.\n\nNo copy count, unlike a match: a match reports what is available to trade,\nan offer names which cards are on the table."
+          "A card named in an offer.\n\nNo copy count, unlike a match: a match reports what is available to trade,\nan offer names which cards are on the table.\n\n`price_usd` is the market price of a near mint copy, and `adjusted_usd`\ndiscounts it for the condition actually offered. They differ, and the gap is\nthe reason condition belongs on an offer at all."
         )
       )
     },
@@ -37,6 +37,7 @@ export const tradeOfferViewSchema = z
     get_value: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
     balance: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
     message: z.union([z.string(), z.null()]),
+    replies_to_id: z.union([z.uuid(), z.null()]),
     created_at: z.iso.datetime(),
     responded_at: z.union([z.iso.datetime(), z.null()]),
   })

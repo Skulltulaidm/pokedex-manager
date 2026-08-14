@@ -60,6 +60,7 @@ export type TradeOfferView = {
    */
   balance: string
   message: string | null
+  replies_to_id: string | null
   /**
    * @type string, date-time
    */

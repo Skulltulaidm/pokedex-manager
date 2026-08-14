@@ -3,6 +3,8 @@
  * Do not edit manually.
  */
 
+import type { OfferCardInput } from "./OfferCardInput"
+
 /**
  * CreateOfferRequest
  */
@@ -14,10 +16,10 @@ export type CreateOfferRequest = {
   /**
    * @type array
    */
-  offered: string[]
+  offered: OfferCardInput[]
   /**
    * @type array
    */
-  requested: string[]
+  requested: OfferCardInput[]
   message?: string | null
 }

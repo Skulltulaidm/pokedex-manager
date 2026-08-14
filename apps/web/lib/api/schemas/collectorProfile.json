@@ -1,0 +1,56 @@
+{
+  "properties": {
+    "user_id": { "type": "string", "title": "User Id" },
+    "name": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Name"
+    },
+    "is_self": { "type": "boolean", "title": "Is Self" },
+    "joined_at": {
+      "anyOf": [
+        { "type": "string", "format": "date-time" },
+        { "type": "null" }
+      ],
+      "title": "Joined At"
+    },
+    "cards": { "type": "integer", "title": "Cards" },
+    "distinct_cards": { "type": "integer", "title": "Distinct Cards" },
+    "spares": { "type": "integer", "title": "Spares" },
+    "wants": { "type": "integer", "title": "Wants" },
+    "you_want": { "type": "integer", "title": "You Want" },
+    "they_want": { "type": "integer", "title": "They Want" },
+    "sets": {
+      "items": {
+        "properties": {
+          "set_id": { "type": "string", "title": "Set Id" },
+          "set_name": { "type": "string", "title": "Set Name" },
+          "owned": { "type": "integer", "title": "Owned" },
+          "printed_total": { "type": "integer", "title": "Printed Total" }
+        },
+        "type": "object",
+        "required": ["set_id", "set_name", "owned", "printed_total"],
+        "title": "ProfileSet",
+        "x-readme-ref-name": "ProfileSet"
+      },
+      "type": "array",
+      "title": "Sets"
+    }
+  },
+  "type": "object",
+  "required": [
+    "user_id",
+    "name",
+    "is_self",
+    "joined_at",
+    "cards",
+    "distinct_cards",
+    "spares",
+    "wants",
+    "you_want",
+    "they_want",
+    "sets"
+  ],
+  "title": "CollectorProfile",
+  "description": "A collector as another collector may see them.\n\nDeliberately not a portfolio: what a collection is worth is a claim about a\nperson, and it stays with them. What is published is what could move — how\nmuch is spare, what each of you is short of — plus the shape of what they\ncollect, which is what tells you whether it is worth talking to them.",
+  "x-readme-ref-name": "CollectorProfile"
+}

@@ -47,6 +47,9 @@ export type {
   CollectionStatsQueryResponse,
 } from "./CollectionStats"
 export type { CollectionValue } from "./CollectionValue"
+export type { CollectorProfile } from "./CollectorProfile"
+export type { CollectorView } from "./CollectorView"
+export type { ConditionCount } from "./ConditionCount"
 export type {
   ConfirmScan201,
   ConfirmScan422,
@@ -57,6 +60,14 @@ export type {
 } from "./ConfirmScan"
 export type { ConversationDetail } from "./ConversationDetail"
 export type { ConversationView } from "./ConversationView"
+export type {
+  CounterOffer201,
+  CounterOffer422,
+  CounterOfferMutation,
+  CounterOfferMutationRequest,
+  CounterOfferMutationResponse,
+  CounterOfferPathParams,
+} from "./CounterOffer"
 export type {
   CreateOffer201,
   CreateOffer422,
@@ -85,6 +96,13 @@ export type {
   ExportCollectionQueryParamsFormatEnumKey,
   ExportCollectionQueryResponse,
 } from "./ExportCollection"
+export type {
+  ForgetPreference204,
+  ForgetPreference422,
+  ForgetPreferenceMutation,
+  ForgetPreferenceMutationResponse,
+  ForgetPreferencePathParams,
+} from "./ForgetPreference"
 export type { GenerationCount } from "./GenerationCount"
 export type {
   GetCard200,
@@ -93,6 +111,13 @@ export type {
   GetCardQuery,
   GetCardQueryResponse,
 } from "./GetCard"
+export type {
+  GetCollector200,
+  GetCollector422,
+  GetCollectorPathParams,
+  GetCollectorQuery,
+  GetCollectorQueryResponse,
+} from "./GetCollector"
 export type {
   GetConversation200,
   GetConversation422,
@@ -130,6 +155,13 @@ export type {
   ListCollectionQueryResponse,
 } from "./ListCollection"
 export type {
+  ListCollectors200,
+  ListCollectors422,
+  ListCollectorsQuery,
+  ListCollectorsQueryParams,
+  ListCollectorsQueryResponse,
+} from "./ListCollectors"
+export type {
   ListConversations200,
   ListConversationsQuery,
   ListConversationsQueryResponse,
@@ -146,8 +178,22 @@ export type {
   ListOffers422,
   ListOffersQuery,
   ListOffersQueryParams,
+  ListOffersQueryParamsDirectionEnumKey,
   ListOffersQueryResponse,
 } from "./ListOffers"
+export type {
+  ListPreferences200,
+  ListPreferencesQuery,
+  ListPreferencesQueryResponse,
+} from "./ListPreferences"
+export type {
+  ListSpares200,
+  ListSpares422,
+  ListSparesPathParams,
+  ListSparesQuery,
+  ListSparesQueryParams,
+  ListSparesQueryResponse,
+} from "./ListSpares"
 export type {
   ListTrades200,
   ListTrades422,
@@ -186,6 +232,7 @@ export type { Me200, MeQuery, MeQueryResponse } from "./Me"
 export type { MeResponse } from "./MeResponse"
 export type { MessageRole, MessageRoleEnumKey } from "./MessageRole"
 export type { MessageView } from "./MessageView"
+export type { OfferCardInput } from "./OfferCardInput"
 export type { OfferCardView } from "./OfferCardView"
 export type { OfferStatus, OfferStatusEnumKey } from "./OfferStatus"
 export type {
@@ -195,9 +242,15 @@ export type {
 } from "./OwnedCardIds"
 export type { OwnedSlot } from "./OwnedSlot"
 export type { PageCollectionItemView } from "./PageCollectionItemView"
+export type { PageCollectorView } from "./PageCollectorView"
 export type { PageMarketCardView } from "./PageMarketCardView"
+export type { PageSpareCard } from "./PageSpareCard"
+export type { PageTradeMatch } from "./PageTradeMatch"
+export type { PageTradeOfferView } from "./PageTradeOfferView"
 export type { PortfolioReturn } from "./PortfolioReturn"
+export type { PreferenceView } from "./PreferenceView"
 export type { PriceChange } from "./PriceChange"
+export type { ProfileSet } from "./ProfileSet"
 export type { PublicCollection } from "./PublicCollection"
 export type { PublicItemView } from "./PublicItemView"
 export type {
@@ -261,6 +314,7 @@ export type { SetCoverage } from "./SetCoverage"
 export type { SetGap } from "./SetGap"
 export type { SetMarketView } from "./SetMarketView"
 export type { ShareLinkView } from "./ShareLinkView"
+export type { SpareCard } from "./SpareCard"
 export type {
   SpeciesTrivia200,
   SpeciesTrivia422,
@@ -302,6 +356,7 @@ export { cardReadingConfidenceEnum } from "./CardReading"
 export { cardReadingRaritySymbolEnum } from "./CardReading"
 export { exportCollectionQueryParamsFormatEnum } from "./ExportCollection"
 export { listCollectionQueryParamsSortEnum } from "./ListCollection"
+export { listOffersQueryParamsDirectionEnum } from "./ListOffers"
 export { marketCardsQueryParamsOwnedEnum } from "./MarketCards"
 export { marketCardsQueryParamsSortEnum } from "./MarketCards"
 export { messageRoleEnum } from "./MessageRole"

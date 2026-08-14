@@ -4,21 +4,31 @@
  */
 
 import type { HTTPValidationError } from "./HTTPValidationError"
-import type { TradeMatch } from "./TradeMatch"
+import type { PageTradeMatch } from "./PageTradeMatch"
 
 export type ListTradesQueryParams = {
+  search?: string | null
+  favourable?: boolean | null
   /**
+   * @minLength 1
+   * @maxLength 50
    * @default 10
    * @type integer | undefined
    */
   limit?: number
+  /**
+   * @minLength 0
+   * @default 0
+   * @type integer | undefined
+   */
+  offset?: number
 }
 
 /**
- * Response List Trades
+ * Page[TradeMatch]
  * @description Successful Response
  */
-export type ListTrades200 = TradeMatch[]
+export type ListTrades200 = PageTradeMatch
 
 /**
  * HTTPValidationError

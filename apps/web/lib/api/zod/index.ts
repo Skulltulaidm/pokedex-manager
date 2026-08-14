@@ -39,6 +39,9 @@ export {
   collectionStatsSchema,
 } from "./collectionStatsSchema"
 export { collectionValueSchema } from "./collectionValueSchema"
+export { collectorProfileSchema } from "./collectorProfileSchema"
+export { collectorViewSchema } from "./collectorViewSchema"
+export { conditionCountSchema } from "./conditionCountSchema"
 export {
   confirmScan201Schema,
   confirmScan422Schema,
@@ -48,6 +51,13 @@ export {
 } from "./confirmScanSchema"
 export { conversationDetailSchema } from "./conversationDetailSchema"
 export { conversationViewSchema } from "./conversationViewSchema"
+export {
+  counterOffer201Schema,
+  counterOffer422Schema,
+  counterOfferMutationRequestSchema,
+  counterOfferMutationResponseSchema,
+  counterOfferPathParamsSchema,
+} from "./counterOfferSchema"
 export { createOfferRequestSchema } from "./createOfferRequestSchema"
 export {
   createOffer201Schema,
@@ -71,6 +81,12 @@ export {
   exportCollectionQueryParamsSchema,
   exportCollectionQueryResponseSchema,
 } from "./exportCollectionSchema"
+export {
+  forgetPreference204Schema,
+  forgetPreference422Schema,
+  forgetPreferenceMutationResponseSchema,
+  forgetPreferencePathParamsSchema,
+} from "./forgetPreferenceSchema"
 export { generationCountSchema } from "./generationCountSchema"
 export {
   getCard200Schema,
@@ -78,6 +94,12 @@ export {
   getCardPathParamsSchema,
   getCardQueryResponseSchema,
 } from "./getCardSchema"
+export {
+  getCollector200Schema,
+  getCollector422Schema,
+  getCollectorPathParamsSchema,
+  getCollectorQueryResponseSchema,
+} from "./getCollectorSchema"
 export {
   getConversation200Schema,
   getConversation422Schema,
@@ -108,6 +130,12 @@ export {
   listCollectionQueryResponseSchema,
 } from "./listCollectionSchema"
 export {
+  listCollectors200Schema,
+  listCollectors422Schema,
+  listCollectorsQueryParamsSchema,
+  listCollectorsQueryResponseSchema,
+} from "./listCollectorsSchema"
+export {
   listConversations200Schema,
   listConversationsQueryResponseSchema,
 } from "./listConversationsSchema"
@@ -123,6 +151,17 @@ export {
   listOffersQueryParamsSchema,
   listOffersQueryResponseSchema,
 } from "./listOffersSchema"
+export {
+  listPreferences200Schema,
+  listPreferencesQueryResponseSchema,
+} from "./listPreferencesSchema"
+export {
+  listSpares200Schema,
+  listSpares422Schema,
+  listSparesPathParamsSchema,
+  listSparesQueryParamsSchema,
+  listSparesQueryResponseSchema,
+} from "./listSparesSchema"
 export {
   listTrades200Schema,
   listTrades422Schema,
@@ -154,6 +193,7 @@ export { meResponseSchema } from "./meResponseSchema"
 export { me200Schema, meQueryResponseSchema } from "./meSchema"
 export { messageRoleSchema } from "./messageRoleSchema"
 export { messageViewSchema } from "./messageViewSchema"
+export { offerCardInputSchema } from "./offerCardInputSchema"
 export { offerCardViewSchema } from "./offerCardViewSchema"
 export { offerStatusSchema } from "./offerStatusSchema"
 export {
@@ -162,9 +202,15 @@ export {
 } from "./ownedCardIdsSchema"
 export { ownedSlotSchema } from "./ownedSlotSchema"
 export { pageCollectionItemViewSchema } from "./pageCollectionItemViewSchema"
+export { pageCollectorViewSchema } from "./pageCollectorViewSchema"
 export { pageMarketCardViewSchema } from "./pageMarketCardViewSchema"
+export { pageSpareCardSchema } from "./pageSpareCardSchema"
+export { pageTradeMatchSchema } from "./pageTradeMatchSchema"
+export { pageTradeOfferViewSchema } from "./pageTradeOfferViewSchema"
 export { portfolioReturnSchema } from "./portfolioReturnSchema"
+export { preferenceViewSchema } from "./preferenceViewSchema"
 export { priceChangeSchema } from "./priceChangeSchema"
+export { profileSetSchema } from "./profileSetSchema"
 export { publicCollectionSchema } from "./publicCollectionSchema"
 export { publicItemViewSchema } from "./publicItemViewSchema"
 export {
@@ -220,6 +266,7 @@ export { setCoverageSchema } from "./setCoverageSchema"
 export { setGapSchema } from "./setGapSchema"
 export { setMarketViewSchema } from "./setMarketViewSchema"
 export { shareLinkViewSchema } from "./shareLinkViewSchema"
+export { spareCardSchema } from "./spareCardSchema"
 export {
   speciesTrivia200Schema,
   speciesTrivia422Schema,

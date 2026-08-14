@@ -32,4 +32,9 @@ export type WishlistItemView = {
    * @type string, date-time
    */
   created_at: string
+  /**
+   * @default 0
+   * @type integer | undefined
+   */
+  owned?: number
 }

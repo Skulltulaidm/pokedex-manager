@@ -7,13 +7,17 @@ export type { CollectionActivitySuspenseQueryKey } from "./hooks/useCollectionAc
 export type { CollectionStatsQueryKey } from "./hooks/useCollectionStats"
 export type { CollectionStatsSuspenseQueryKey } from "./hooks/useCollectionStatsSuspense"
 export type { ConfirmScanMutationKey } from "./hooks/useConfirmScan"
+export type { CounterOfferMutationKey } from "./hooks/useCounterOffer"
 export type { CreateOfferMutationKey } from "./hooks/useCreateOffer"
 export type { CreateScanMutationKey } from "./hooks/useCreateScan"
 export type { CreateShareLinkMutationKey } from "./hooks/useCreateShareLink"
 export type { ExportCollectionQueryKey } from "./hooks/useExportCollection"
 export type { ExportCollectionSuspenseQueryKey } from "./hooks/useExportCollectionSuspense"
+export type { ForgetPreferenceMutationKey } from "./hooks/useForgetPreference"
 export type { GetCardQueryKey } from "./hooks/useGetCard"
 export type { GetCardSuspenseQueryKey } from "./hooks/useGetCardSuspense"
+export type { GetCollectorQueryKey } from "./hooks/useGetCollector"
+export type { GetCollectorSuspenseQueryKey } from "./hooks/useGetCollectorSuspense"
 export type { GetConversationQueryKey } from "./hooks/useGetConversation"
 export type { GetConversationSuspenseQueryKey } from "./hooks/useGetConversationSuspense"
 export type { GetItemQueryKey } from "./hooks/useGetItem"
@@ -26,12 +30,18 @@ export type { HealthQueryKey } from "./hooks/useHealth"
 export type { HealthSuspenseQueryKey } from "./hooks/useHealthSuspense"
 export type { ListCollectionQueryKey } from "./hooks/useListCollection"
 export type { ListCollectionSuspenseQueryKey } from "./hooks/useListCollectionSuspense"
+export type { ListCollectorsQueryKey } from "./hooks/useListCollectors"
+export type { ListCollectorsSuspenseQueryKey } from "./hooks/useListCollectorsSuspense"
 export type { ListConversationsQueryKey } from "./hooks/useListConversations"
 export type { ListConversationsSuspenseQueryKey } from "./hooks/useListConversationsSuspense"
 export type { ListGapsQueryKey } from "./hooks/useListGaps"
 export type { ListGapsSuspenseQueryKey } from "./hooks/useListGapsSuspense"
 export type { ListOffersQueryKey } from "./hooks/useListOffers"
 export type { ListOffersSuspenseQueryKey } from "./hooks/useListOffersSuspense"
+export type { ListPreferencesQueryKey } from "./hooks/useListPreferences"
+export type { ListPreferencesSuspenseQueryKey } from "./hooks/useListPreferencesSuspense"
+export type { ListSparesQueryKey } from "./hooks/useListSpares"
+export type { ListSparesSuspenseQueryKey } from "./hooks/useListSparesSuspense"
 export type { ListTradesQueryKey } from "./hooks/useListTrades"
 export type { ListTradesSuspenseQueryKey } from "./hooks/useListTradesSuspense"
 export type { ListWishlistQueryKey } from "./hooks/useListWishlist"
@@ -113,6 +123,9 @@ export type {
   CollectionStatsQueryResponse,
 } from "./types/CollectionStats"
 export type { CollectionValue } from "./types/CollectionValue"
+export type { CollectorProfile } from "./types/CollectorProfile"
+export type { CollectorView } from "./types/CollectorView"
+export type { ConditionCount } from "./types/ConditionCount"
 export type {
   ConfirmScan201,
   ConfirmScan422,
@@ -123,6 +136,14 @@ export type {
 } from "./types/ConfirmScan"
 export type { ConversationDetail } from "./types/ConversationDetail"
 export type { ConversationView } from "./types/ConversationView"
+export type {
+  CounterOffer201,
+  CounterOffer422,
+  CounterOfferMutation,
+  CounterOfferMutationRequest,
+  CounterOfferMutationResponse,
+  CounterOfferPathParams,
+} from "./types/CounterOffer"
 export type {
   CreateOffer201,
   CreateOffer422,
@@ -151,6 +172,13 @@ export type {
   ExportCollectionQueryParamsFormatEnumKey,
   ExportCollectionQueryResponse,
 } from "./types/ExportCollection"
+export type {
+  ForgetPreference204,
+  ForgetPreference422,
+  ForgetPreferenceMutation,
+  ForgetPreferenceMutationResponse,
+  ForgetPreferencePathParams,
+} from "./types/ForgetPreference"
 export type { GenerationCount } from "./types/GenerationCount"
 export type {
   GetCard200,
@@ -159,6 +187,13 @@ export type {
   GetCardQuery,
   GetCardQueryResponse,
 } from "./types/GetCard"
+export type {
+  GetCollector200,
+  GetCollector422,
+  GetCollectorPathParams,
+  GetCollectorQuery,
+  GetCollectorQueryResponse,
+} from "./types/GetCollector"
 export type {
   GetConversation200,
   GetConversation422,
@@ -200,6 +235,13 @@ export type {
   ListCollectionQueryResponse,
 } from "./types/ListCollection"
 export type {
+  ListCollectors200,
+  ListCollectors422,
+  ListCollectorsQuery,
+  ListCollectorsQueryParams,
+  ListCollectorsQueryResponse,
+} from "./types/ListCollectors"
+export type {
   ListConversations200,
   ListConversationsQuery,
   ListConversationsQueryResponse,
@@ -216,8 +258,22 @@ export type {
   ListOffers422,
   ListOffersQuery,
   ListOffersQueryParams,
+  ListOffersQueryParamsDirectionEnumKey,
   ListOffersQueryResponse,
 } from "./types/ListOffers"
+export type {
+  ListPreferences200,
+  ListPreferencesQuery,
+  ListPreferencesQueryResponse,
+} from "./types/ListPreferences"
+export type {
+  ListSpares200,
+  ListSpares422,
+  ListSparesPathParams,
+  ListSparesQuery,
+  ListSparesQueryParams,
+  ListSparesQueryResponse,
+} from "./types/ListSpares"
 export type {
   ListTrades200,
   ListTrades422,
@@ -256,6 +312,7 @@ export type { Me200, MeQuery, MeQueryResponse } from "./types/Me"
 export type { MeResponse } from "./types/MeResponse"
 export type { MessageRole, MessageRoleEnumKey } from "./types/MessageRole"
 export type { MessageView } from "./types/MessageView"
+export type { OfferCardInput } from "./types/OfferCardInput"
 export type { OfferCardView } from "./types/OfferCardView"
 export type { OfferStatus, OfferStatusEnumKey } from "./types/OfferStatus"
 export type {
@@ -265,9 +322,15 @@ export type {
 } from "./types/OwnedCardIds"
 export type { OwnedSlot } from "./types/OwnedSlot"
 export type { PageCollectionItemView } from "./types/PageCollectionItemView"
+export type { PageCollectorView } from "./types/PageCollectorView"
 export type { PageMarketCardView } from "./types/PageMarketCardView"
+export type { PageSpareCard } from "./types/PageSpareCard"
+export type { PageTradeMatch } from "./types/PageTradeMatch"
+export type { PageTradeOfferView } from "./types/PageTradeOfferView"
 export type { PortfolioReturn } from "./types/PortfolioReturn"
+export type { PreferenceView } from "./types/PreferenceView"
 export type { PriceChange } from "./types/PriceChange"
+export type { ProfileSet } from "./types/ProfileSet"
 export type { PublicCollection } from "./types/PublicCollection"
 export type { PublicItemView } from "./types/PublicItemView"
 export type {
@@ -331,6 +394,7 @@ export type { SetCoverage } from "./types/SetCoverage"
 export type { SetGap } from "./types/SetGap"
 export type { SetMarketView } from "./types/SetMarketView"
 export type { ShareLinkView } from "./types/ShareLinkView"
+export type { SpareCard } from "./types/SpareCard"
 export type {
   SpeciesTrivia200,
   SpeciesTrivia422,
@@ -375,20 +439,26 @@ export { cardMarketContext } from "./clients/cardMarketContext"
 export { collectionActivity } from "./clients/collectionActivity"
 export { collectionStats } from "./clients/collectionStats"
 export { confirmScan } from "./clients/confirmScan"
+export { counterOffer } from "./clients/counterOffer"
 export { createOffer } from "./clients/createOffer"
 export { createScan } from "./clients/createScan"
 export { createShareLink } from "./clients/createShareLink"
 export { exportCollection } from "./clients/exportCollection"
+export { forgetPreference } from "./clients/forgetPreference"
 export { getCard } from "./clients/getCard"
+export { getCollector } from "./clients/getCollector"
 export { getConversation } from "./clients/getConversation"
 export { getItem } from "./clients/getItem"
 export { getScanImage } from "./clients/getScanImage"
 export { getShareLink } from "./clients/getShareLink"
 export { health } from "./clients/health"
 export { listCollection } from "./clients/listCollection"
+export { listCollectors } from "./clients/listCollectors"
 export { listConversations } from "./clients/listConversations"
 export { listGaps } from "./clients/listGaps"
 export { listOffers } from "./clients/listOffers"
+export { listPreferences } from "./clients/listPreferences"
+export { listSpares } from "./clients/listSpares"
 export { listTrades } from "./clients/listTrades"
 export { listWishlist } from "./clients/listWishlist"
 export { marketCards } from "./clients/marketCards"
@@ -434,6 +504,9 @@ export { useCollectionStatsSuspense } from "./hooks/useCollectionStatsSuspense"
 export { confirmScanMutationKey } from "./hooks/useConfirmScan"
 export { confirmScanMutationOptions } from "./hooks/useConfirmScan"
 export { useConfirmScan } from "./hooks/useConfirmScan"
+export { counterOfferMutationKey } from "./hooks/useCounterOffer"
+export { counterOfferMutationOptions } from "./hooks/useCounterOffer"
+export { useCounterOffer } from "./hooks/useCounterOffer"
 export { createOfferMutationKey } from "./hooks/useCreateOffer"
 export { createOfferMutationOptions } from "./hooks/useCreateOffer"
 export { useCreateOffer } from "./hooks/useCreateOffer"
@@ -449,12 +522,21 @@ export { useExportCollection } from "./hooks/useExportCollection"
 export { exportCollectionSuspenseQueryKey } from "./hooks/useExportCollectionSuspense"
 export { exportCollectionSuspenseQueryOptions } from "./hooks/useExportCollectionSuspense"
 export { useExportCollectionSuspense } from "./hooks/useExportCollectionSuspense"
+export { forgetPreferenceMutationKey } from "./hooks/useForgetPreference"
+export { forgetPreferenceMutationOptions } from "./hooks/useForgetPreference"
+export { useForgetPreference } from "./hooks/useForgetPreference"
 export { getCardQueryKey } from "./hooks/useGetCard"
 export { getCardQueryOptions } from "./hooks/useGetCard"
 export { useGetCard } from "./hooks/useGetCard"
 export { getCardSuspenseQueryKey } from "./hooks/useGetCardSuspense"
 export { getCardSuspenseQueryOptions } from "./hooks/useGetCardSuspense"
 export { useGetCardSuspense } from "./hooks/useGetCardSuspense"
+export { getCollectorQueryKey } from "./hooks/useGetCollector"
+export { getCollectorQueryOptions } from "./hooks/useGetCollector"
+export { useGetCollector } from "./hooks/useGetCollector"
+export { getCollectorSuspenseQueryKey } from "./hooks/useGetCollectorSuspense"
+export { getCollectorSuspenseQueryOptions } from "./hooks/useGetCollectorSuspense"
+export { useGetCollectorSuspense } from "./hooks/useGetCollectorSuspense"
 export { getConversationQueryKey } from "./hooks/useGetConversation"
 export { getConversationQueryOptions } from "./hooks/useGetConversation"
 export { useGetConversation } from "./hooks/useGetConversation"
@@ -491,6 +573,12 @@ export { useListCollection } from "./hooks/useListCollection"
 export { listCollectionSuspenseQueryKey } from "./hooks/useListCollectionSuspense"
 export { listCollectionSuspenseQueryOptions } from "./hooks/useListCollectionSuspense"
 export { useListCollectionSuspense } from "./hooks/useListCollectionSuspense"
+export { listCollectorsQueryKey } from "./hooks/useListCollectors"
+export { listCollectorsQueryOptions } from "./hooks/useListCollectors"
+export { useListCollectors } from "./hooks/useListCollectors"
+export { listCollectorsSuspenseQueryKey } from "./hooks/useListCollectorsSuspense"
+export { listCollectorsSuspenseQueryOptions } from "./hooks/useListCollectorsSuspense"
+export { useListCollectorsSuspense } from "./hooks/useListCollectorsSuspense"
 export { listConversationsQueryKey } from "./hooks/useListConversations"
 export { listConversationsQueryOptions } from "./hooks/useListConversations"
 export { useListConversations } from "./hooks/useListConversations"
@@ -509,6 +597,18 @@ export { useListOffers } from "./hooks/useListOffers"
 export { listOffersSuspenseQueryKey } from "./hooks/useListOffersSuspense"
 export { listOffersSuspenseQueryOptions } from "./hooks/useListOffersSuspense"
 export { useListOffersSuspense } from "./hooks/useListOffersSuspense"
+export { listPreferencesQueryKey } from "./hooks/useListPreferences"
+export { listPreferencesQueryOptions } from "./hooks/useListPreferences"
+export { useListPreferences } from "./hooks/useListPreferences"
+export { listPreferencesSuspenseQueryKey } from "./hooks/useListPreferencesSuspense"
+export { listPreferencesSuspenseQueryOptions } from "./hooks/useListPreferencesSuspense"
+export { useListPreferencesSuspense } from "./hooks/useListPreferencesSuspense"
+export { listSparesQueryKey } from "./hooks/useListSpares"
+export { listSparesQueryOptions } from "./hooks/useListSpares"
+export { useListSpares } from "./hooks/useListSpares"
+export { listSparesSuspenseQueryKey } from "./hooks/useListSparesSuspense"
+export { listSparesSuspenseQueryOptions } from "./hooks/useListSparesSuspense"
+export { useListSparesSuspense } from "./hooks/useListSparesSuspense"
 export { listTradesQueryKey } from "./hooks/useListTrades"
 export { listTradesQueryOptions } from "./hooks/useListTrades"
 export { useListTrades } from "./hooks/useListTrades"
@@ -602,6 +702,7 @@ export { cardReadingConfidenceEnum } from "./types/CardReading"
 export { cardReadingRaritySymbolEnum } from "./types/CardReading"
 export { exportCollectionQueryParamsFormatEnum } from "./types/ExportCollection"
 export { listCollectionQueryParamsSortEnum } from "./types/ListCollection"
+export { listOffersQueryParamsDirectionEnum } from "./types/ListOffers"
 export { marketCardsQueryParamsOwnedEnum } from "./types/MarketCards"
 export { marketCardsQueryParamsSortEnum } from "./types/MarketCards"
 export { messageRoleEnum } from "./types/MessageRole"
@@ -650,6 +751,9 @@ export {
   collectionStatsSchema,
 } from "./zod/collectionStatsSchema"
 export { collectionValueSchema } from "./zod/collectionValueSchema"
+export { collectorProfileSchema } from "./zod/collectorProfileSchema"
+export { collectorViewSchema } from "./zod/collectorViewSchema"
+export { conditionCountSchema } from "./zod/conditionCountSchema"
 export {
   confirmScan201Schema,
   confirmScan422Schema,
@@ -659,6 +763,13 @@ export {
 } from "./zod/confirmScanSchema"
 export { conversationDetailSchema } from "./zod/conversationDetailSchema"
 export { conversationViewSchema } from "./zod/conversationViewSchema"
+export {
+  counterOffer201Schema,
+  counterOffer422Schema,
+  counterOfferMutationRequestSchema,
+  counterOfferMutationResponseSchema,
+  counterOfferPathParamsSchema,
+} from "./zod/counterOfferSchema"
 export { createOfferRequestSchema } from "./zod/createOfferRequestSchema"
 export {
   createOffer201Schema,
@@ -682,6 +793,12 @@ export {
   exportCollectionQueryParamsSchema,
   exportCollectionQueryResponseSchema,
 } from "./zod/exportCollectionSchema"
+export {
+  forgetPreference204Schema,
+  forgetPreference422Schema,
+  forgetPreferenceMutationResponseSchema,
+  forgetPreferencePathParamsSchema,
+} from "./zod/forgetPreferenceSchema"
 export { generationCountSchema } from "./zod/generationCountSchema"
 export {
   getCard200Schema,
@@ -689,6 +806,12 @@ export {
   getCardPathParamsSchema,
   getCardQueryResponseSchema,
 } from "./zod/getCardSchema"
+export {
+  getCollector200Schema,
+  getCollector422Schema,
+  getCollectorPathParamsSchema,
+  getCollectorQueryResponseSchema,
+} from "./zod/getCollectorSchema"
 export {
   getConversation200Schema,
   getConversation422Schema,
@@ -719,6 +842,12 @@ export {
   listCollectionQueryResponseSchema,
 } from "./zod/listCollectionSchema"
 export {
+  listCollectors200Schema,
+  listCollectors422Schema,
+  listCollectorsQueryParamsSchema,
+  listCollectorsQueryResponseSchema,
+} from "./zod/listCollectorsSchema"
+export {
   listConversations200Schema,
   listConversationsQueryResponseSchema,
 } from "./zod/listConversationsSchema"
@@ -734,6 +863,17 @@ export {
   listOffersQueryParamsSchema,
   listOffersQueryResponseSchema,
 } from "./zod/listOffersSchema"
+export {
+  listPreferences200Schema,
+  listPreferencesQueryResponseSchema,
+} from "./zod/listPreferencesSchema"
+export {
+  listSpares200Schema,
+  listSpares422Schema,
+  listSparesPathParamsSchema,
+  listSparesQueryParamsSchema,
+  listSparesQueryResponseSchema,
+} from "./zod/listSparesSchema"
 export {
   listTrades200Schema,
   listTrades422Schema,
@@ -765,6 +905,7 @@ export { meResponseSchema } from "./zod/meResponseSchema"
 export { me200Schema, meQueryResponseSchema } from "./zod/meSchema"
 export { messageRoleSchema } from "./zod/messageRoleSchema"
 export { messageViewSchema } from "./zod/messageViewSchema"
+export { offerCardInputSchema } from "./zod/offerCardInputSchema"
 export { offerCardViewSchema } from "./zod/offerCardViewSchema"
 export { offerStatusSchema } from "./zod/offerStatusSchema"
 export {
@@ -773,9 +914,15 @@ export {
 } from "./zod/ownedCardIdsSchema"
 export { ownedSlotSchema } from "./zod/ownedSlotSchema"
 export { pageCollectionItemViewSchema } from "./zod/pageCollectionItemViewSchema"
+export { pageCollectorViewSchema } from "./zod/pageCollectorViewSchema"
 export { pageMarketCardViewSchema } from "./zod/pageMarketCardViewSchema"
+export { pageSpareCardSchema } from "./zod/pageSpareCardSchema"
+export { pageTradeMatchSchema } from "./zod/pageTradeMatchSchema"
+export { pageTradeOfferViewSchema } from "./zod/pageTradeOfferViewSchema"
 export { portfolioReturnSchema } from "./zod/portfolioReturnSchema"
+export { preferenceViewSchema } from "./zod/preferenceViewSchema"
 export { priceChangeSchema } from "./zod/priceChangeSchema"
+export { profileSetSchema } from "./zod/profileSetSchema"
 export { publicCollectionSchema } from "./zod/publicCollectionSchema"
 export { publicItemViewSchema } from "./zod/publicItemViewSchema"
 export {
@@ -831,6 +978,7 @@ export { setCoverageSchema } from "./zod/setCoverageSchema"
 export { setGapSchema } from "./zod/setGapSchema"
 export { setMarketViewSchema } from "./zod/setMarketViewSchema"
 export { shareLinkViewSchema } from "./zod/shareLinkViewSchema"
+export { spareCardSchema } from "./zod/spareCardSchema"
 export {
   speciesTrivia200Schema,
   speciesTrivia422Schema,

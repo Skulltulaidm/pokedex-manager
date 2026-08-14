@@ -1,0 +1,175 @@
+{
+  "properties": {
+    "card": {
+      "properties": {
+        "id": { "type": "string", "title": "Id" },
+        "name": { "type": "string", "title": "Name" },
+        "category": { "type": "string", "title": "Category" },
+        "number": { "type": "string", "title": "Number" },
+        "rarity": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "title": "Rarity"
+        },
+        "variants": {
+          "additionalProperties": { "type": "boolean" },
+          "type": "object",
+          "title": "Variants"
+        },
+        "hp": {
+          "anyOf": [{ "type": "integer" }, { "type": "null" }],
+          "title": "Hp"
+        },
+        "image_small_url": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "title": "Image Small Url"
+        },
+        "image_large_url": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "title": "Image Large Url"
+        },
+        "price_usd": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+            },
+            { "type": "null" }
+          ],
+          "title": "Price Usd"
+        },
+        "card_set": {
+          "properties": {
+            "id": { "type": "string", "title": "Id" },
+            "name": { "type": "string", "title": "Name" },
+            "series": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Series"
+            },
+            "printed_total": { "type": "integer", "title": "Printed Total" },
+            "release_date": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "title": "Release Date"
+            },
+            "logo_url": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Logo Url"
+            }
+          },
+          "type": "object",
+          "required": [
+            "id",
+            "name",
+            "series",
+            "printed_total",
+            "release_date",
+            "logo_url"
+          ],
+          "title": "CardSetView",
+          "x-readme-ref-name": "CardSetView"
+        },
+        "species": {
+          "anyOf": [
+            {
+              "properties": {
+                "id": { "type": "integer", "title": "Id" },
+                "name": { "type": "string", "title": "Name" },
+                "generation": { "type": "integer", "title": "Generation" },
+                "types": {
+                  "items": { "type": "string" },
+                  "type": "array",
+                  "title": "Types"
+                },
+                "stats": {
+                  "additionalProperties": { "type": "integer" },
+                  "type": "object",
+                  "title": "Stats"
+                },
+                "evolution_chain_id": {
+                  "anyOf": [{ "type": "integer" }, { "type": "null" }],
+                  "title": "Evolution Chain Id"
+                },
+                "sprite_url": {
+                  "anyOf": [{ "type": "string" }, { "type": "null" }],
+                  "title": "Sprite Url"
+                }
+              },
+              "type": "object",
+              "required": [
+                "id",
+                "name",
+                "generation",
+                "types",
+                "stats",
+                "evolution_chain_id",
+                "sprite_url"
+              ],
+              "title": "SpeciesView",
+              "x-readme-ref-name": "SpeciesView"
+            },
+            { "type": "null" }
+          ]
+        }
+      },
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "category",
+        "number",
+        "rarity",
+        "variants",
+        "hp",
+        "image_small_url",
+        "image_large_url",
+        "card_set",
+        "species"
+      ],
+      "title": "CardView",
+      "description": "A card with both layers: what is printed, and the species it depicts.",
+      "x-readme-ref-name": "CardView"
+    },
+    "copies": { "type": "integer", "title": "Copies" },
+    "price_usd": {
+      "anyOf": [
+        { "type": "string", "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$" },
+        { "type": "null" }
+      ],
+      "title": "Price Usd"
+    },
+    "wanted": { "type": "boolean", "title": "Wanted" },
+    "conditions": {
+      "items": {
+        "properties": {
+          "condition": {
+            "type": "string",
+            "enum": [
+              "mint",
+              "near_mint",
+              "lightly_played",
+              "moderately_played",
+              "heavily_played",
+              "damaged"
+            ],
+            "title": "CardCondition",
+            "x-readme-ref-name": "CardCondition"
+          },
+          "copies": { "type": "integer", "title": "Copies" }
+        },
+        "type": "object",
+        "required": ["condition", "copies"],
+        "title": "ConditionCount",
+        "x-readme-ref-name": "ConditionCount"
+      },
+      "type": "array",
+      "title": "Conditions"
+    }
+  },
+  "type": "object",
+  "required": ["card", "copies", "price_usd", "wanted", "conditions"],
+  "title": "SpareCard",
+  "description": "A card free to trade, seen by someone who might want it.",
+  "x-readme-ref-name": "SpareCard"
+}

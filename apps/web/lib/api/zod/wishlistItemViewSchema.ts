@@ -20,4 +20,5 @@ export const wishlistItemViewSchema = z.object({
     return wishlistSourceSchema
   },
   created_at: z.iso.datetime(),
+  owned: z.optional(z.int().default(0)),
 })

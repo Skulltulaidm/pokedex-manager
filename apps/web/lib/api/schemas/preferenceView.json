@@ -1,0 +1,15 @@
+{
+  "properties": {
+    "key": { "type": "string", "title": "Key" },
+    "value": {
+      "additionalProperties": true,
+      "type": "object",
+      "title": "Value"
+    }
+  },
+  "type": "object",
+  "required": ["key", "value"],
+  "title": "PreferenceView",
+  "description": "One durable fact the assistant learned, as its owner can read it.\n\nExposed so the user can see what is being remembered about them and delete\nany of it: the agent writes here without being asked, and a memory nobody\ncan inspect is one nobody agreed to.",
+  "x-readme-ref-name": "PreferenceView"
+}

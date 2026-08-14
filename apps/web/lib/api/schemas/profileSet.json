@@ -1,0 +1,12 @@
+{
+  "properties": {
+    "set_id": { "type": "string", "title": "Set Id" },
+    "set_name": { "type": "string", "title": "Set Name" },
+    "owned": { "type": "integer", "title": "Owned" },
+    "printed_total": { "type": "integer", "title": "Printed Total" }
+  },
+  "type": "object",
+  "required": ["set_id", "set_name", "owned", "printed_total"],
+  "title": "ProfileSet",
+  "x-readme-ref-name": "ProfileSet"
+}

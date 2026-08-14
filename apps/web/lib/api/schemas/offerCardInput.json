@@ -1,0 +1,28 @@
+{
+  "properties": {
+    "card_id": { "type": "string", "title": "Card Id" },
+    "condition": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "mint",
+            "near_mint",
+            "lightly_played",
+            "moderately_played",
+            "heavily_played",
+            "damaged"
+          ],
+          "title": "CardCondition",
+          "x-readme-ref-name": "CardCondition"
+        },
+        { "type": "null" }
+      ]
+    }
+  },
+  "type": "object",
+  "required": ["card_id"],
+  "title": "OfferCardInput",
+  "description": "A card put on the table, in a state.\n\nLeaving the condition out lets the service pick the worst copy its owner\nholds, which is the one a collector parts with.",
+  "x-readme-ref-name": "OfferCardInput"
+}

@@ -3,11 +3,12 @@
  * Do not edit manually.
  */
 
+import { cardConditionSchema } from "./cardConditionSchema"
 import { cardViewSchema } from "./cardViewSchema"
 import { z } from "zod/v4"
 
 /**
- * @description A card named in an offer.\n\nNo copy count, unlike a match: a match reports what is available to trade,\nan offer names which cards are on the table.
+ * @description A card named in an offer.\n\nNo copy count, unlike a match: a match reports what is available to trade,\nan offer names which cards are on the table.\n\n`price_usd` is the market price of a near mint copy, and `adjusted_usd`\ndiscounts it for the condition actually offered. They differ, and the gap is\nthe reason condition belongs on an offer at all.
  */
 export const offerCardViewSchema = z
   .object({
@@ -16,11 +17,18 @@ export const offerCardViewSchema = z
         "A card with both layers: what is printed, and the species it depicts."
       )
     },
+    get condition() {
+      return cardConditionSchema
+    },
     price_usd: z.union([
+      z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+      z.null(),
+    ]),
+    adjusted_usd: z.union([
       z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
       z.null(),
     ]),
   })
   .describe(
-    "A card named in an offer.\n\nNo copy count, unlike a match: a match reports what is available to trade,\nan offer names which cards are on the table."
+    "A card named in an offer.\n\nNo copy count, unlike a match: a match reports what is available to trade,\nan offer names which cards are on the table.\n\n`price_usd` is the market price of a near mint copy, and `adjusted_usd`\ndiscounts it for the condition actually offered. They differ, and the gap is\nthe reason condition belongs on an offer at all."
   )

@@ -3,11 +3,12 @@
  * Do not edit manually.
  */
 
+import type { CardCondition } from "./CardCondition"
 import type { CardView } from "./CardView"
 
 /**
  * OfferCardView
- * @description A card named in an offer.\n\nNo copy count, unlike a match: a match reports what is available to trade,\nan offer names which cards are on the table.
+ * @description A card named in an offer.\n\nNo copy count, unlike a match: a match reports what is available to trade,\nan offer names which cards are on the table.\n\n`price_usd` is the market price of a near mint copy, and `adjusted_usd`\ndiscounts it for the condition actually offered. They differ, and the gap is\nthe reason condition belongs on an offer at all.
  */
 export type OfferCardView = {
   /**
@@ -15,5 +16,10 @@ export type OfferCardView = {
    * @type object
    */
   card: CardView
+  /**
+   * @type string
+   */
+  condition: CardCondition
   price_usd: string | null
+  adjusted_usd: string | null
 }

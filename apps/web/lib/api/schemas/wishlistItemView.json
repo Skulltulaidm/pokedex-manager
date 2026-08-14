@@ -147,7 +147,8 @@
       "type": "string",
       "format": "date-time",
       "title": "Created At"
-    }
+    },
+    "owned": { "type": "integer", "title": "Owned", "default": 0 }
   },
   "type": "object",
   "required": ["id", "card", "priority", "reason", "added_by", "created_at"],

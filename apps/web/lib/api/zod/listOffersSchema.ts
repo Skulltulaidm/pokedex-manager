@@ -5,27 +5,22 @@
 
 import { HTTPValidationErrorSchema } from "./HTTPValidationErrorSchema"
 import { offerStatusSchema } from "./offerStatusSchema"
-import { tradeOfferViewSchema } from "./tradeOfferViewSchema"
+import { pageTradeOfferViewSchema } from "./pageTradeOfferViewSchema"
 import { z } from "zod/v4"
 
-export const listOffersQueryParamsSchema = z
-  .object({
-    get status_filter() {
-      return z.union([offerStatusSchema, z.null()]).optional()
-    },
-  })
-  .optional()
+export const listOffersQueryParamsSchema = z.object({
+  get status_filter() {
+    return z.union([offerStatusSchema, z.null()]).optional()
+  },
+  direction: z.optional(z.union([z.enum(["sent", "received"]), z.null()])),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+  offset: z.coerce.number().int().min(0).default(0),
+})
 
 /**
  * @description Successful Response
  */
-export const listOffers200Schema = z.array(
-  z
-    .lazy(() => tradeOfferViewSchema)
-    .describe(
-      "An offer told from the reader's side.\n\n`you_give` and `you_get` swap meaning depending on who is looking, so the\nservice resolves them per reader rather than storing them that way."
-    )
-)
+export const listOffers200Schema = z.lazy(() => pageTradeOfferViewSchema)
 
 /**
  * @description Validation Error

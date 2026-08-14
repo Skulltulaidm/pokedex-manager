@@ -1,0 +1,32 @@
+{
+  "properties": {
+    "items": {
+      "items": {
+        "properties": {
+          "user_id": { "type": "string", "title": "User Id" },
+          "name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Name"
+          },
+          "spares": { "type": "integer", "title": "Spares" },
+          "you_want": { "type": "integer", "title": "You Want" },
+          "they_want": { "type": "integer", "title": "They Want" }
+        },
+        "type": "object",
+        "required": ["user_id", "name", "spares", "you_want", "they_want"],
+        "title": "CollectorView",
+        "description": "Another collector, described only by what could move between you.\n\nTheir collection stays theirs: what is published is how much is spare and\nhow much of it either of you is short of.",
+        "x-readme-ref-name": "CollectorView"
+      },
+      "type": "array",
+      "title": "Items"
+    },
+    "total": { "type": "integer", "title": "Total" },
+    "limit": { "type": "integer", "title": "Limit" },
+    "offset": { "type": "integer", "title": "Offset" }
+  },
+  "type": "object",
+  "required": ["items", "total", "limit", "offset"],
+  "title": "Page[CollectorView]",
+  "x-readme-ref-name": "Page_CollectorView_"
+}

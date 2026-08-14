@@ -4,23 +4,20 @@
  */
 
 import { HTTPValidationErrorSchema } from "./HTTPValidationErrorSchema"
-import { tradeMatchSchema } from "./tradeMatchSchema"
+import { pageTradeMatchSchema } from "./pageTradeMatchSchema"
 import { z } from "zod/v4"
 
 export const listTradesQueryParamsSchema = z.object({
-  limit: z.coerce.number().int().default(10),
+  search: z.optional(z.union([z.string(), z.null()])),
+  favourable: z.optional(z.union([z.boolean(), z.null()])),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+  offset: z.coerce.number().int().min(0).default(0),
 })
 
 /**
  * @description Successful Response
  */
-export const listTrades200Schema = z.array(
-  z
-    .lazy(() => tradeMatchSchema)
-    .describe(
-      "A counterparty who wants something spare, and has something wanted.\n\nOnly the cards on both sides of the overlap are named. What else the\ncounterparty holds, and what their collection is worth, stay theirs: this\nanswers whether a trade exists, not what someone owns.\n\nValues count one copy of each card. `balance` is what the trade is worth to\nthe reader — positive means they come out ahead — and it is reported rather\nthan balanced, because which cards even out a swap is the traders' call."
-    )
-)
+export const listTrades200Schema = z.lazy(() => pageTradeMatchSchema)
 
 /**
  * @description Validation Error
