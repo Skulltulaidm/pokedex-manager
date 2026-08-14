@@ -5,6 +5,7 @@ import { useState } from "react";
 import { CardDetail } from "@/components/card-detail";
 import { CardImage } from "@/components/card-image";
 import { CardSkeleton } from "@/components/pokeball";
+import { WishButton } from "@/components/wish-button";
 import { formatUsd } from "@/lib/format";
 import {
   Dialog,
@@ -130,7 +131,13 @@ export function CardsDialog({
               )}
             >
               {cards.map((card) => (
-                <li key={card.id}>
+                <li key={card.id} className="relative">
+                  <WishButton
+                    cardId={card.id}
+                    cardName={card.name}
+                    held={card.owned > 0}
+                    className="absolute top-1.5 right-1.5 z-10"
+                  />
                   <button
                     onClick={() => setOpenCard(card.id)}
                     aria-label={`Ver ${card.name}`}
