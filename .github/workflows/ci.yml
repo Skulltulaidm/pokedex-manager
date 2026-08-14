@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: pokedex
+          POSTGRES_PASSWORD: pokedex
+          POSTGRES_DB: pokedex
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pokedex -d pokedex"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+asyncpg://pokedex:pokedex@localhost:5432/pokedex
+      AUTH_JWKS_URL: http://localhost:3000/api/auth/jwks
+      AUTH_ISSUER: http://localhost:3000
+      AUTH_AUDIENCE: http://localhost:3000
+      # Left unset on purpose: the agent is optional, the chat answers 503
+      # without it, and a public repository must not need a key to go green.
+      GOOGLE_API_KEY: ""
+
+    defaults:
+      run:
+        working-directory: apps/api
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+
+      # A service container gets no docker-entrypoint-initdb.d, so the schemas
+      # and the trigram extension the migrations expect are created by hand.
+      - name: Prepare the database
+        working-directory: .
+        run: psql "postgresql://pokedex:pokedex@localhost:5432/pokedex" -f db/init/01-schemas.sql
+
+      - run: uv sync --frozen
+
+      - run: uv run alembic upgrade head
+
+      - run: uv run pytest -q
+
+      - run: uv run mypy src
+
+      - run: uv run ruff check .
+
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # Scoped to the web workspace and its dependencies: the root tasks also
+      # cover the API, whose toolchain lives in the job above.
+      - run: npx turbo run typecheck lint test --filter=web...
