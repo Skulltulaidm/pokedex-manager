@@ -44,40 +44,56 @@ export function Pokeball({
         </clipPath>
       </defs>
 
-      {/* Halves rather than one circle: a burst opens them apart, and a whole
-          circle has nothing to open. */}
-      <g className={cn(state === "escaped" && "origin-center")}>
-        <circle
-          cx="24"
-          cy="24"
-          r="21"
-          className="fill-destructive"
-          clipPath="url(#pokeball-top)"
-          transform={state === "escaped" ? "translate(0 -5)" : undefined}
-        />
-        <circle
-          cx="24"
-          cy="24"
-          r="21"
-          className="fill-surface stroke-foreground/15"
-          strokeWidth="1.5"
-          clipPath="url(#pokeball-bottom)"
-          transform={state === "escaped" ? "translate(0 5)" : undefined}
-        />
-      </g>
-
-      <circle
-        cx="24"
-        cy="24"
-        r="21"
-        fill="none"
-        className="stroke-foreground/20"
-        strokeWidth="1.5"
-      />
-      {state !== "escaped" && (
+      {state === "escaped" ? (
+        /* Both halves keep their outline and their flat edge; a red shape
+           floating over a white one reads as a rendering fault rather than as
+           a ball that opened. */
+        <g>
+          <path
+            d="M3 24a21 21 0 0 1 42 0Z"
+            className="fill-destructive stroke-foreground/25"
+            strokeWidth="1.5"
+            transform="translate(0 -8) rotate(-10 24 24)"
+          />
+          <path
+            d="M45 24a21 21 0 0 1-42 0Z"
+            className="fill-surface stroke-foreground/25"
+            strokeWidth="1.5"
+            transform="translate(0 8) rotate(7 24 24)"
+          />
+        </g>
+      ) : (
         <>
+          <circle
+            cx="24"
+            cy="24"
+            r="21"
+            className="fill-destructive"
+            clipPath="url(#pokeball-top)"
+          />
+          <circle
+            cx="24"
+            cy="24"
+            r="21"
+            className="fill-surface"
+            clipPath="url(#pokeball-bottom)"
+          />
+          <circle
+            cx="24"
+            cy="24"
+            r="21"
+            fill="none"
+            className="stroke-foreground/20"
+            strokeWidth="1.5"
+          />
           <rect x="3" y="22" width="42" height="4" className="fill-foreground/85" />
-          <circle cx="24" cy="24" r="7.5" className="fill-surface stroke-foreground/85" strokeWidth="3" />
+          <circle
+            cx="24"
+            cy="24"
+            r="7.5"
+            className="fill-surface stroke-foreground/85"
+            strokeWidth="3"
+          />
           <circle cx="24" cy="24" r="3" className="fill-foreground/25" />
         </>
       )}
@@ -185,7 +201,7 @@ export function LoadFailed({
 }) {
   return (
     <div className="ring-edge bg-surface/60 flex flex-col items-center gap-3 rounded-2xl px-6 py-12 text-center ring-1">
-      <Pokeball state="escaped" size={40} />
+      <Pokeball state="escaped" size={56} />
       <p className="text-muted-foreground text-sm">{message}</p>
       {onRetry && (
         <button
