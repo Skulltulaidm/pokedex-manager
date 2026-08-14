@@ -5,19 +5,21 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from pokedex.api.deps import CurrentUser, DbSession
 from pokedex.api.route import CommittingRoute
-from pokedex.db.models import OfferStatus
+from pokedex.db.models import ListingStatus, OfferStatus
 from pokedex.schemas.common import Page
 from pokedex.schemas.trade import (
     CollectorProfile,
     CollectorView,
+    CreateListingRequest,
     CreateOfferRequest,
     RespondOfferRequest,
     SpareCard,
+    TradeListingView,
     TradeMatch,
     TradeOfferView,
 )
 from pokedex.services import trade
-from pokedex.services.trade import OfferError
+from pokedex.services.trade import ListingError, OfferError
 
 router = APIRouter(tags=["trades"], route_class=CommittingRoute)
 
@@ -176,6 +178,77 @@ async def withdraw_offer(offer_id: UUID, user: CurrentUser, db: DbSession) -> An
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Offer not found")
 
     return await _view(db, user.id, offer.id)
+
+
+@router.get("/trades/listings", response_model=Page[TradeListingView])
+async def list_listings(
+    user: CurrentUser,
+    db: DbSession,
+    search: str | None = None,
+    fulfillable: bool | None = None,
+    mine: bool | None = None,
+    status_filter: ListingStatus = ListingStatus.OPEN,
+    limit: int = Query(default=6, ge=1, le=50),
+    offset: int = Query(default=0, ge=0),
+) -> Any:
+    """The open board: swaps published to whoever can fill them.
+
+    Unlike an offer, a listing is addressed to nobody and every collector reads
+    the same one. What changes per reader is only whether they can take it.
+    """
+    return await trade.listing_page(
+        db,
+        user.id,
+        search=search,
+        fulfillable=fulfillable,
+        mine=mine,
+        status=status_filter,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.post(
+    "/trades/listings",
+    response_model=TradeListingView,
+    status_code=status.HTTP_201_CREATED,
+)
+async def publish_listing(
+    request: CreateListingRequest, user: CurrentUser, db: DbSession
+) -> Any:
+    """Publish a swap. What you give must be spare; what you ask for need not be."""
+    try:
+        listing = await trade.publish_listing(db, user.id, request)
+    except (ListingError, OfferError) as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from exc
+
+    return await trade.listing_view(db, user.id, listing.id)
+
+
+@router.post("/trades/listings/{listing_id}/accept", response_model=TradeOfferView)
+async def accept_listing(listing_id: UUID, user: CurrentUser, db: DbSession) -> Any:
+    """Take a listing, which agrees it: the answer is the trade it became."""
+    try:
+        offer = await trade.accept_listing(db, user.id, listing_id)
+    except ListingError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+    if offer is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Listing not found")
+
+    return await _view(db, user.id, offer.id)
+
+
+@router.post("/trades/listings/{listing_id}/cancel", response_model=TradeListingView)
+async def cancel_listing(listing_id: UUID, user: CurrentUser, db: DbSession) -> Any:
+    """Take a listing off the board. Only its publisher, and only while open."""
+    try:
+        listing = await trade.cancel_listing(db, user.id, listing_id)
+    except ListingError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+    if listing is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Listing not found")
+
+    return await trade.listing_view(db, user.id, listing.id)
 
 
 async def _view(db: DbSession, user_id: str, offer_id: UUID) -> TradeOfferView:

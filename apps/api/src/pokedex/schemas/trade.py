@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from pokedex.db.models import CardCondition, OfferStatus
+from pokedex.db.models import CardCondition, ListingStatus, OfferStatus
 from pokedex.schemas.catalog import CardView
 
 
@@ -128,6 +128,61 @@ class CollectorView(BaseModel):
     spares: int
     you_want: int
     they_want: int
+
+
+class ListingCardView(BaseModel):
+    """A card named on a listing.
+
+    `condition` is null on the wanted side, and so is `adjusted_usd` with it:
+    nobody has said yet which copy would arrive, so the market price is the only
+    honest figure there.
+    """
+
+    card: CardView
+    condition: CardCondition | None
+    price_usd: Decimal | None
+    adjusted_usd: Decimal | None
+
+
+class CreateListingRequest(BaseModel):
+    """Wanted cards are ids alone: a state can only be promised by whoever holds
+    the card, and on this side nobody holds it yet."""
+
+    give: list[OfferCardInput] = Field(min_length=1)
+    want: list[str] = Field(min_length=1)
+    note: str | None = Field(default=None, max_length=280)
+
+
+class TradeListingView(BaseModel):
+    """A listing as one reader sees it.
+
+    Sides are named from the publisher, who is fixed, rather than from the
+    reader, who is not. `balance` is what taking it would be worth — positive
+    means the taker comes out ahead — and it is the same number for everyone.
+
+    `available` is the publisher's half of the promise still standing, and
+    `can_fulfil` the reader's: both have to be true for the listing to be
+    takeable, and a listing whose publisher has since traded away what it names
+    is shown rather than hidden, so the board does not appear to lose rows.
+    """
+
+    id: UUID
+    owner_id: str
+    owner_name: str | None
+    is_mine: bool
+    status: ListingStatus
+    gives: list[ListingCardView]
+    wants: list[ListingCardView]
+    give_value: Decimal
+    want_value: Decimal
+    balance: Decimal
+    available: bool
+    can_fulfil: bool
+    missing: int
+    note: str | None
+    offer_id: UUID | None
+    created_at: datetime
+    taken_at: datetime | None
 
 
 class ProfileSet(BaseModel):

@@ -1,15 +1,30 @@
 from datetime import date
 from decimal import Decimal
+from uuid import UUID
 
 import pytest
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from pokedex.db.models import CardCondition, OfferStatus, WishlistSource
+from pokedex.db.models import (
+    CardCondition,
+    ListingStatus,
+    OfferStatus,
+    TradeListing,
+    WishlistSource,
+)
 from pokedex.integrations.pokeapi import SpeciesPayload
 from pokedex.integrations.tcgdex import CardPayload, SetPayload
-from pokedex.schemas.collection import AddCardRequest
+from pokedex.schemas.collection import AddCardRequest, UpdateItemRequest
+from pokedex.schemas.common import Page
 from pokedex.schemas.gaps import AddWishlistRequest
-from pokedex.schemas.trade import CreateOfferRequest, OfferCardInput, TradeMatch
+from pokedex.schemas.trade import (
+    CreateListingRequest,
+    CreateOfferRequest,
+    OfferCardInput,
+    TradeListingView,
+    TradeMatch,
+)
 from pokedex.services import catalog, collection, trade, wishlist
 
 SET_ID = "base1"
@@ -586,6 +601,284 @@ async def test_condition_discounts_what_the_offer_is_worth(
     assert view.you_get[0].price_usd == Decimal("100.00")
     assert view.you_get[0].adjusted_usd == Decimal("35.00")
     assert view.get_value == Decimal("35.00")
+
+
+WARTORTLE_CARD = f"{SET_ID}-8"
+
+
+def a_listing(want: list[str] | None = None) -> CreateListingRequest:
+    return CreateListingRequest(
+        give=[card_input(CHARIZARD_CARD)], want=want or [SQUIRTLE_CARD]
+    )
+
+
+def on_board(
+    page: Page[TradeListingView], listing_id: UUID
+) -> TradeListingView | None:
+    """One listing on the board, if the filter left it there.
+
+    The board is public, so like matching it sees rows the test did not create.
+    Assertions name the listing they mean rather than counting the page.
+    """
+    return next((item for item in page.items if item.id == listing_id), None)
+
+
+async def test_a_listing_is_addressed_to_nobody(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    """Anyone holding what it asks for reads the same listing and the same price."""
+    listing = await trade.publish_listing(swappable, other_user_id, a_listing())
+
+    page = await trade.listing_page(swappable, user_id, limit=50)
+    view = on_board(page, listing.id)
+
+    assert view is not None
+    assert view.is_mine is False
+    assert view.owner_id == other_user_id
+    assert [entry.card.id for entry in view.gives] == [CHARIZARD_CARD]
+    assert [entry.card.id for entry in view.wants] == [SQUIRTLE_CARD]
+    assert view.can_fulfil is True
+    assert view.available is True
+    assert view.balance == Decimal("90.00")
+
+
+async def test_a_wanted_card_carries_no_condition(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    """Which copy arrives is for whoever takes it to say, and nobody has yet."""
+    listing = await trade.publish_listing(swappable, other_user_id, a_listing())
+
+    view = on_board(await trade.listing_page(swappable, user_id, limit=50), listing.id)
+
+    assert view is not None
+    assert view.gives[0].condition is CardCondition.NEAR_MINT
+    assert view.wants[0].condition is None
+    assert view.wants[0].adjusted_usd is None
+    assert view.want_value == Decimal("10.00")
+
+
+async def test_a_listing_cannot_promise_a_card_its_publisher_lacks(
+    swappable: AsyncSession, user_id: str
+) -> None:
+    """The unaddressed half of the promise is still a promise."""
+    with pytest.raises(trade.ListingError, match="Not spare in your collection"):
+        await trade.publish_listing(swappable, user_id, a_listing())
+
+
+async def test_a_listing_cannot_ask_for_what_it_also_gives(
+    swappable: AsyncSession, other_user_id: str
+) -> None:
+    with pytest.raises(trade.ListingError, match="given at once"):
+        await trade.publish_listing(
+            swappable, other_user_id, a_listing(want=[CHARIZARD_CARD])
+        )
+
+
+@pytest.fixture
+async def a_third_card(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> AsyncSession:
+    """A card the reader owns one of and somebody else has spare.
+
+    Spare for somebody is not spare for the reader, and a filter that reads the
+    wrong holder's inventory answers yes to both.
+    """
+    await catalog.upsert_cards(
+        swappable, [card(WARTORTLE_CARD, 7, "Wartortle", "8", Decimal("5.00"))]
+    )
+    await collection.add_card(swappable, user_id, AddCardRequest(card_id=WARTORTLE_CARD))
+    await collection.add_card(
+        swappable, other_user_id, AddCardRequest(card_id=WARTORTLE_CARD, quantity=2)
+    )
+    return swappable
+
+
+async def test_a_listing_cannot_be_taken_without_what_it_asks_for(
+    a_third_card: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    """The taker's half is checked the same way: one copy is the collection."""
+    listing = await trade.publish_listing(
+        a_third_card, other_user_id, a_listing(want=[WARTORTLE_CARD])
+    )
+
+    view = on_board(
+        await trade.listing_page(a_third_card, user_id, limit=50), listing.id
+    )
+    assert view is not None
+    assert view.can_fulfil is False
+    assert view.missing == 1
+
+    with pytest.raises(trade.ListingError, match="Not spare in your collection"):
+        await trade.accept_listing(a_third_card, user_id, listing.id)
+
+
+async def test_the_board_cuts_to_what_the_reader_can_fill(
+    a_third_card: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    fillable = await trade.publish_listing(a_third_card, other_user_id, a_listing())
+    unfillable = await trade.publish_listing(
+        a_third_card, other_user_id, a_listing(want=[WARTORTLE_CARD])
+    )
+
+    page = await trade.listing_page(
+        a_third_card, user_id, fulfillable=True, limit=50
+    )
+
+    assert on_board(page, fillable.id) is not None
+    assert on_board(page, unfillable.id) is None
+
+
+async def test_the_board_can_be_searched(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    listing = await trade.publish_listing(swappable, other_user_id, a_listing())
+
+    named = await trade.listing_page(swappable, user_id, search="chari", limit=50)
+    other = await trade.listing_page(swappable, user_id, search="zzzz", limit=50)
+
+    assert on_board(named, listing.id) is not None
+    assert on_board(other, listing.id) is None
+
+
+async def test_the_board_is_read_a_page_at_a_time(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    for _ in range(3):
+        await trade.publish_listing(
+            swappable,
+            user_id,
+            CreateListingRequest(
+                give=[card_input(SQUIRTLE_CARD)], want=[CHARIZARD_CARD]
+            ),
+        )
+
+    first = await trade.listing_page(swappable, user_id, mine=True, limit=2)
+    second = await trade.listing_page(swappable, user_id, mine=True, limit=2, offset=2)
+
+    assert first.total == 3
+    assert len(first.items) == 2
+    assert len(second.items) == 1
+    assert all(item.is_mine for item in first.items)
+
+
+async def test_taking_a_listing_writes_the_trade_both_sides_read(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    """The board and the negotiation end in the same record."""
+    listing = await trade.publish_listing(swappable, other_user_id, a_listing())
+
+    offer = await trade.accept_listing(swappable, user_id, listing.id)
+    assert offer is not None
+    assert offer.status is OfferStatus.ACCEPTED
+
+    mine = next(
+        entry for entry in await trade.list_offers(swappable, user_id)
+        if entry.id == offer.id
+    )
+    theirs = next(
+        entry for entry in await trade.list_offers(swappable, other_user_id)
+        if entry.id == offer.id
+    )
+
+    assert mine.direction == "received"
+    assert [entry.card.id for entry in mine.you_get] == [CHARIZARD_CARD]
+    assert [entry.card.id for entry in mine.you_give] == [SQUIRTLE_CARD]
+    assert theirs.direction == "sent"
+    assert listing.status is ListingStatus.TAKEN
+    assert listing.offer_id == offer.id
+
+
+async def test_taking_a_listing_moves_no_cards(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    before = await collection.total_quantity(swappable, user_id)
+    listing = await trade.publish_listing(swappable, other_user_id, a_listing())
+
+    await trade.accept_listing(swappable, user_id, listing.id)
+
+    assert await collection.total_quantity(swappable, user_id) == before
+
+
+async def test_a_listing_is_taken_once(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    """Two collectors cannot both walk away with the same cards."""
+    listing = await trade.publish_listing(swappable, other_user_id, a_listing())
+    await trade.accept_listing(swappable, user_id, listing.id)
+
+    with pytest.raises(trade.ListingError, match="already taken"):
+        await trade.accept_listing(swappable, user_id, listing.id)
+
+
+async def test_a_listing_claimed_underneath_a_reader_is_refused(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    """The row decides who took it, not the copy the reader was holding.
+
+    Somebody else's take lands after this reader has already read the listing as
+    open, which is the only way two people ever take the same one.
+    """
+    listing = await trade.publish_listing(swappable, other_user_id, a_listing())
+    await swappable.execute(
+        update(TradeListing)
+        .where(TradeListing.id == listing.id)
+        .values(status=ListingStatus.TAKEN)
+        .execution_options(synchronize_session=False)
+    )
+
+    with pytest.raises(trade.ListingError, match="already taken"):
+        await trade.accept_listing(swappable, user_id, listing.id)
+
+
+async def test_a_publisher_does_not_take_their_own_listing(
+    swappable: AsyncSession, other_user_id: str
+) -> None:
+    listing = await trade.publish_listing(swappable, other_user_id, a_listing())
+
+    with pytest.raises(trade.ListingError, match="somebody else"):
+        await trade.accept_listing(swappable, other_user_id, listing.id)
+
+
+async def test_only_the_publisher_cancels(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    listing = await trade.publish_listing(swappable, other_user_id, a_listing())
+
+    assert await trade.cancel_listing(swappable, user_id, listing.id) is None
+
+    cancelled = await trade.cancel_listing(swappable, other_user_id, listing.id)
+    assert cancelled is not None
+    assert cancelled.status is ListingStatus.CANCELLED
+
+
+async def test_a_cancelled_listing_cannot_be_taken(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    listing = await trade.publish_listing(swappable, other_user_id, a_listing())
+    await trade.cancel_listing(swappable, other_user_id, listing.id)
+
+    with pytest.raises(trade.ListingError, match="already cancelled"):
+        await trade.accept_listing(swappable, user_id, listing.id)
+
+
+async def test_a_listing_stops_standing_when_its_publisher_runs_out(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    """What somebody had spare last week is not a promise they can still keep."""
+    listing = await trade.publish_listing(swappable, other_user_id, a_listing())
+    held = await collection.add_card(
+        swappable, other_user_id, AddCardRequest(card_id=CHARIZARD_CARD)
+    )
+    await collection.update_item(
+        swappable, other_user_id, held.id, UpdateItemRequest(quantity=1)
+    )
+
+    view = on_board(await trade.listing_page(swappable, user_id, limit=50), listing.id)
+    assert view is not None
+    assert view.available is False
+
+    with pytest.raises(trade.ListingError, match="No longer spare"):
+        await trade.accept_listing(swappable, user_id, listing.id)
 
 
 async def test_spares_publish_the_conditions_on_hand(

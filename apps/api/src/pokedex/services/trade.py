@@ -2,7 +2,7 @@ from collections import defaultdict
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import Select, func, or_, select
+from sqlalchemy import Select, exists, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -11,8 +11,11 @@ from pokedex.db.models import (
     CardCondition,
     CardSet,
     CollectionItem,
+    ListingStatus,
     OfferSide,
     OfferStatus,
+    TradeListing,
+    TradeListingCard,
     TradeOffer,
     TradeOfferCard,
     WishlistItem,
@@ -24,12 +27,15 @@ from pokedex.schemas.trade import (
     CollectorProfile,
     CollectorView,
     ConditionCount,
+    CreateListingRequest,
     CreateOfferRequest,
+    ListingCardView,
     OfferCardInput,
     OfferCardView,
     ProfileSet,
     SpareCard,
     TradeCard,
+    TradeListingView,
     TradeMatch,
     TradeOfferView,
 )
@@ -741,3 +747,357 @@ async def collector_profile(
             for set_id, name, printed_total, owned in set_rows
         ],
     )
+
+
+class ListingError(RuntimeError):
+    """A listing, or a taking of one, that the rules do not allow."""
+
+
+async def publish_listing(
+    db: AsyncSession, user_id: str, request: CreateListingRequest
+) -> TradeListing:
+    """Put a swap on the board, addressed to nobody.
+
+    The given side is held to the same rule as an offer — only copies its owner
+    has spare — because an unaddressed promise is still a promise. The wanted
+    side is any catalogued card: asking for something nobody has spare only
+    makes a listing nobody takes, which is the publisher's business.
+    """
+    mine = await _spare_ids(db, user_id)
+    given = _unique(request.give)
+    if missing := {entry.card_id for entry in given} - mine:
+        raise ListingError(f"Not spare in your collection: {', '.join(sorted(missing))}")
+
+    wanted = list(dict.fromkeys(request.want))
+    known = set(
+        (await db.execute(select(Card.id).where(Card.id.in_(wanted)))).scalars()
+    )
+    if unknown := set(wanted) - known:
+        raise ListingError(f"No such cards: {', '.join(sorted(unknown))}")
+    if both := {entry.card_id for entry in given} & set(wanted):
+        raise ListingError(f"Asked for and given at once: {', '.join(sorted(both))}")
+
+    holdings = await _holdings(db, user_id)
+    listing = TradeListing(
+        owner_id=user_id,
+        note=request.note,
+        cards=[
+            TradeListingCard(
+                card_id=entry.card_id,
+                side=OfferSide.OFFERED,
+                condition=_settle_condition(entry, holdings),
+            )
+            for entry in given
+        ]
+        + [
+            TradeListingCard(card_id=card_id, side=OfferSide.REQUESTED)
+            for card_id in wanted
+        ],
+    )
+    db.add(listing)
+    await db.flush()
+    return listing
+
+
+async def cancel_listing(
+    db: AsyncSession, user_id: str, listing_id: UUID
+) -> TradeListing | None:
+    """Take a listing off the board. Only its publisher, and only while open."""
+    listing = await db.get(TradeListing, listing_id)
+    if listing is None or listing.owner_id != user_id:
+        return None
+    if listing.status is not ListingStatus.OPEN:
+        raise ListingError(f"This listing was already {listing.status.value}")
+
+    listing.status = ListingStatus.CANCELLED
+    await db.flush()
+    return listing
+
+
+async def accept_listing(
+    db: AsyncSession, user_id: str, listing_id: UUID
+) -> TradeOffer | None:
+    """Take a listing, which is the agreement.
+
+    Both halves are checked against the collections as they stand now, not as
+    they stood when it was published: what somebody had spare last week is not a
+    promise they can still keep.
+
+    What comes out is an offer already accepted between the two of them, so the
+    board and the negotiation end in the same record — and, like every accepted
+    offer, it moves no cards.
+    """
+    listing = (
+        await db.execute(
+            select(TradeListing)
+            .options(selectinload(TradeListing.cards))
+            .where(TradeListing.id == listing_id)
+        )
+    ).scalar_one_or_none()
+    if listing is None:
+        return None
+    if listing.owner_id == user_id:
+        raise ListingError("A listing is taken by somebody else")
+    if listing.status is not ListingStatus.OPEN:
+        raise ListingError(f"This listing was already {listing.status.value}")
+
+    given = [entry for entry in listing.cards if entry.side is OfferSide.OFFERED]
+    wanted = [entry for entry in listing.cards if entry.side is OfferSide.REQUESTED]
+
+    theirs = await _spare_ids(db, listing.owner_id)
+    mine = await _spare_ids(db, user_id)
+    if missing := {entry.card_id for entry in given} - theirs:
+        raise ListingError(f"No longer spare in theirs: {', '.join(sorted(missing))}")
+    if missing := {entry.card_id for entry in wanted} - mine:
+        raise ListingError(f"Not spare in your collection: {', '.join(sorted(missing))}")
+
+    # One statement decides who took it. A second taker's update matches no row
+    # once the first has committed, so the loser is refused instead of being
+    # handed a trade that is already somebody else's.
+    claimed = (
+        await db.execute(
+            update(TradeListing)
+            .where(
+                TradeListing.id == listing.id,
+                TradeListing.status == ListingStatus.OPEN,
+            )
+            .values(status=ListingStatus.TAKEN, taken_at=func.now())
+            .returning(TradeListing.id)
+        )
+    ).scalar_one_or_none()
+    if claimed is None:
+        raise ListingError("This listing was already taken")
+
+    my_holdings = await _holdings(db, user_id)
+    offer = TradeOffer(
+        from_user_id=listing.owner_id,
+        to_user_id=user_id,
+        message=listing.note,
+        status=OfferStatus.ACCEPTED,
+        responded_at=func.now(),
+        cards=[
+            TradeOfferCard(
+                card_id=entry.card_id,
+                side=OfferSide.OFFERED,
+                condition=entry.condition or CardCondition.NEAR_MINT,
+            )
+            for entry in given
+        ]
+        + [
+            TradeOfferCard(
+                card_id=entry.card_id,
+                side=OfferSide.REQUESTED,
+                condition=_settle_condition(
+                    OfferCardInput(card_id=entry.card_id), my_holdings
+                ),
+            )
+            for entry in wanted
+        ],
+    )
+    db.add(offer)
+    await db.flush()
+
+    listing.offer_id = offer.id
+    await db.flush()
+    await db.refresh(offer, ["responded_at"])
+    return offer
+
+
+async def listing_page(
+    db: AsyncSession,
+    user_id: str,
+    *,
+    search: str | None = None,
+    fulfillable: bool | None = None,
+    mine: bool | None = None,
+    status: ListingStatus = ListingStatus.OPEN,
+    limit: int = 10,
+    offset: int = 0,
+) -> Page[TradeListingView]:
+    """The board, cut into pages after it has been filtered.
+
+    `fulfillable` is decided in the statement rather than over the rows on
+    screen, so a page of what the reader can actually take is a page and not
+    whatever survived of one.
+    """
+    spares = _spares().subquery()
+    my_spares = select(spares.c.card_id).where(spares.c.user_id == user_id)
+    short = exists(
+        select(TradeListingCard.id).where(
+            TradeListingCard.listing_id == TradeListing.id,
+            TradeListingCard.side == OfferSide.REQUESTED,
+            TradeListingCard.card_id.not_in(my_spares),
+        )
+    )
+
+    statement = select(TradeListing).where(TradeListing.status == status)
+    if mine is not None:
+        statement = statement.where(
+            TradeListing.owner_id == user_id
+            if mine
+            else TradeListing.owner_id != user_id
+        )
+    if fulfillable is not None:
+        statement = statement.where(~short if fulfillable else short)
+    if search and (needle := search.strip().lower()):
+        named = exists(
+            select(TradeListingCard.id)
+            .join(Card, Card.id == TradeListingCard.card_id)
+            .where(
+                TradeListingCard.listing_id == TradeListing.id,
+                Card.name_normalized.ilike(f"%{needle}%"),
+            )
+        )
+        by_owner = exists(
+            select(auth_user.c.id).where(
+                auth_user.c.id == TradeListing.owner_id,
+                func.lower(auth_user.c.name).like(f"%{needle}%"),
+            )
+        )
+        statement = statement.where(or_(named, by_owner))
+
+    total = (
+        await db.execute(
+            select(func.count()).select_from(statement.order_by(None).subquery())
+        )
+    ).scalar_one()
+
+    listings = list(
+        (
+            await db.execute(
+                statement.options(selectinload(TradeListing.cards))
+                .order_by(TradeListing.created_at.desc(), TradeListing.id)
+                .limit(limit)
+                .offset(offset)
+            )
+        ).scalars()
+    )
+
+    return Page(
+        items=await _listing_views(db, user_id, listings),
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
+
+
+async def listing_view(
+    db: AsyncSession, user_id: str, listing_id: UUID
+) -> TradeListingView:
+    """One listing, described the way the board describes it."""
+    listing = (
+        await db.execute(
+            select(TradeListing)
+            .options(selectinload(TradeListing.cards))
+            .where(TradeListing.id == listing_id)
+        )
+    ).scalar_one()
+    return (await _listing_views(db, user_id, [listing]))[0]
+
+
+async def _listing_views(
+    db: AsyncSession, user_id: str, listings: list[TradeListing]
+) -> list[TradeListingView]:
+    """Describe listings for one reader, in one round of queries."""
+    if not listings:
+        return []
+
+    card_ids = {entry.card_id for listing in listings for entry in listing.cards}
+    owners = {listing.owner_id for listing in listings}
+    cards = {
+        card.id: card
+        for card in (
+            await db.execute(
+                select(Card)
+                .options(joinedload(Card.card_set), joinedload(Card.species))
+                .where(Card.id.in_(card_ids))
+            )
+        )
+        .unique()
+        .scalars()
+    }
+    names: dict[str, str | None] = {
+        row[0]: row[1]
+        for row in (
+            await db.execute(
+                select(auth_user.c.id, auth_user.c.name).where(
+                    auth_user.c.id.in_(owners | {user_id})
+                )
+            )
+        ).all()
+    }
+
+    spares = _spares().subquery()
+    held = {
+        (row[0], row[1])
+        for row in (
+            await db.execute(
+                select(spares.c.user_id, spares.c.card_id).where(
+                    spares.c.user_id.in_(owners | {user_id}),
+                    spares.c.card_id.in_(card_ids),
+                )
+            )
+        ).all()
+    }
+
+    return [_listing_view(listing, user_id, cards, names, held) for listing in listings]
+
+
+def _listing_view(
+    listing: TradeListing,
+    user_id: str,
+    cards: dict[str, Card],
+    names: dict[str, str | None],
+    held: set[tuple[str, str]],
+) -> TradeListingView:
+    gives = [
+        _listing_card(cards[entry.card_id], entry.condition)
+        for entry in listing.cards
+        if entry.side is OfferSide.OFFERED
+    ]
+    wants = [
+        _listing_card(cards[entry.card_id], entry.condition)
+        for entry in listing.cards
+        if entry.side is OfferSide.REQUESTED
+    ]
+    give_value = sum((_worth(entry) for entry in gives), Decimal(0))
+    want_value = sum((_worth(entry) for entry in wants), Decimal(0))
+    missing = sum(1 for entry in wants if (user_id, entry.card.id) not in held)
+
+    return TradeListingView(
+        id=listing.id,
+        owner_id=listing.owner_id,
+        owner_name=names.get(listing.owner_id),
+        is_mine=listing.owner_id == user_id,
+        status=listing.status,
+        gives=sorted(gives, key=lambda entry: entry.card.id),
+        wants=sorted(wants, key=lambda entry: entry.card.id),
+        give_value=give_value,
+        want_value=want_value,
+        balance=give_value - want_value,
+        available=listing.status is ListingStatus.OPEN
+        and all((listing.owner_id, entry.card.id) in held for entry in gives),
+        can_fulfil=missing == 0,
+        missing=missing,
+        note=listing.note,
+        offer_id=listing.offer_id,
+        created_at=listing.created_at,
+        taken_at=listing.taken_at,
+    )
+
+
+def _listing_card(card: Card, condition: CardCondition | None) -> ListingCardView:
+    return ListingCardView(
+        card=CardView.model_validate(card),
+        condition=condition,
+        price_usd=card.price_usd,
+        adjusted_usd=None if condition is None else adjusted(card.price_usd, condition),
+    )
+
+
+def _worth(entry: ListingCardView) -> Decimal:
+    """What a listed card counts as: the discounted price where a state is
+    known, and the market price where the reader is still to name one."""
+    if entry.adjusted_usd is not None:
+        return entry.adjusted_usd
+    return entry.price_usd or Decimal(0)

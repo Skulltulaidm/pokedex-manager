@@ -24,6 +24,12 @@ class OfferSide(enum.StrEnum):
     REQUESTED = "requested"
 
 
+class ListingStatus(enum.StrEnum):
+    OPEN = "open"
+    TAKEN = "taken"
+    CANCELLED = "cancelled"
+
+
 class TradeOffer(Base):
     """A proposal between two collectors.
 
@@ -92,3 +98,66 @@ class TradeOfferCard(Base):
     )
 
     offer: Mapped[TradeOffer] = relationship(back_populates="cards", lazy="raise")
+
+
+class TradeListing(Base):
+    """A swap published to nobody in particular.
+
+    An offer has an address and a listing does not, and that is the whole
+    difference: anyone who holds what it asks for can take it, and taking it is
+    the agreement. Taking one writes a TradeOffer that is already accepted, so
+    a trade that started on the board and one that started as a proposal are
+    the same thing from then on.
+    """
+
+    __tablename__ = "trade_listing"
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=func.gen_random_uuid())
+    owner_id: Mapped[str] = mapped_column(
+        ForeignKey(AUTH_USER_ID, ondelete="CASCADE"), index=True
+    )
+
+    status: Mapped[ListingStatus] = mapped_column(
+        pg_enum(ListingStatus, "listing_status"), default=ListingStatus.OPEN, index=True
+    )
+    note: Mapped[str | None] = mapped_column(Text)
+
+    # The trade it turned into. Whoever took it is that offer's recipient, and
+    # keeping the taker only there stops the two records from disagreeing.
+    offer_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey(f"{SCHEMA}.trade_offer.id", ondelete="SET NULL"), index=True
+    )
+
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    taken_at: Mapped[datetime | None]
+
+    cards: Mapped[list["TradeListingCard"]] = relationship(
+        back_populates="listing", cascade="all, delete-orphan", lazy="raise"
+    )
+
+
+class TradeListingCard(Base):
+    """One card on one side of a listing, in the publisher's terms.
+
+    `OFFERED` is what the publisher hands over and `REQUESTED` what they are
+    asking for, the same way round as on an offer.
+    """
+
+    __tablename__ = "trade_listing_card"
+    __table_args__ = (
+        UniqueConstraint("listing_id", "card_id", "side", name="uq_trade_listing_card"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=func.gen_random_uuid())
+    listing_id: Mapped[UUID] = mapped_column(
+        ForeignKey(f"{SCHEMA}.trade_listing.id", ondelete="CASCADE"), index=True
+    )
+    card_id: Mapped[str] = mapped_column(ForeignKey(f"{SCHEMA}.card.id"), index=True)
+    side: Mapped[OfferSide] = mapped_column(pg_enum(OfferSide, "offer_side"))
+    # Only the given side has one: what state a wanted card arrives in is
+    # whoever takes the listing to answer, and there is nobody to ask yet.
+    condition: Mapped[CardCondition | None] = mapped_column(
+        pg_enum(CardCondition, "card_condition")
+    )
+
+    listing: Mapped[TradeListing] = relationship(back_populates="cards", lazy="raise")

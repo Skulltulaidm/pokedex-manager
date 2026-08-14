@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { CardImage } from "@/components/card-image";
 import { PanelSkeleton } from "@/components/pokeball";
 import { CardPreview, type PreviewCard, type PreviewSides } from "@/components/card-preview";
+import { ListingBoard, type Filter } from "@/components/listing-board";
 import { OfferList } from "@/components/offer-list";
 import { Pager } from "@/components/pager";
 import { ScreenHeader } from "@/components/screen-header";
@@ -49,6 +50,9 @@ function Trades() {
   const offersPage = Math.max(1, Number(params.get("op") ?? 1));
   const search = params.get("q") ?? "";
   const side = params.get("lado");
+  const boardPage = Math.max(1, Number(params.get("tp") ?? 1));
+  const boardSearch = params.get("tq") ?? "";
+  const boardFilter = (params.get("tf") as Filter | null) ?? "todas";
 
   const { data: matches, isPending } = useListTrades(
     {
@@ -112,6 +116,17 @@ function Trades() {
           <OfferList offers={open.items} />
         </section>
       )}
+
+      <div className="mb-10">
+        <ListingBoard
+          page={boardPage}
+          search={boardSearch}
+          filter={boardFilter}
+          onPage={(next) => setParam({ tp: String(next) })}
+          onSearch={(next) => setParam({ tq: next, tp: undefined })}
+          onFilter={(next) => setParam({ tf: next === "todas" ? undefined : next, tp: undefined })}
+        />
+      </div>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-lg font-semibold">Coincidencias</h2>

@@ -16,8 +16,11 @@ from pokedex.db.models.conversation import (
 from pokedex.db.models.external import auth_user
 from pokedex.db.models.share import ShareLink
 from pokedex.db.models.trade import (
+    ListingStatus,
     OfferSide,
     OfferStatus,
+    TradeListing,
+    TradeListingCard,
     TradeOffer,
     TradeOfferCard,
 )
@@ -30,6 +33,7 @@ __all__ = [
     "CardSet",
     "CollectionItem",
     "Conversation",
+    "ListingStatus",
     "Message",
     "MessageRole",
     "OfferSide",
@@ -39,6 +43,8 @@ __all__ = [
     "ShareLink",
     "Species",
     "SpeciesTrivia",
+    "TradeListing",
+    "TradeListingCard",
     "TradeOffer",
     "TradeOfferCard",
     "UserPreference",
