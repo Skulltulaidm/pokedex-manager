@@ -1,0 +1,697 @@
+% PokéDex Manager — manual de usuario
+% Compile with: latexmk -xelatex -interaction=nonstopmode manual-usuario.tex
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setdefaultlanguage{spanish}
+
+\usepackage[
+  a4paper,
+  top=2.5cm, bottom=2.3cm, left=2.1cm, right=2.1cm,
+  headsep=0.9cm, footskip=1.1cm
+]{geometry}
+
+\usepackage[table]{xcolor}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{tikz}
+\usepackage[most]{tcolorbox}
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{needspace}
+\usepackage[hidelinks]{hyperref}
+
+\usetikzlibrary{calc}
+
+% ---------------------------------------------------------------------------
+% Palette. Every pair used for text was checked against WCAG AA
+% (4.5:1 body, 3:1 large) with the relative-luminance formula.
+% ---------------------------------------------------------------------------
+\definecolor{paper}{HTML}{FFFFFF}
+\definecolor{ink}{HTML}{101216}
+\definecolor{coverInk}{HTML}{0E1014}
+\definecolor{slab}{HTML}{1A1D23}
+
+\definecolor{pokeRed}{HTML}{C21426}
+\definecolor{pokeRedDark}{HTML}{8E0E1B}
+\definecolor{pokeRedLight}{HTML}{FF7A85}
+\definecolor{pokeRedTint}{HTML}{FDECEE}
+
+\definecolor{graphite}{HTML}{2A2F38}
+\definecolor{steel}{HTML}{5B6472}
+\definecolor{steelDark}{HTML}{4A5260}
+\definecolor{mist}{HTML}{F4F5F7}
+\definecolor{mistDark}{HTML}{E7E9ED}
+\definecolor{coverMuted}{HTML}{B9C0CC}
+\definecolor{coverFaint}{HTML}{8B94A3}
+
+\definecolor{gold}{HTML}{8A6100}
+\definecolor{goldTint}{HTML}{FFF6DC}
+\definecolor{leaf}{HTML}{1F6A3E}
+\definecolor{leafTint}{HTML}{E9F5EE}
+\definecolor{water}{HTML}{14568F}
+\definecolor{waterTint}{HTML}{E8F0F9}
+\definecolor{psychic}{HTML}{8A2570}
+\definecolor{psychicTint}{HTML}{F9EAF5}
+
+% ---------------------------------------------------------------------------
+% Type
+% ---------------------------------------------------------------------------
+\setmainfont{Charter}[
+  BoldFont={Charter Bold},
+  ItalicFont={Charter Italic},
+  BoldItalicFont={Charter Bold Italic},
+  Numbers=Lining
+]
+\setsansfont{Avenir Next}[
+  UprightFont={Avenir Next Regular},
+  BoldFont={Avenir Next Demi Bold},
+  ItalicFont={Avenir Next Italic}
+]
+\setmonofont{Menlo}[Scale=0.86]
+
+\newfontfamily\displayfont{Avenir Next}[
+  UprightFont={Avenir Next Medium},
+  BoldFont={Avenir Next Bold}
+]
+
+\color{ink}
+\linespread{1.09}
+
+% ---------------------------------------------------------------------------
+% Headings
+% ---------------------------------------------------------------------------
+% A pokéball drawn at the size of a word: red cap, pale body, dark band and
+% button. Used as the mark on every chapter opener.
+\newcommand{\pokeball}[1][0.34cm]{%
+  \begin{tikzpicture}[baseline=-0.32ex]
+    \begin{scope}
+      \clip (0,0) circle (#1);
+      \fill[pokeRed] (-#1,0) rectangle (#1,#1);
+      \fill[mist]    (-#1,-#1) rectangle (#1,0);
+      \fill[graphite] (-#1,-0.055cm) rectangle (#1,0.055cm);
+    \end{scope}
+    \draw[graphite, line width=0.8pt] (0,0) circle (#1);
+    \fill[paper] (0,0) circle (0.115cm);
+    \draw[graphite, line width=0.8pt] (0,0) circle (0.115cm);
+  \end{tikzpicture}%
+}
+
+\titleformat{\section}[display]
+  {\normalfont\sffamily}
+  {%
+    \pokeball[0.30cm]\hspace{0.34cm}%
+    {\color{pokeRed}\displayfont\bfseries\fontsize{26}{26}\selectfont\thesection}%
+  }
+  {0.28cm}
+  {\color{ink}\displayfont\bfseries\fontsize{23}{27}\selectfont\raggedright}
+  [{\vspace{0.16cm}\color{pokeRed}\rule{3.2cm}{2.2pt}}]
+
+\titlespacing*{\section}{0pt}{0pt}{0.85\baselineskip}
+
+\titleformat{\subsection}
+  {\normalfont\sffamily\bfseries\fontsize{13}{16}\selectfont\color{graphite}}
+  {\color{pokeRed}\thesubsection}{0.6em}{}
+\titlespacing*{\subsection}{0pt}{1.25\baselineskip}{0.35\baselineskip}
+
+% ---------------------------------------------------------------------------
+% Running heads and footer
+% ---------------------------------------------------------------------------
+\newcommand{\pagepill}{%
+  \tikz[baseline=(x.base)]{%
+    \node[fill=pokeRed, text=paper, rounded corners=3pt, inner xsep=6pt, inner ysep=2.5pt,
+          font=\sffamily\bfseries\footnotesize] (x) {\thepage};}%
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\fancyhead[L]{\sffamily\footnotesize\color{steelDark}\leftmark}
+\fancyhead[R]{\sffamily\footnotesize\color{steelDark}PokéDex Manager}
+\fancyfoot[C]{\pagepill}
+
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\pagepill}%
+  \renewcommand{\headrulewidth}{0pt}}
+
+\makeatletter
+\renewcommand{\sectionmark}[1]{\markboth{\thesection\quad #1}{}}
+\makeatother
+
+% ---------------------------------------------------------------------------
+% Table of contents
+% ---------------------------------------------------------------------------
+\titlecontents{section}
+  [2.6em]
+  {\vspace{0.42em}\sffamily\bfseries\color{ink}}
+  {\makebox[2.6em][l]{\color{pokeRed}\thecontentslabel}}
+  {}
+  {\titlerule*[0.6pc]{\color{steelDark}.}\contentspage}
+
+\titlecontents{subsection}
+  [2.6em]
+  {\vspace{0.12em}\sffamily\small\color{steelDark}}
+  {}
+  {}
+  {\titlerule*[0.6pc]{\color{steelDark}.}\contentspage}
+
+% ---------------------------------------------------------------------------
+% Callouts
+% ---------------------------------------------------------------------------
+\newtcolorbox{pokedexbox}[1]{
+  enhanced, breakable,
+  colback=pokeRedTint, colframe=pokeRed,
+  boxrule=0pt, leftrule=3pt,
+  arc=2pt, outer arc=2pt,
+  left=10pt, right=10pt, top=9pt, bottom=9pt,
+  fontupper=\small\color{ink},
+  title={\sffamily\bfseries\footnotesize\MakeUppercase{#1}},
+  coltitle=paper, colbacktitle=pokeRed,
+  attach boxed title to top left={xshift=3pt, yshift=-2pt},
+  boxed title style={boxrule=0pt, arc=2pt, left=6pt, right=6pt, top=2pt, bottom=2pt},
+  top=16pt
+}
+
+\newtcolorbox{notabox}[2][mist]{
+  enhanced, breakable,
+  colback=#1, colframe=#1,
+  boxrule=0pt, arc=3pt,
+  left=11pt, right=11pt, top=9pt, bottom=9pt,
+  fontupper=\small\color{ink},
+  before upper={\par\noindent{\sffamily\bfseries\small\color{graphite}#2}\par\vspace{3pt}}
+}
+
+\newtcolorbox{tipbox}[1]{
+  enhanced, colback=leafTint, colframe=leafTint,
+  boxrule=0pt, arc=3pt, left=11pt, right=11pt, top=9pt, bottom=9pt,
+  fontupper=\small\color{ink},
+  before upper={\par\noindent{\sffamily\bfseries\small\color{leaf}#1}\par\vspace{3pt}}
+}
+
+\newtcolorbox{avisobox}[1]{
+  enhanced, colback=goldTint, colframe=goldTint,
+  boxrule=0pt, arc=3pt, left=11pt, right=11pt, top=9pt, bottom=9pt,
+  fontupper=\small\color{ink},
+  before upper={\par\noindent{\sffamily\bfseries\small\color{gold}#1}\par\vspace{3pt}}
+}
+
+\newtcolorbox{datobox}[1]{
+  enhanced, colback=waterTint, colframe=waterTint,
+  boxrule=0pt, arc=3pt, left=11pt, right=11pt, top=9pt, bottom=9pt,
+  fontupper=\small\color{ink},
+  before upper={\par\noindent{\sffamily\bfseries\small\color{water}#1}\par\vspace{3pt}}
+}
+
+\newtcolorbox{iabox}[1]{
+  enhanced, colback=psychicTint, colframe=psychicTint,
+  boxrule=0pt, arc=3pt, left=11pt, right=11pt, top=9pt, bottom=9pt,
+  fontupper=\small\color{ink},
+  before upper={\par\noindent{\sffamily\bfseries\small\color{psychic}#1}\par\vspace{3pt}}
+}
+
+% ---------------------------------------------------------------------------
+% Figures
+% ---------------------------------------------------------------------------
+\captionsetup{
+  font={sf,footnotesize,color=steelDark},
+  labelfont={sf,bf,footnotesize,color=pokeRedDark},
+  labelsep=period,
+  justification=raggedright,
+  singlelinecheck=false,
+  skip=6pt
+}
+
+\newcommand{\pantalla}[3][\textwidth]{%
+  \begin{figure}[H]
+    \centering
+    \setlength{\fboxsep}{0pt}%
+    \setlength{\fboxrule}{0.6pt}%
+    {\color{mistDark}\fbox{\includegraphics[width=#1]{img/#2}}}%
+    \caption{#3}
+  \end{figure}%
+}
+
+% ---------------------------------------------------------------------------
+% Tables
+% ---------------------------------------------------------------------------
+\newcommand{\thead}[1]{\sffamily\bfseries\footnotesize\color{paper}#1}
+\renewcommand{\arraystretch}{1.32}
+
+\newcommand{\cuenta}[1]{{\ttfamily\footnotesize #1}}
+
+\setlist[itemize]{leftmargin=1.15em, itemsep=2pt, topsep=4pt}
+\setlist[description]{leftmargin=0pt, labelwidth=0pt, labelindent=0pt,
+  style=nextline, itemsep=6pt, topsep=5pt,
+  font=\sffamily\bfseries\color{graphite}}
+
+\hypersetup{
+  pdftitle={PokéDex Manager — Manual de usuario},
+  pdfauthor={PokéDex Manager},
+  pdflang={es}
+}
+
+\begin{document}
+
+% ===========================================================================
+% Portada
+% ===========================================================================
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture, overlay]
+  \fill[coverInk] (current page.south west) rectangle (current page.north east);
+
+  % Pokéball motif, low contrast on purpose: it is decoration, not information.
+  \begin{scope}
+    \clip (current page.south west) rectangle (current page.north east);
+    \coordinate (ball) at ($(current page.south east)+(-2.6cm,5.6cm)$);
+    \fill[pokeRed, opacity=0.20] (ball) ++(-7,0) arc (180:0:7cm) -- cycle;
+    \fill[coverFaint, opacity=0.09] (ball) ++(7,0) arc (0:-180:7cm) -- cycle;
+    \draw[coverFaint, opacity=0.32, line width=1.1pt] (ball) circle (7cm);
+    \draw[coverFaint, opacity=0.32, line width=1.4pt] ($(ball)+(-7,0)$) -- ($(ball)+(7,0)$);
+    \fill[coverInk] (ball) circle (2cm);
+    \draw[coverFaint, opacity=0.45, line width=1.6pt] (ball) circle (2cm);
+    \draw[coverFaint, opacity=0.45, line width=1.2pt] (ball) circle (1.05cm);
+
+    \fill[pokeRed, opacity=0.22] ($(current page.north west)+(-2cm,1.5cm)$) circle (5.6cm);
+    \draw[coverFaint, opacity=0.16, line width=0.9pt]
+      ($(current page.north west)+(-2cm,1.5cm)$) circle (7.8cm);
+  \end{scope}
+\end{tikzpicture}
+
+\vspace*{3.4cm}
+\noindent
+{\sffamily\bfseries\fontsize{10}{12}\selectfont\color{pokeRedLight}%
+ \MakeUppercase{Manual de usuario}}
+
+\vspace{0.55cm}
+\noindent
+{\displayfont\bfseries\fontsize{50}{54}\selectfont\color{paper}%
+ Poké\textcolor{coverMuted}{Dex}\\ Manager}
+
+\vspace{0.7cm}
+\noindent
+\begin{minipage}{11.2cm}
+{\sffamily\fontsize{12.5}{18}\selectfont\color{coverMuted}%
+ Cataloga tus cartas, mira cuánto valen de verdad, y cámbialas con quien tenga
+ justo lo que te falta.}
+\end{minipage}
+
+\vfill
+
+\noindent
+{\color{coverFaint}\rule{5.5cm}{0.8pt}}
+
+\vspace{0.5cm}
+\noindent
+\begin{minipage}{\textwidth}
+\sffamily\footnotesize
+\setlength{\tabcolsep}{0pt}
+\begin{tabular}{@{}p{3.3cm}p{9.5cm}@{}}
+{\color{coverMuted}Versión} & {\color{paper}1.0} \\[3pt]
+{\color{coverMuted}Aplicación} & {\color{paper}PokéDex Manager (web)} \\[3pt]
+{\color{coverMuted}Pruébala en} & {\color{paper}\url{https://web-production-78a4b.up.railway.app}} \\[3pt]
+{\color{coverMuted}Código} & {\color{paper}\url{https://github.com/Skulltulaidm/pokedex-manager}} \\[3pt]
+{\color{coverMuted}Idioma} & {\color{paper}Español} \\
+\end{tabular}
+\end{minipage}
+
+\vspace{0.9cm}
+\end{titlepage}
+
+% ===========================================================================
+% Índice
+% ===========================================================================
+\thispagestyle{plain}
+\noindent
+{\sffamily\bfseries\fontsize{9.5}{11}\selectfont\color{pokeRed}%
+ \MakeUppercase{Contenido}}
+
+\vspace{0.25cm}
+\noindent{\color{pokeRed}\rule{3.2cm}{2.2pt}}
+\vspace{0.9cm}
+
+\setcounter{tocdepth}{1}
+\makeatletter\@starttoc{toc}\makeatother
+
+\vspace{1.2cm}
+\begin{notabox}{Cómo leer este manual}
+Cada capítulo se puede leer suelto. Si sólo quieres ver la aplicación
+funcionando, ve al capítulo~2: hay tres cuentas de prueba ya cargadas y una
+dirección donde abrirlas sin instalar nada.
+\end{notabox}
+
+\clearpage
+
+% ===========================================================================
+\section{Qué es y qué resuelve}
+% ===========================================================================
+
+Una caja de zapatos con cartas es ilegible. No sabes qué tienes, no sabes qué
+vale, y no sabes a cuántas cartas estás de terminar un set. PokéDex Manager
+convierte esa caja en algo que se puede consultar.
+
+Registras tus cartas ---a mano o fotografiándolas--- y a partir de ahí la
+aplicación te responde tres preguntas que antes tenías que responder de memoria:
+
+\begin{description}
+  \item[Qué tengo.] El catálogo completo con tus cartas encendidas y las que te
+  faltan apagadas, set por set.
+  \item[Cuánto vale.] Precio de mercado de cada carta, cuánto pagaste, y por
+  tanto cuánto has ganado o perdido.
+  \item[Con quién puedo cambiar.] Otros coleccionistas que tienen repetido lo
+  que buscas y buscan lo que a ti te sobra.
+\end{description}
+
+Encima de todo eso hay un asistente al que le puedes preguntar en español
+---«¿cuál es mi carta más cara?», «¿qué me falta del Base Set?»--- y que se
+acuerda de lo que le cuentas.
+
+\begin{pokedexbox}{Lo que no hace}
+No compra ni vende cartas, no cobra comisiones y no mueve nada por su cuenta.
+Un trueque se cierra entre dos personas; la aplicación sólo lo propone, lo
+valora y guarda la conversación.
+\end{pokedexbox}
+
+% ===========================================================================
+\clearpage
+\section{Los tres accesos}
+% ===========================================================================
+
+La forma más rápida de entender la aplicación es entrar con una cuenta que ya
+tenga datos dentro. Hay tres preparadas, cada una pensada para enseñarte una
+cara distinta del producto. El mismo formulario de entrada crea una cuenta
+nueva: sólo hay que tocar «¿Primera vez? Crear una cuenta».
+
+\medskip
+\noindent
+{\sffamily\bfseries\small\color{graphite}Ábrelas sin instalar nada en:}\\[2pt]
+\noindent{\ttfamily\small\href{https://web-production-78a4b.up.railway.app}{https://web-production-78a4b.up.railway.app}}
+
+\medskip
+\noindent
+{\sffamily\bfseries\small\color{graphite}Contraseña de las tres:}
+{\ttfamily\small pokedex2026}
+
+\vspace{0.5cm}
+
+\noindent
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{4.35cm} >{\raggedright\arraybackslash\sffamily\small}p{2.75cm} X@{}}
+\rowcolor{graphite}
+\thead{Correo} & \thead{Nombre} & \thead{Qué vas a ver} \\
+\cuenta{coleccionista@pokedex.test} & AshKetchum99 &
+  34 cartas en 4 sets, todas con precio de compra. Es la cuenta de la cartera:
+  valor, rendimiento, posiciones y concentración. \\
+\rowcolor{mist}
+\cuenta{trader@pokedex.test} & xX\_TradeLord\_Xx &
+  18 cartas, 9 de ellas repetidas, 10 deseos y 3 publicaciones en el tablón. Es
+  la cuenta del trueque: emparejamiento, ofertas, tablón y simulador. \\
+\cuenta{novato@pokedex.test} & PikaRookie &
+  2 cartas y 4 deseos. Es la cuenta de empezar de cero: pantallas vacías,
+  agregar la primera carta, escanear. \\
+\bottomrule
+\end{tabularx}
+
+\vspace{0.35cm}
+
+\begin{tipbox}{Por dónde empezar}
+Si tienes cinco minutos, entra con \cuenta{trader@pokedex.test}: es la única
+desde la que funciona la propuesta de trueque de la IA, porque necesita cartas
+repetidas y una lista de deseos a la vez. Si lo que te interesa es el dinero,
+entra con \cuenta{coleccionista@pokedex.test}.
+\end{tipbox}
+
+\begin{avisobox}{Son cuentas compartidas}
+Cualquiera que lea este manual entra con las mismas credenciales, así que lo
+que hagas en ellas lo verán los demás. Para tus cartas de verdad, créate una
+cuenta propia.
+\end{avisobox}
+
+% ===========================================================================
+\clearpage
+\section{Tu colección}
+% ===========================================================================
+
+\subsection{El catálogo}
+
+La pantalla principal no es tu colección: es el catálogo entero. Tus cartas
+salen a color y las que no tienes salen apagadas, de modo que el hueco se ve
+sin tener que buscarlo. Arriba está lo que ya vale tu cartera y lo que costaría
+completar el catálogo.
+
+Puedes filtrar por \emph{Todas}, \emph{Tuyas} o \emph{Te faltan}, ordenar,
+acotar por set o generación, y usar la fila de tipos para quedarte con uno solo.
+Al tocar una carta se abre su ficha: precio, rareza, PS, año, estadísticas de la
+especie y su línea evolutiva.
+
+\pantalla{catalogo-desktop.png}{Catálogo con la cuenta \cuenta{coleccionista}.
+Las cartas apagadas son las que faltan; la barra de arriba compara lo que vale
+tu cartera con lo que cuesta completar el catálogo.}
+
+\subsection{Agregar una carta a mano}
+
+Desde \emph{Agregar una carta} buscas por nombre, eliges la impresión correcta
+---la imagen te dice de qué set es--- y rellenas estado, cuántas tienes, cuánto
+pagaste por cada una y una nota.
+
+\begin{datobox}{El precio de compra es opcional, pero cuenta}
+Si lo dejas vacío la carta entra igual en tu colección y en el valor estimado,
+pero queda fuera del rendimiento. La aplicación te lo avisa en el propio
+formulario.
+\end{datobox}
+
+\pantalla{agregar-formulario-desktop.png}{Alta manual de una carta. Poner
+«2» en \emph{Cuántas tienes} es lo que convierte la segunda copia en una
+repetida disponible para trueque.}
+
+\subsection{Escanear}
+
+Le haces una foto a la carta y el modelo transcribe lo que está impreso: nombre,
+número, total del set y PS. Con eso la aplicación decide qué carta es y te
+enseña \emph{por qué} coincide. Si no acertó, «No es esa» abre las demás
+candidatas con su motivo. Tú eliges el estado y confirmas.
+
+\pantalla{escaneo-resultado-desktop.png}{Resultado de un escaneo. Arriba, lo que
+el modelo leyó en la foto; abajo, la carta propuesta y en qué coincide.}
+
+% ===========================================================================
+\clearpage
+\section{Tu cartera}
+% ===========================================================================
+
+\emph{Resumen} tiene cuatro pestañas. La primera es la foto general de la
+colección; la segunda la abre carta por carta.
+
+\begin{description}
+  \item[Valor estimado.] La suma del precio de mercado de tus cartas. Debajo,
+  cuántas de tus cartas tienen precio: si son 34 de 34, el total es completo.
+  \item[Rendimiento.] Lo que pagaste frente a lo que valen hoy, en dinero y en
+  porcentaje.
+  \item[Tus sets.] Cada casilla es una carta impresa del set y las encendidas
+  son las tuyas. Van ordenados por lo que cuesta terminarlos, no por cuántas
+  faltan.
+\end{description}
+
+\begin{avisobox}{Por qué una carta puede no aparecer en el rendimiento}
+El rendimiento compara dos cifras: lo que pagaste y lo que vale. Si nunca
+registraste cuánto pagaste por una carta, esa resta no se puede hacer, así que
+la carta queda fuera del cálculo ---no entra como cero, que haría parecer que
+la regalaron---. Sí sigue contando en el valor estimado. Por eso una colección
+puede valer \$3.339 y tener un rendimiento calculado sobre menos cartas: en la
+tabla de posiciones esas aparecen con un guion en la columna de costo.
+\end{avisobox}
+
+\pantalla{resumen-desktop.png}{Resumen de \cuenta{coleccionista}: valor
+estimado, cobertura de precios, rendimiento y las cartas que más pesan.}
+
+\subsection{Posiciones y concentración}
+
+Cada carta es una posición: sus copias juntas, lo que pagaste, lo que valen hoy,
+la ganancia o pérdida y qué porcentaje de la cartera representa. Se ordena
+tocando cualquier columna.
+
+Al lado, \emph{Concentración} responde a una pregunta que el total esconde: en
+cuántas cartas está la mitad de tu dinero. Una cartera que se apoya en tres
+cartas corre un riesgo distinto de una repartida entre cien.
+
+\pantalla{posiciones-desktop.png}{Posiciones ordenadas por valor, y a la derecha
+la concentración: la mitad de esta cartera está en 7 de sus 34 cartas.}
+
+% ===========================================================================
+\clearpage
+\section{Trueques}
+% ===========================================================================
+
+\subsection{Emparejamiento}
+
+Un trueque necesita las dos mitades: que alguien quiera una de tus repetidas y
+que tenga repetida una de tu lista de deseos. Cuando las dos coinciden, el par
+aparece en \emph{Coincidencias} ya armado y valorado, con el saldo a tu favor o
+en tu contra.
+
+Desde ahí puedes proponerlo tal cual, o abrir «Elegir otras cartas» y montar
+otro reparto carta por carta.
+
+\pantalla{coincidencias-desktop.png}{Coincidencias: la aplicación arma el
+intercambio y calcula la diferencia de valor de los dos lados.}
+
+\subsection{El tablón abierto}
+
+No siempre quieres elegir con quién. Una publicación del tablón dice qué das y
+qué pides, sin destinatario, y la toma quien pueda cumplirla. Se queda en pie
+hasta que alguien la acepte o la retires, y ninguna carta se mueve de tu
+colección mientras tanto.
+
+\pantalla{tablon-desktop.png}{Una publicación ajena en el tablón. El botón
+aparece atenuado con el motivo al lado: falta una carta repetida de las que
+pide.}
+
+\subsection{Ofertas y contraofertas}
+
+Una oferta dirigida llega a \emph{Trueques} y a \emph{Novedades}. Tienes cuatro
+respuestas: aceptar, rechazar, contraofertar o escribir. La contraoferta abre el
+mismo selector de cartas y, al enviarla, rechaza la original: no pueden quedar
+dos ofertas en pie sobre la misma mesa.
+
+\pantalla{ofertas-desktop.png}{Arriba, una oferta recibida con sus cuatro
+respuestas. Abajo, una oferta que tú enviaste y que sigue pendiente.}
+
+\begin{tipbox}{Aceptar no mueve cartas}
+Aceptar cierra el acuerdo, no el intercambio físico. Las cartas cambian de dueño
+cuando ustedes se ven; después cada uno actualiza su colección.
+\end{tipbox}
+
+\subsection{Mensajes}
+
+Un trueque se cierra hablando. Desde cualquier oferta, publicación o perfil hay
+un botón \emph{Mensaje} que abre la conversación con esa persona.
+
+\pantalla{mensajes-hilo-desktop.png}{Conversación entre dos coleccionistas.
+El icono de arriba a la derecha lleva directo a armar un trueque con esa
+persona.}
+
+\subsection{El simulador y la propuesta de la IA}
+
+El simulador arma un intercambio hipotético y te enseña cómo quedaría tu cartera
+después: valor, cuántas cartas distintas tendrías, en cuántas quedaría la mitad
+del valor y qué porcentaje pesaría la carta más cara. No envía nada.
+
+El botón \emph{Que la IA proponga uno} lo rellena solo. Busca entre tus
+repetidas y tu lista de deseos un cambio que te convenga, y explica por qué.
+Necesita las dos cosas a la vez, así que sólo funciona desde una cuenta que
+tenga repetidas y deseos ---la de \cuenta{trader}, por ejemplo---.
+
+\pantalla[12cm]{simulador-desktop.png}{Propuesta generada por la IA, con su motivo escrito arriba.}
+
+% ===========================================================================
+\clearpage
+\section{El asistente}
+% ===========================================================================
+
+\emph{Preguntar} es un chat en español que lee tu colección. No inventa
+precios: consulta los mismos datos que ves en pantalla y cita las cartas con su
+miniatura y su precio, de modo que puedes comprobar cada cifra.
+
+\begin{iabox}{Dos preguntas reales, con su respuesta}
+\textbf{«¿Cuánto vale mi colección y en qué sets está repartida?»}\\
+\emph{Tu colección tiene un valor total estimado de 3339.19 dólares y cuenta con
+34 cartas distribuidas en cuatro expansiones: Jungle (10 cartas valoradas en
+1241.56 dólares), Fossil (9 cartas, 1198.26 dólares), Paldea Evolved (10 cartas,
+453.36 dólares) y Base Set (5 cartas, 446.01 dólares).}
+
+\medskip
+\textbf{«¿Qué me falta para completar el Base Set y cuánto me costaría?»}\\
+\emph{Actualmente tienes 5 de las 102 cartas de Base Set (Blastoise, Clefairy,
+Gyarados, Mewtwo y Zapdos), por lo que te faltan 97 cartas para completarlo.
+Adquirir las cartas restantes te costaría aproximadamente 1633.66 dólares según
+los precios de mercado actuales.}
+\end{iabox}
+
+\pantalla{preguntar-desktop.png}{El asistente cita las cartas dentro de la
+respuesta: cada chip lleva a la ficha de esa carta.}
+
+\subsection{Lo que recuerda de ti}
+
+Si le dices algo que vale para siempre ---«sólo colecciono cartas de la primera
+generación», «no gasto más de 100 dólares por carta»--- lo guarda y lo aplica en
+las siguientes conversaciones. Puedes ver esa lista, y borrar lo que quieras, en
+\emph{Tu perfil} $\rightarrow$ \emph{Lo que sabe el asistente}.
+
+% ===========================================================================
+\clearpage
+\section{Novedades y tu cuenta}
+% ===========================================================================
+
+\emph{Novedades} reúne lo que pasó sin ti: ofertas que te llegaron, trueques que
+se cerraron, mensajes nuevos y cambios de precio en cartas de tu lista de
+deseos. El filtro \emph{Sin responder} deja sólo lo que espera una acción tuya,
+y la campana de la cabecera lleva la misma cuenta.
+
+\pantalla{novedades-desktop.png}{Novedades con dos entradas pendientes. El punto
+rojo marca lo que todavía no has respondido.}
+
+\subsection{Tu perfil}
+
+En \emph{Tu perfil} cambias tu nombre visible ---el que aparece en tus ofertas---
+y controlas qué ven los demás. Tu perfil público muestra tu nombre, los sets que
+coleccionas y tus repetidas; nunca cuánto vale tu colección. Aparte puedes crear
+un enlace público y revocable con tus cartas, sin totales de dinero. El avatar
+se genera a partir de tu correo: no hay nada que subir.
+
+% ===========================================================================
+\clearpage
+\section{Preguntas frecuentes}
+% ===========================================================================
+
+\begin{description}
+  \item[¿De dónde salen los precios?]
+  Del precio de mercado de TCGplayer, leído una vez al día. Es orientativo, no
+  una tasación: el estado real y la edición cambian lo que vale una carta.
+
+  \item[Registré una carta y no aparece en el rendimiento.]
+  Le falta el precio de compra. Ábrela desde \emph{Posiciones} o desde el
+  catálogo y rellena «Cuánto pagaste por cada una».
+
+  \item[¿Por qué no me sale ninguna coincidencia?]
+  Porque falta una de las dos mitades. Necesitas al menos una carta repetida
+  ---cantidad 2 o más--- y al menos un deseo apuntado.
+
+  \item[¿Qué diferencia hay entre una oferta y una publicación del tablón?]
+  La oferta va dirigida a una persona concreta. La publicación no tiene
+  destinatario: la toma quien pueda cumplirla.
+
+  \item[Acepté un trueque, ¿ya cambiaron las cartas de dueño?]
+  No. Aceptar cierra el acuerdo; el intercambio es físico. Después de verse,
+  cada uno actualiza su colección a mano.
+
+  \item[¿El asistente ve mis notas privadas?]
+  Lee tu colección para responderte a ti. Lo que sale de tu cuenta es sólo lo
+  que compartes: el perfil público y el enlace, y ninguno de los dos incluye
+  notas, fechas de compra ni totales de dinero.
+
+  \item[Escaneé una carta y acertó la especie pero no la impresión.]
+  Toca «No es esa» y elige entre las candidatas. Cada una dice en qué coincidió;
+  el número y el total del set son las señales que más ayudan, así que vale la
+  pena que salgan nítidos en la foto.
+
+  \item[¿Puedo sacar mis datos?]
+  Sí: la colección se exporta en CSV y en JSON.
+\end{description}
+
+\vfill
+
+\begin{notabox}{Sobre este manual}
+Todas las capturas son de la aplicación funcionando, tomadas con las tres
+cuentas de prueba en un navegador de 1440 px de ancho. Las cifras que aparecen son las de esas
+cuentas: en la versión publicada pueden variar, porque el catálogo cargado no es
+el mismo.
+\end{notabox}
+
+\end{document}
