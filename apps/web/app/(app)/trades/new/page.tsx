@@ -315,7 +315,7 @@ function SparePanel({
             className={cn(
               "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
               onlyWanted
-                ? "bg-foreground text-background"
+                ? "bg-primary text-primary-foreground"
                 : "bg-secondary text-muted-foreground hover:text-foreground",
             )}
           >

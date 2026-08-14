@@ -229,7 +229,7 @@ function Chip({
       aria-pressed={active}
       className={cn(
         "rounded-full px-3.5 py-2 text-[13px] font-medium transition-colors",
-        active ? "bg-foreground text-background" : "bg-secondary text-muted-foreground hover:text-foreground",
+        active ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground",
       )}
     >
       {children}
