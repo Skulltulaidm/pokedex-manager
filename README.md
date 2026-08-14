@@ -1,13 +1,25 @@
 # PokéDex Manager
 
-Catalogue a physical Pokémon card collection by photographing it, then ask
-questions about it in plain language.
+Catalogue a physical Pokémon card collection by photographing it, price it, and
+trade it — then ask questions about all of it in plain language.
 
 The interesting problem is not storage. It is that a shoebox of cards is
 unreadable: you cannot tell what you have, what is worth something, or what you
-are three cards away from completing. This turns a pile into a queryable
-collection, and the same data is reachable two ways — a REST API for the web
-app, and an **MCP server** any assistant can connect to.
+are three cards away from completing. This turns a pile into a portfolio you can
+query, value and swap, and the same data is reachable two ways — a REST API for
+the web app, and an **MCP server** any assistant can connect to.
+
+What it does, beyond cataloguing:
+
+- **A portfolio.** Cost against market value, position by position, plus how few
+  cards carry half of it. Prices are read once a day, so the series is real.
+- **Trading.** Matching against other collectors, offers and counter-offers, and
+  an open board where a proposal is published to nobody in particular and taken
+  by whoever can fill it. Condition adjusts what a card is worth.
+- **A trade simulator**, including one the assistant builds for you out of what
+  you hold spare against what you actually want.
+- **Direct messages**, because the deal happens in words.
+- **An assistant** with thirteen tools over MCP, and a memory of what you told it.
 
 ---
 
@@ -56,6 +68,27 @@ echo 'VISION_MODEL=ollama:qwen2.5vl:7b' >> .env
 
 The api container reaches a host Ollama through `host.docker.internal`, which is
 already wired up.
+
+---
+
+## Deploying
+
+Both images are self-sufficient: each brings up the schema it owns before it
+serves. Alembic owns `pokedex`, Better Auth owns `auth`, and the API waits for
+the second because its foreign keys point into it.
+
+What a host needs to set:
+
+| Service | Variables |
+| ------- | --------- |
+| api | `DATABASE_URL` (asyncpg), `AUTH_JWKS_URL`, `AUTH_ISSUER`, `AUTH_AUDIENCE`, `CORS_ORIGINS`, `PORT` |
+| web | `DATABASE_URL`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `NEXT_PUBLIC_API_URL`, `PORT`, `HOSTNAME=0.0.0.0` |
+
+`NEXT_PUBLIC_API_URL` is baked into the client bundle at build time, so it must
+be the URL a browser can reach — not the one the container uses.
+
+Populate a fresh deployment with `pokedex-sync base1 base2 base3` for the
+catalogue, and `pokedex-seed --count 1000` for a marketplace to look at.
 
 ---
 
