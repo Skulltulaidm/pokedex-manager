@@ -24,6 +24,7 @@ dependencies = [
 
 [project.scripts]
 pokedex-sync = "pokedex.cli:sync"
+pokedex-seed = "pokedex.cli:seed"
 
 [build-system]
 requires = ["uv_build>=0.11.29,<0.12.0"]
