@@ -24,9 +24,12 @@ export function CardDetail({
   cardId,
   onClose,
   compact,
+  backLabel,
 }: {
   cardId: string;
   onClose: () => void;
+  /** What the close control says when the list it came from is off screen. */
+  backLabel?: string;
   /** Drops the radar: a hexagon and six labelled bars need more width than a
       side panel has, and squeezed they read as decoration. */
   compact?: boolean;
@@ -45,7 +48,7 @@ export function CardDetail({
   }
 
   return (
-    <div className="max-h-[62svh] overflow-y-auto p-5">
+    <div className="overflow-y-auto p-4 sm:max-h-[62svh] sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="font-display truncate text-xl font-semibold tracking-tight">
@@ -59,8 +62,14 @@ export function CardDetail({
             {card.rarity && ` · ${card.rarity}`}
           </p>
         </div>
-        <Button variant="ghost" size="icon-sm" aria-label="Cerrar la carta" onClick={onClose}>
+        <Button
+          variant="ghost"
+          size={backLabel ? "sm" : "icon-sm"}
+          aria-label={backLabel ?? "Cerrar la carta"}
+          onClick={onClose}
+        >
           <X />
+          {backLabel && <span className="sm:hidden">{backLabel}</span>}
         </Button>
       </div>
 

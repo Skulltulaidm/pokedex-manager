@@ -68,9 +68,12 @@ export function CardsDialog({
         }
       }}
     >
+      {/* Full screen on a phone and a panel from the tablet up. A dialog that
+          keeps a desktop's margins on a 390px screen wastes the only axis it
+          has. */}
       <DialogContent
         showCloseButton
-        className="max-h-[88svh] w-full max-w-4xl gap-0 overflow-hidden p-0 sm:max-w-4xl"
+        className="inset-0 top-0 left-0 h-dvh max-h-dvh w-full max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none p-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:h-auto sm:max-h-[88svh] sm:max-w-4xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl"
       >
         <DialogTitle className="border-edge border-b px-5 py-4 pr-14 text-left">
           <span className="font-display text-lg font-semibold">{title}</span>
@@ -90,16 +93,20 @@ export function CardsDialog({
           </div>
         )}
 
+      {/* A floor on the height so three cards and sixty read as the same
+          surface: without it a short list collapses into a letterbox. */}
         <div
           className={cn(
-            "max-h-[62svh]",
-            openCard && "grid sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]",
+            "min-h-[24rem] flex-1 sm:max-h-[62svh] sm:min-h-[30rem]",
+            openCard && "sm:grid sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]",
           )}
         >
           <div
             className={cn(
-              "overflow-y-auto px-5 py-4",
-              openCard && "border-edge max-h-[62svh] sm:border-r",
+              "overflow-y-auto px-4 py-4 sm:px-5",
+              // On a phone the card takes the screen: two panes in 390px is one
+              // pane too many, so the list steps aside until it is closed.
+              openCard && "hidden sm:block sm:max-h-[62svh] sm:border-r sm:border-edge",
             )}
           >
             {loading && (
@@ -117,7 +124,9 @@ export function CardsDialog({
             <ul
               className={cn(
                 "grid gap-3",
-                openCard ? "grid-cols-2" : "grid-cols-[repeat(auto-fill,minmax(104px,1fr))]",
+                openCard
+                  ? "grid-cols-3 sm:grid-cols-2"
+                  : "grid-cols-[repeat(auto-fill,minmax(92px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(104px,1fr))]",
               )}
             >
               {cards.map((card) => (
@@ -156,7 +165,11 @@ export function CardsDialog({
           </div>
 
           {openCard && (
-            <CardDetail cardId={openCard} onClose={() => setOpenCard(null)} />
+            <CardDetail
+              cardId={openCard}
+              onClose={() => setOpenCard(null)}
+              backLabel="Volver a la lista"
+            />
           )}
         </div>
       </DialogContent>
