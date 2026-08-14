@@ -98,13 +98,7 @@ function CollectionGrid() {
     <>
       <ScreenHeader
         title="Catálogo"
-        meta={
-          data && (
-            <span className="text-muted-foreground shrink-0 text-sm tabular-nums">
-              {total}
-            </span>
-          )
-        }
+        meta={data ? String(total) : undefined}
       >
         <Pager page={page} lastPage={lastPage} onChange={(next) => setParam({ p: String(next) })} />
         <Button
