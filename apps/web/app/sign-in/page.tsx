@@ -1,16 +1,14 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { CardFan } from "@/components/card-fan";
 import { clearAccessToken } from "@/lib/api-client";
-import { authClient } from "@/lib/auth-client";
+import { authClient, leaveTo } from "@/lib/auth-client";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 
 export default function SignInPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
@@ -39,7 +37,7 @@ export default function SignInPage() {
     }
 
     clearAccessToken();
-    router.replace("/collection");
+    leaveTo("/collection");
   }
 
   return (

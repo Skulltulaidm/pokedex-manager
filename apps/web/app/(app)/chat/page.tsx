@@ -115,7 +115,7 @@ export default function ChatPage() {
               <SquarePen />
             </Button>
             <span className="lg:hidden">
-              <AccountMenu email={session?.user.email} />
+              <AccountMenu email={session?.user.email} compact />
             </span>
           </div>
         </header>

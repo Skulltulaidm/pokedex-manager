@@ -27,7 +27,7 @@ import { useGetShareLink } from "@/lib/api/hooks/useGetShareLink";
 import { useListPreferences } from "@/lib/api/hooks/useListPreferences";
 import { useCreateShareLink } from "@/lib/api/hooks/useCreateShareLink";
 import { useRevokeShareLink } from "@/lib/api/hooks/useRevokeShareLink";
-import { authClient } from "@/lib/auth-client";
+import { authClient, leaveTo } from "@/lib/auth-client";
 import { Button, buttonVariants } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
@@ -389,7 +389,7 @@ function Security() {
           onClick={async () => {
             await authClient.signOut();
             clearAccessToken();
-            router.replace("/sign-in");
+            leaveTo("/sign-in");
           }}
         >
           <LogOut />

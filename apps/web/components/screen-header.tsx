@@ -1,6 +1,7 @@
 "use client";
 
 import { AccountMenu } from "@/components/account-menu";
+import { NewsBell } from "@/components/news-bell";
 import { authClient } from "@/lib/auth-client";
 
 /**
@@ -32,10 +33,17 @@ export function ScreenHeader({
           {meta}
         </span>
       )}
-      <div className="ml-auto flex min-w-0 shrink items-center gap-1">
+      {/* The count is what gives way here: a phone fits the title, the screen's
+          own action and the two bits of chrome, and not much else. */}
+      <div className="ml-auto flex shrink-0 items-center gap-1">
         {children}
+        {/* A phone has no site header, and the bottom bar is full at six, so
+            this is how it reaches the novedades screen. */}
+        <span className="ml-1 lg:hidden">
+          <NewsBell />
+        </span>
         <span className="lg:hidden">
-          <AccountMenu email={session?.user.email} />
+          <AccountMenu email={session?.user.email} compact />
         </span>
       </div>
     </header>

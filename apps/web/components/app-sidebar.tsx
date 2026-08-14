@@ -8,6 +8,7 @@ import { PokedexMark } from "@/components/logo";
 import {
   AskIcon,
   CatalogIcon,
+  NewsIcon,
   ScanIcon,
   StatsIcon,
   TradeIcon,
@@ -33,6 +34,18 @@ export const NAV = [
   { href: "/stats", label: "Resumen", icon: StatsIcon },
   { href: "/chat", label: "Preguntar", icon: AskIcon },
   { href: "/profile", label: "Tu perfil", icon: TrainerIcon },
+];
+
+/**
+ * The rail can hold one more than the phone's bar can.
+ *
+ * Seven pills do not fit across 390px once the active one opens to show its
+ * label, so novedades is reached on a phone through the bell in the header
+ * instead of through the bar.
+ */
+export const SIDEBAR_NAV = [
+  ...NAV,
+  { href: "/notifications", label: "Novedades", icon: NewsIcon },
 ];
 
 export function AppSidebar() {
@@ -63,7 +76,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAV.map(({ href, label, icon: Icon }) => (
+              {SIDEBAR_NAV.map(({ href, label, icon: Icon }) => (
                 <SidebarMenuItem key={href}>
                   <SidebarMenuButton
                     isActive={pathname === href}
@@ -85,11 +98,8 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem className="flex items-center gap-2 px-1 py-0.5">
-            <AccountMenu email={session?.user.email} />
-            <p className="text-muted-foreground min-w-0 flex-1 truncate text-xs group-data-[collapsible=icon]:hidden">
-              {session?.user.email}
-            </p>
+          <SidebarMenuItem>
+            <AccountMenu email={session?.user.email} name={session?.user.name} />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
