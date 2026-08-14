@@ -77,6 +77,8 @@ function AddCard() {
   );
 }
 
+const RESULTS = 24;
+
 function SearchStep({
   query,
   onQuery,
@@ -88,9 +90,10 @@ function SearchStep({
 }) {
   const trimmed = query.trim();
   const { data, isFetching } = useSearchCards(
-    { q: trimmed || undefined, limit: 24 },
+    { q: trimmed || undefined, limit: RESULTS },
     { client: { client: apiClient } },
   );
+  const capped = data?.length === RESULTS;
 
   return (
     <>
@@ -156,6 +159,12 @@ function SearchStep({
           </li>
         ))}
       </ul>
+
+      {capped && (
+        <p className="text-muted-foreground mt-4 text-center text-xs">
+          Se muestran las primeras {RESULTS}. Escribe un poco más para acortar la lista.
+        </p>
+      )}
     </>
   );
 }

@@ -6,9 +6,15 @@ import { NAV } from "@/components/app-sidebar";
 import { Separator } from "@workspace/ui/components/separator";
 import { SidebarTrigger } from "@workspace/ui/components/sidebar";
 
+/** Screens you reach from inside another one, so they are not in the sidebar. */
+const ASIDE = [
+  { href: "/compare", label: "Comparar" },
+  { href: "/collectors", label: "Coleccionista" },
+];
+
 export function SiteHeader() {
   const pathname = usePathname();
-  const current = NAV.find((item) => pathname.startsWith(item.href));
+  const current = [...NAV, ...ASIDE].find((item) => pathname.startsWith(item.href));
 
   return (
     <header className="h-(--header-height) shrink-0 items-center border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) hidden lg:flex">
