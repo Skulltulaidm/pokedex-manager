@@ -13,8 +13,8 @@ W -> A: POST /trades/listings/{id}/accept
 activate A
 
 A -> DB: SELECT trade_listing + cards
-DB --> A: publicacion
-alt no existe o no esta abierta
+DB --> A: publicación
+alt no existe o no está abierta
   A --> W: 404 / 409
 end
 
@@ -23,7 +23,7 @@ note right of DB
   Los sobrantes se recalculan AHORA, no como
   estaban al publicar: el lado pedido contra el
   inventario de quien toma, el ofrecido contra
-  el de quien publico.
+  el de quien publicó.
 end note
 DB --> A: sobrantes de ambos lados
 
@@ -39,7 +39,7 @@ alt RETURNING vacio
   A --> W: 409 «already taken»
 else
   DB --> A: id
-  A -> DB: INSERT trade_offer (accepted)\nfrom = quien publico, to = quien toma
+  A -> DB: INSERT trade_offer (accepted)\nfrom = quien publicó, to = quien toma
   A -> DB: INSERT trade_offer_card x n\ncon la condicion copiada
   A -> DB: UPDATE trade_listing SET offer_id
   A --> W: 200 TradeOfferView
@@ -47,8 +47,8 @@ end
 deactivate A
 
 note over W, DB
-  Ninguna carta cambia de dueno en la base: la coleccion
-  es lo que alguien tiene fisicamente en la mano.
+  Ninguna carta cambia de dueno en la base: la colección
+  es lo que alguien tiene físicamente en la mano.
 end note
 
 @enduml

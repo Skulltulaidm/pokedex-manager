@@ -3,7 +3,7 @@
 
 hide footbox
 
-actor Coleccionista as U
+actor Colecciónista as U
 participant "chat-stream.ts\n(SSE)" as W
 participant "POST /api/v1/chat\n+ mcp_session" as C
 participant "Servidor MCP /mcp\nservices + PostgreSQL" as S
@@ -20,7 +20,7 @@ end
 C -> S: historial (20 turnos) y preferencias
 C -> S: initialize + tools/list\ncon el token del llamante
 note right of C
-  Una sesion MCP por turno con el MISMO token:
+  Una sesión MCP por turno con el MISMO token:
   el agente actua como el llamante, nunca como
   una identidad de servicio, y no puede hacer
   nada que un cliente MCP externo no pueda.
@@ -44,7 +44,7 @@ loop por cada fragmento de texto
 end
 
 LLM --> C: AgentRunResultEvent
-C -> S: persiste el turno\n(message.content jsonb integro)
+C -> S: persiste el turno\n(message.content jsonb íntegro)
 C --> W: event: done
 deactivate C
 

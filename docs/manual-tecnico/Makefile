@@ -26,7 +26,7 @@ diagramas: $(FIGS)
 # PlantUML: SVG first, then librsvg to PDF. `-tpdf` also works but substitutes a
 # serif face for the diagram labels.
 $(OUT)/%.pdf: $(SRC)/%.puml $(SRC)/estilo.puml | $(OUT)
-	plantuml -tsvg -o "$(CURDIR)/$(OUT)" "$<"
+	plantuml -charset UTF-8 -tsvg -o "$(CURDIR)/$(OUT)" "$<"
 	rsvg-convert -f pdf -o "$@" "$(OUT)/$*.svg"
 	rm -f "$(OUT)/$*.svg"
 

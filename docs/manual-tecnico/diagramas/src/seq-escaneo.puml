@@ -3,7 +3,7 @@
 
 hide footbox
 
-actor Coleccionista as U
+actor Colecciónista as U
 participant "Next.js" as W
 participant "FastAPI\n/api/v1/scans" as A
 participant "vision.read_card" as V
@@ -23,10 +23,10 @@ note right of A
 end note
 
 A -> V: read_card(bytes)
-V --> A: CardReading\nnombre, numero, total, HP
+V --> A: CardReading\nnombre, número, total, HP
 
 A -> A: resolve.find_candidates(reading)
-A -> DB: SELECT ... score =\n0.35 total + 0.35 numero\n+ 0.25 trigrama + 0.05 HP
+A -> DB: SELECT ... score =\n0.35 total + 0.35 número\n+ 0.25 trigrama + 0.05 HP
 DB --> A: top 8 candidatos
 
 alt score >= 0.7 y margen >= 0.3

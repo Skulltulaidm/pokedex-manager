@@ -47,8 +47,10 @@ next-env.d.ts
 
 # --- project specific ---
 
-# Internal design docs, not published to the remote
+# Internal design notes stay local; the two manuals are deliverables and ship.
 docs/
+!docs/manual-tecnico/
+!docs/manual-usuario/
 .remember/
 
 # Python
