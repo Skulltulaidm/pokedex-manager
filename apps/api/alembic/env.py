@@ -81,9 +81,11 @@ async def run_async_migrations() -> None:
     )
 
     async with connectable.connect() as connection:
-        # The first migration writes into this schema, so nothing in the
-        # migration chain can be the thing that creates it.
+        # The first migration writes into this schema and indexes with
+        # gin_trgm_ops, so neither the schema nor the extension can be created
+        # by anything inside the chain.
         await connection.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{DOMAIN_SCHEMA}"'))
+        await connection.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
         await connection.commit()
         await connection.run_sync(do_run_migrations)
 
