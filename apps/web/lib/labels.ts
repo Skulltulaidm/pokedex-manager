@@ -20,6 +20,24 @@ export function conditionLabel(condition: string): string {
   return CONDITION_LABEL[condition] ?? condition;
 }
 
+/**
+ * The grades collectors actually read, in the letters the hobby prints on a
+ * listing. "Casi impecable" does not fit under a thumbnail and nobody says it
+ * out loud anyway; the full label stays as the title attribute.
+ */
+export const CONDITION_SHORT: Record<string, string> = {
+  mint: "M",
+  near_mint: "NM",
+  lightly_played: "LP",
+  moderately_played: "MP",
+  heavily_played: "HP",
+  damaged: "DMG",
+};
+
+export function conditionShort(condition: string): string {
+  return CONDITION_SHORT[condition] ?? condition;
+}
+
 export const STAT_LABEL: Record<string, string> = {
   hp: "PS",
   attack: "Ataque",

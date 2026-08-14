@@ -1,16 +1,19 @@
 "use client";
 
 import { ArrowLeftRight, Check, X } from "lucide-react";
+import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { CardImage } from "@/components/card-image";
+import { UserAvatar } from "@/components/user-avatar";
 import { apiClient } from "@/lib/api-client";
 import { useRespondToOffer } from "@/lib/api/hooks/useRespondToOffer";
 import { useWithdrawOffer } from "@/lib/api/hooks/useWithdrawOffer";
 import type { OfferCardView, TradeOfferView } from "@/lib/api/types";
 import { formatUsd } from "@/lib/format";
-import { Button } from "@workspace/ui/components/button";
+import { conditionLabel, conditionShort } from "@/lib/labels";
+import { Button, buttonVariants } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -66,13 +69,19 @@ export function OfferList({ offers }: { offers: TradeOfferView[] }) {
           <article className="ring-edge bg-surface rounded-2xl p-4 ring-1">
             <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <span className="bg-secondary text-muted-foreground grid size-7 place-items-center rounded-full text-[11px] font-medium uppercase">
-                  {(offer.partner_name ?? "?").slice(0, 2)}
-                </span>
-                <p className="text-sm font-medium">
+                <UserAvatar value={offer.partner_id} size={28} />
+                <Link
+                  href={`/collectors/${offer.partner_id}`}
+                  className="text-sm font-medium hover:underline"
+                >
                   {offer.direction === "received" ? "De" : "Para"}{" "}
                   {offer.partner_name ?? "un coleccionista"}
-                </p>
+                </Link>
+                {offer.replies_to_id && (
+                  <span className="text-muted-foreground/70 text-[11px]">
+                    contraoferta
+                  </span>
+                )}
                 <span
                   className={cn(
                     "rounded-full px-2 py-0.5 text-[11px] font-medium",
@@ -127,6 +136,13 @@ export function OfferList({ offers }: { offers: TradeOfferView[] }) {
                       <X />
                       Rechazar
                     </Button>
+                    <Link
+                      href={`/trades/new?con=${offer.partner_id}&responde=${offer.id}`}
+                      className={buttonVariants({ variant: "ghost", size: "sm" })}
+                    >
+                      <ArrowLeftRight />
+                      Contraofertar
+                    </Link>
                   </>
                 ) : (
                   <Button
@@ -186,17 +202,27 @@ function Cards({
         <h3 className="text-muted-foreground text-[11px] tracking-wide uppercase">
           {title}
         </h3>
-        <p className="font-mono text-xs tabular-nums">{formatUsd(value)}</p>
+        <p className="font-mono text-xs tabular-nums" title="Ajustado por el estado de cada carta">
+          {formatUsd(value)}
+        </p>
       </div>
-      <ul className="flex flex-wrap gap-1.5">
+      <ul className="flex flex-wrap gap-2">
         {cards.map((entry) => (
-          <li key={entry.card.id} className="w-11" title={entry.card.name}>
-            <CardImage
-              src={entry.card.image_small_url}
-              alt={entry.card.name}
-              sizes="44px"
-              category={entry.card.category}
-            />
+          <li key={entry.card.id} className="w-14">
+            <div title={`${entry.card.name} · ${conditionLabel(entry.condition)}`}>
+              <CardImage
+                src={entry.card.image_small_url}
+                alt={entry.card.name}
+                sizes="56px"
+                category={entry.card.category}
+              />
+            </div>
+            <p
+              className="text-muted-foreground/80 mt-1 text-center font-mono text-[10px]"
+              title={conditionLabel(entry.condition)}
+            >
+              {conditionShort(entry.condition)}
+            </p>
           </li>
         ))}
       </ul>

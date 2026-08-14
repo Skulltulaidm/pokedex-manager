@@ -6,7 +6,7 @@ from sqlalchemy import ForeignKey, Text, UniqueConstraint, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from pokedex.db.base import Base
-from pokedex.db.models.collection import AUTH_USER_ID, SCHEMA, pg_enum
+from pokedex.db.models.collection import AUTH_USER_ID, SCHEMA, CardCondition, pg_enum
 
 
 class OfferStatus(enum.StrEnum):
@@ -47,6 +47,12 @@ class TradeOffer(Base):
     )
     message: Mapped[str | None] = mapped_column(Text)
 
+    # An offer made in answer to another. The original is declined at the same
+    # time, so a chain is a history of what each side asked for, not open offers.
+    replies_to_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey(f"{SCHEMA}.trade_offer.id", ondelete="SET NULL"), index=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     responded_at: Mapped[datetime | None]
 
@@ -61,6 +67,10 @@ class TradeOfferCard(Base):
     Quantity is deliberately absent: an offer names cards, and how many copies
     change hands is settled when the two of them meet. Recording a number here
     would look like a commitment the app cannot hold anyone to.
+
+    Condition is not absent, because it is most of the price. A near mint card
+    and a damaged one are the same row without it, and worth several times each
+    other.
     """
 
     __tablename__ = "trade_offer_card"
@@ -74,5 +84,11 @@ class TradeOfferCard(Base):
     )
     card_id: Mapped[str] = mapped_column(ForeignKey(f"{SCHEMA}.card.id"), index=True)
     side: Mapped[OfferSide] = mapped_column(pg_enum(OfferSide, "offer_side"))
+    # Copied onto the offer rather than pointed at a collection row: an offer is
+    # a promise about a card in a state, and it has to survive its owner editing
+    # or deleting the row it came from.
+    condition: Mapped[CardCondition] = mapped_column(
+        pg_enum(CardCondition, "card_condition"), default=CardCondition.NEAR_MINT
+    )
 
     offer: Mapped[TradeOffer] = relationship(back_populates="cards", lazy="raise")

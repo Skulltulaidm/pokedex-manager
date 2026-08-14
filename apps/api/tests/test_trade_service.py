@@ -4,12 +4,12 @@ from decimal import Decimal
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from pokedex.db.models import OfferStatus, WishlistSource
+from pokedex.db.models import CardCondition, OfferStatus, WishlistSource
 from pokedex.integrations.pokeapi import SpeciesPayload
 from pokedex.integrations.tcgdex import CardPayload, SetPayload
 from pokedex.schemas.collection import AddCardRequest
 from pokedex.schemas.gaps import AddWishlistRequest
-from pokedex.schemas.trade import CreateOfferRequest, TradeMatch
+from pokedex.schemas.trade import CreateOfferRequest, OfferCardInput, TradeMatch
 from pokedex.services import catalog, collection, trade, wishlist
 
 SET_ID = "base1"
@@ -76,9 +76,7 @@ def with_partner(matches: list[TradeMatch], partner_id: str) -> TradeMatch | Non
     Matching is the only service that reads across users, so unlike every other
     one it sees rows the test did not create. Assertions name the counterparty
     they mean instead of describing the whole list, which whatever else lives in
-    the database would otherwise decide. For the same reason every call asks for
-    more matches than it needs: the default cut would eventually drop the
-    counterparty the test is about.
+    the database would otherwise decide.
     """
     return next((match for match in matches if match.partner_id == partner_id), None)
 
@@ -108,7 +106,7 @@ async def test_a_swap_needs_something_on_both_sides(
         catalogued, user_id, AddWishlistRequest(card_id=CHARIZARD_CARD), WishlistSource.USER
     )
 
-    matches = await trade.find_matches(catalogued, user_id, limit=100)
+    matches = await trade.find_matches(catalogued, user_id)
     assert with_partner(matches, other_user_id) is None
 
 
@@ -128,7 +126,7 @@ async def test_a_mutual_overlap_is_a_match(
         catalogued, other_user_id, AddWishlistRequest(card_id=SQUIRTLE_CARD), WishlistSource.USER
     )
 
-    match = with_partner(await trade.find_matches(catalogued, user_id, limit=100), other_user_id)
+    match = with_partner(await trade.find_matches(catalogued, user_id), other_user_id)
 
     assert match is not None
     assert [entry.card.id for entry in match.you_get] == [CHARIZARD_CARD]
@@ -150,7 +148,7 @@ async def test_a_single_copy_is_not_spare(
         catalogued, other_user_id, AddWishlistRequest(card_id=SQUIRTLE_CARD), WishlistSource.USER
     )
 
-    matches = await trade.find_matches(catalogued, user_id, limit=100)
+    matches = await trade.find_matches(catalogued, user_id)
     assert with_partner(matches, other_user_id) is None
 
 
@@ -170,7 +168,7 @@ async def test_spare_copies_count_what_is_free_to_move(
         catalogued, other_user_id, AddWishlistRequest(card_id=SQUIRTLE_CARD), WishlistSource.USER
     )
 
-    match = with_partner(await trade.find_matches(catalogued, user_id, limit=100), other_user_id)
+    match = with_partner(await trade.find_matches(catalogued, user_id), other_user_id)
 
     assert match is not None
     assert match.you_get[0].copies == 3
@@ -194,7 +192,7 @@ async def test_the_balance_is_stated_from_the_readers_side(
         catalogued, other_user_id, AddWishlistRequest(card_id=SQUIRTLE_CARD), WishlistSource.USER
     )
 
-    match = with_partner(await trade.find_matches(catalogued, user_id, limit=100), other_user_id)
+    match = with_partner(await trade.find_matches(catalogued, user_id), other_user_id)
     assert match is not None
 
     assert match.get_value == Decimal("100.00")
@@ -219,7 +217,7 @@ async def test_an_unpriced_card_is_counted_rather_than_valued_at_zero(
         catalogued, other_user_id, AddWishlistRequest(card_id=SQUIRTLE_CARD), WishlistSource.USER
     )
 
-    match = with_partner(await trade.find_matches(catalogued, user_id, limit=100), other_user_id)
+    match = with_partner(await trade.find_matches(catalogued, user_id), other_user_id)
     assert match is not None
 
     assert match.get_value == Decimal("0.00")
@@ -236,7 +234,7 @@ async def test_a_reader_is_never_their_own_counterparty(
         catalogued, user_id, AddWishlistRequest(card_id=CHARIZARD_CARD), WishlistSource.USER
     )
 
-    matches = await trade.find_matches(catalogued, user_id, limit=100)
+    matches = await trade.find_matches(catalogued, user_id)
     assert with_partner(matches, user_id) is None
 
 
@@ -254,9 +252,15 @@ async def swappable(
     return catalogued
 
 
+def card_input(card_id: str, condition: CardCondition | None = None) -> OfferCardInput:
+    return OfferCardInput(card_id=card_id, condition=condition)
+
+
 def an_offer(to_user: str) -> CreateOfferRequest:
     return CreateOfferRequest(
-        to_user_id=to_user, offered=[SQUIRTLE_CARD], requested=[CHARIZARD_CARD]
+        to_user_id=to_user,
+        offered=[card_input(SQUIRTLE_CARD)],
+        requested=[card_input(CHARIZARD_CARD)],
     )
 
 
@@ -289,8 +293,8 @@ async def test_an_offer_cannot_name_a_card_its_owner_lacks(
             user_id,
             CreateOfferRequest(
                 to_user_id=other_user_id,
-                offered=[CHARIZARD_CARD],
-                requested=[CHARIZARD_CARD],
+                offered=[card_input(CHARIZARD_CARD)],
+                requested=[card_input(CHARIZARD_CARD)],
             ),
         )
 
@@ -356,3 +360,249 @@ async def test_an_offer_is_private_to_its_two_parties(
     await trade.create_offer(swappable, user_id, an_offer(other_user_id))
 
     assert await trade.list_offers(swappable, "test-nobody") == []
+
+
+async def test_spares_mark_what_the_viewer_wants(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    """Shopping starts from what you came for, so wants sort first."""
+    await wishlist.add(
+        swappable, user_id, AddWishlistRequest(card_id=CHARIZARD_CARD), WishlistSource.USER
+    )
+
+    page = await trade.spare_page(swappable, other_user_id, viewer_id=user_id)
+
+    assert [entry.card.id for entry in page.items] == [CHARIZARD_CARD]
+    assert page.items[0].wanted is True
+    assert page.items[0].copies == 1
+
+
+async def test_spares_never_include_a_last_copy(
+    catalogued: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    await collection.add_card(
+        catalogued, other_user_id, AddCardRequest(card_id=CHARIZARD_CARD)
+    )
+
+    page = await trade.spare_page(catalogued, other_user_id, viewer_id=user_id)
+
+    assert page.total == 0
+
+
+async def test_spares_can_be_searched(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    page = await trade.spare_page(
+        swappable, other_user_id, viewer_id=user_id, search="chari"
+    )
+    empty = await trade.spare_page(
+        swappable, other_user_id, viewer_id=user_id, search="zzzz"
+    )
+
+    assert page.total == 1
+    assert empty.total == 0
+
+
+async def test_a_collector_is_listed_without_a_mutual_swap(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    """Someone holding what you want is worth seeing even if you have nothing
+    they asked for: the offer is how you find out what they would take."""
+    await wishlist.add(
+        swappable, user_id, AddWishlistRequest(card_id=CHARIZARD_CARD), WishlistSource.USER
+    )
+
+    page = await trade.collector_page(swappable, user_id)
+    them = next(c for c in page.items if c.user_id == other_user_id)
+
+    assert them.spares == 1
+    assert them.you_want == 1
+    assert them.they_want == 0
+    assert await trade.find_matches(swappable, user_id) == []
+
+
+async def test_a_collector_never_lists_themselves(
+    swappable: AsyncSession, user_id: str
+) -> None:
+    page = await trade.collector_page(swappable, user_id)
+
+    assert all(entry.user_id != user_id for entry in page.items)
+
+
+def a_counter(to_user: str) -> CreateOfferRequest:
+    return CreateOfferRequest(
+        to_user_id=to_user,
+        offered=[card_input(CHARIZARD_CARD)],
+        requested=[card_input(SQUIRTLE_CARD)],
+    )
+
+
+async def test_a_counter_declines_what_it_answers(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    """Both standing would let them accept terms that were just turned down."""
+    original = await trade.create_offer(swappable, user_id, an_offer(other_user_id))
+
+    countered = await trade.counter_offer(
+        swappable, other_user_id, original.id, a_counter(user_id)
+    )
+
+    assert countered is not None
+    assert countered.replies_to_id == original.id
+    assert countered.status is OfferStatus.PENDING
+    assert original.status is OfferStatus.DECLINED
+
+
+async def test_only_the_recipient_counters(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    original = await trade.create_offer(swappable, user_id, an_offer(other_user_id))
+
+    assert (
+        await trade.counter_offer(swappable, user_id, original.id, a_counter(user_id))
+        is None
+    )
+
+
+async def test_a_counter_answers_whoever_made_the_offer(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    """An answer has one address."""
+    original = await trade.create_offer(swappable, user_id, an_offer(other_user_id))
+
+    with pytest.raises(trade.OfferError, match="answers whoever"):
+        await trade.counter_offer(
+            swappable, other_user_id, original.id, a_counter(other_user_id)
+        )
+
+
+async def test_an_answered_offer_cannot_be_countered(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    original = await trade.create_offer(swappable, user_id, an_offer(other_user_id))
+    await trade.respond_to_offer(swappable, other_user_id, original.id, False)
+
+    with pytest.raises(trade.OfferError, match="already declined"):
+        await trade.counter_offer(
+            swappable, other_user_id, original.id, a_counter(user_id)
+        )
+
+
+async def test_a_profile_counts_without_pricing(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    """What a collection is worth is the owner's to say, so it is never here."""
+    await wishlist.add(
+        swappable, user_id, AddWishlistRequest(card_id=CHARIZARD_CARD), WishlistSource.USER
+    )
+
+    profile = await trade.collector_profile(swappable, other_user_id, viewer_id=user_id)
+
+    assert profile is not None
+    assert profile.is_self is False
+    assert profile.cards == 2
+    assert profile.distinct_cards == 1
+    assert profile.spares == 1
+    assert profile.you_want == 1
+    assert profile.sets[0].set_name == "Base Set"
+    assert not hasattr(profile, "value")
+
+
+async def test_your_own_profile_says_so(
+    swappable: AsyncSession, user_id: str
+) -> None:
+    profile = await trade.collector_profile(swappable, user_id, viewer_id=user_id)
+
+    assert profile is not None
+    assert profile.is_self is True
+
+
+async def test_an_unknown_collector_has_no_profile(
+    swappable: AsyncSession, user_id: str
+) -> None:
+    assert await trade.collector_profile(swappable, "nobody", viewer_id=user_id) is None
+
+
+async def test_an_unstated_condition_offers_the_worst_copy(
+    catalogued: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    """Nobody parts with the pristine one while a scuffed duplicate sits there."""
+    await collection.add_card(
+        catalogued, user_id, AddCardRequest(card_id=SQUIRTLE_CARD)
+    )
+    await collection.add_card(
+        catalogued,
+        user_id,
+        AddCardRequest(card_id=SQUIRTLE_CARD, condition=CardCondition.DAMAGED),
+    )
+    await collection.add_card(
+        catalogued, other_user_id, AddCardRequest(card_id=CHARIZARD_CARD, quantity=2)
+    )
+
+    offer = await trade.create_offer(catalogued, user_id, an_offer(other_user_id))
+    given = next(entry for entry in offer.cards if entry.card_id == SQUIRTLE_CARD)
+
+    assert given.condition is CardCondition.DAMAGED
+
+
+async def test_a_condition_nobody_holds_is_refused(
+    swappable: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    with pytest.raises(trade.OfferError, match="No damaged copy"):
+        await trade.create_offer(
+            swappable,
+            user_id,
+            CreateOfferRequest(
+                to_user_id=other_user_id,
+                offered=[card_input(SQUIRTLE_CARD, CardCondition.DAMAGED)],
+                requested=[card_input(CHARIZARD_CARD)],
+            ),
+        )
+
+
+async def test_condition_discounts_what_the_offer_is_worth(
+    catalogued: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    """A damaged Charizard is not a hundred dollars, and the total has to agree."""
+    await collection.add_card(
+        catalogued, user_id, AddCardRequest(card_id=SQUIRTLE_CARD, quantity=2)
+    )
+    await collection.add_card(
+        catalogued,
+        other_user_id,
+        AddCardRequest(
+            card_id=CHARIZARD_CARD, quantity=2, condition=CardCondition.DAMAGED
+        ),
+    )
+
+    offer = await trade.create_offer(catalogued, user_id, an_offer(other_user_id))
+    view = next(
+        entry
+        for entry in await trade.list_offers(catalogued, user_id)
+        if entry.id == offer.id
+    )
+
+    assert view.you_get[0].condition is CardCondition.DAMAGED
+    assert view.you_get[0].price_usd == Decimal("100.00")
+    assert view.you_get[0].adjusted_usd == Decimal("35.00")
+    assert view.get_value == Decimal("35.00")
+
+
+async def test_spares_publish_the_conditions_on_hand(
+    catalogued: AsyncSession, user_id: str, other_user_id: str
+) -> None:
+    await collection.add_card(
+        catalogued, other_user_id, AddCardRequest(card_id=CHARIZARD_CARD)
+    )
+    await collection.add_card(
+        catalogued,
+        other_user_id,
+        AddCardRequest(card_id=CHARIZARD_CARD, condition=CardCondition.HEAVILY_PLAYED),
+    )
+
+    page = await trade.spare_page(catalogued, other_user_id, viewer_id=user_id)
+
+    assert [count.condition for count in page.items[0].conditions] == [
+        CardCondition.NEAR_MINT,
+        CardCondition.HEAVILY_PLAYED,
+    ]
