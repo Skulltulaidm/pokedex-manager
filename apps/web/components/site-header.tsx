@@ -9,6 +9,7 @@ import { SidebarTrigger } from "@workspace/ui/components/sidebar";
 
 /** Screens you reach from inside another one, so they are not in the sidebar. */
 const ASIDE = [
+  { href: "/cards", label: "Carta" },
   { href: "/compare", label: "Comparar" },
   { href: "/collectors", label: "Coleccionista" },
 ];

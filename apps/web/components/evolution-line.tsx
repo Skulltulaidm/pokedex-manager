@@ -2,10 +2,12 @@
 
 import { ChevronRight } from "lucide-react";
 import Image from "next/image";
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 
+import { CARD_RATIO, CardImage } from "@/components/card-image";
+import { CardPeek } from "@/components/card-peek";
 import { ScrollRow } from "@/components/scroll-row";
-import { TypeDots, typeColor } from "@/components/type-dot";
+import { TypeDots } from "@/components/type-dot";
 import { apiClient } from "@/lib/api-client";
 import { useSpeciesEvolutions } from "@/lib/api/hooks/useSpeciesEvolutions";
 import type { EvolutionMemberView } from "@/lib/api/types/EvolutionMemberView";
@@ -13,8 +15,9 @@ import { cn } from "@workspace/ui/lib/utils";
 
 /**
  * The family a species belongs to, the way the Pokedex prints it: every member
- * in dex order, the card's own lit, and the ones the reader owns no card of
- * greyed out.
+ * in dex order as a card, the current one lit, and the ones the reader owns no
+ * card of greyed out. Opening one raises the card over the page rather than
+ * navigating, so the line stays where it was.
  *
  * A species alone in its chain, or with no chain at all, comes back empty from
  * the API and draws nothing — a panel that only says a Pokemon evolves into
@@ -24,6 +27,7 @@ export function EvolutionLine({ speciesId }: { speciesId: number }) {
   const { data: family } = useSpeciesEvolutions(speciesId, {
     client: { client: apiClient },
   });
+  const [openCard, setOpenCard] = useState<string | null>(null);
 
   if (!family || family.length === 0) return null;
 
@@ -41,45 +45,51 @@ export function EvolutionLine({ speciesId }: { speciesId: number }) {
             {index > 0 && (
               <ChevronRight
                 aria-hidden
-                className="text-muted-foreground/40 mt-7 size-4 shrink-0 self-start"
+                className="text-muted-foreground/40 mt-14 size-4 shrink-0 self-start"
               />
             )}
-            <Member member={member} />
+            <Member member={member} onOpen={setOpenCard} />
           </Fragment>
         ))}
       </ScrollRow>
+
+      {openCard && (
+        <CardPeek cardId={openCard} open onClose={() => setOpenCard(null)} />
+      )}
     </section>
   );
 }
 
-function Member({ member }: { member: EvolutionMemberView }) {
-  const color = typeColor(member.types[0] ?? "normal");
+function Member({
+  member,
+  onOpen,
+}: {
+  member: EvolutionMemberView;
+  onOpen: (cardId: string) => void;
+}) {
+  const cardId = member.card_id;
 
   return (
-    <div className="w-20 shrink-0 text-center">
-      <div
-        className={cn(
-          "ring-edge grid size-20 place-items-center rounded-lg ring-1",
-          member.is_current && "ring-primary ring-2",
-        )}
-        style={{
-          background: member.owned
-            ? `color-mix(in oklch, ${color} 12%, transparent)`
-            : undefined,
-        }}
-      >
-        {member.sprite_url ? (
-          <Image
-            src={member.sprite_url}
-            alt={member.name}
-            width={72}
-            height={72}
-            className={cn("size-[72px]", !member.owned && "opacity-35 grayscale")}
+    <div className="w-[88px] shrink-0 text-center">
+      {cardId ? (
+        <button
+          onClick={() => onOpen(cardId)}
+          aria-label={`Ver ${member.card_name ?? member.name}`}
+          className="block w-full"
+        >
+          <CardImage
+            src={member.card_image_url}
+            alt={member.card_name ?? member.name}
+            sizes="88px"
+            category={member.card_category ?? undefined}
+            locked={!member.owned}
+            selected={member.is_current}
+            className="transition-transform hover:-translate-y-0.5"
           />
-        ) : (
-          <span className="text-muted-foreground/50 text-xs">sin sprite</span>
-        )}
-      </div>
+        </button>
+      ) : (
+        <SpriteTile member={member} />
+      )}
 
       <p
         className={cn(
@@ -93,6 +103,31 @@ function Member({ member }: { member: EvolutionMemberView }) {
         #{String(member.id).padStart(3, "0")}
         <TypeDots types={member.types.slice(0, 1)} />
       </p>
+    </div>
+  );
+}
+
+/** A member no set in the catalog prints: the dex knows it, the binder cannot. */
+function SpriteTile({ member }: { member: EvolutionMemberView }) {
+  return (
+    <div
+      className={cn(
+        "ring-edge bg-surface grid w-full place-items-center rounded-lg ring-1",
+        CARD_RATIO,
+        member.is_current && "ring-primary ring-2 ring-inset",
+      )}
+    >
+      {member.sprite_url ? (
+        <Image
+          src={member.sprite_url}
+          alt={member.name}
+          width={64}
+          height={64}
+          className="size-16 opacity-35 grayscale"
+        />
+      ) : (
+        <span className="text-muted-foreground/50 text-[10px]">sin carta</span>
+      )}
     </div>
   );
 }

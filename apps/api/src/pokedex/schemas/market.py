@@ -62,6 +62,10 @@ class CardMarketContext(BaseModel):
     cards_in_set: int
     owned_in_set: int
     set_value: Decimal
+    owned: int
+    # The oldest holding, so a card already held can link to its own row rather
+    # than to the form that would add it again.
+    item_id: UUID | None
     change: PriceChange | None = None
 
 

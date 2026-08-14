@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from pokedex.db.models import CardCondition, CardPrice
+from pokedex.db.models import CardCondition, CardPrice, CollectionItem
 from pokedex.integrations.pokeapi import SpeciesPayload
 from pokedex.integrations.tcgdex import CardPayload, SetPayload
 from pokedex.schemas.collection import AddCardRequest
@@ -237,6 +237,38 @@ async def test_card_context_leaves_unpriced_cards_unranked(
     context = await market.card_context(stocked, user_id, chikorita)
 
     assert context.price_rank is None
+
+
+async def test_card_context_carries_the_holding_it_belongs_to(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    charizard = await catalog.get_card(stocked, f"{SET_ID}-4")
+    assert charizard is not None
+    held = (
+        await stocked.execute(
+            select(CollectionItem.id).where(
+                CollectionItem.card_id == charizard.id,
+                CollectionItem.user_id == user_id,
+            )
+        )
+    ).scalar_one()
+
+    context = await market.card_context(stocked, user_id, charizard)
+
+    assert context.owned == 2
+    assert context.item_id == held
+
+
+async def test_card_context_of_a_card_nobody_holds_carries_no_holding(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    squirtle = await catalog.get_card(stocked, f"{SET_ID}-63")
+    assert squirtle is not None
+
+    context = await market.card_context(stocked, user_id, squirtle)
+
+    assert context.owned == 0
+    assert context.item_id is None
 
 
 async def record(

@@ -303,12 +303,25 @@ async def card_context(
         ).scalar_one()
         rank = ahead + 1
 
+    holdings = (
+        await db.execute(
+            select(CollectionItem.id, CollectionItem.quantity)
+            .where(
+                CollectionItem.card_id == card.id,
+                CollectionItem.user_id == user_id,
+            )
+            .order_by(CollectionItem.created_at)
+        )
+    ).all()
+
     return CardMarketContext(
         price_rank=rank,
         priced_in_set=priced_in_set,
         cards_in_set=cards_in_set,
         owned_in_set=owned_in_set,
         set_value=Decimal(set_value),
+        owned=sum(quantity for _, quantity in holdings),
+        item_id=holdings[0][0] if holdings else None,
         change=await card_change(db, card),
     )
 

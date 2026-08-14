@@ -108,8 +108,11 @@ export default function ItemDetailPage() {
         ]}
       />
 
-      <div className="lg:grid lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] lg:items-start lg:gap-10">
-      <div className="relative mx-auto w-60 lg:sticky lg:top-0 lg:w-full">
+      {/* `contents` below lg so his copies can order themselves after the facts
+          while still riding the sticky column beside them above lg. */}
+      <div className="flex flex-col lg:grid lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] lg:items-start lg:gap-10">
+      <aside className="contents lg:sticky lg:top-0 lg:block lg:space-y-6">
+      <div className="relative order-1 mx-auto w-60 lg:w-full">
         <CardImage
           src={card.image_large_url ?? null}
           alt={card.name}
@@ -120,86 +123,7 @@ export default function ItemDetailPage() {
         />
       </div>
 
-      <div className="mt-7 space-y-6 lg:mt-0">
-      <header className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="font-display truncate text-[28px] leading-none font-semibold tracking-[-0.03em]">
-            {card.name}
-          </h1>
-          <p className="text-muted-foreground mt-2 font-mono text-sm tabular-nums">
-            {card.number}
-            <span className="text-muted-foreground/50">/{card.card_set.printed_total}</span>
-            <span className="mx-2">·</span>
-            {card.card_set.name}
-          </p>
-          {card.species && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {card.species.types.map((type) => (
-                <TypeChip key={type} type={type} />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {price !== null && (
-          <div className="shrink-0 text-right">
-            <p className="font-display text-2xl leading-none font-semibold tabular-nums">
-              {formatUsd(price)}
-            </p>
-            <p className="text-muted-foreground mt-1.5 text-xs">orientativo</p>
-          </div>
-        )}
-      </header>
-
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-        {card.rarity && <InfoTile icon={Sparkles} label="Rareza" value={card.rarity} />}
-        {card.hp !== null && <InfoTile icon={Heart} label="PS" value={card.hp} />}
-        {card.card_set.release_date && (
-          <InfoTile
-            icon={CalendarDays}
-            label="Salió"
-            value={new Date(card.card_set.release_date).getFullYear()}
-          />
-        )}
-        {availableVariants.length > 0 && (
-          <InfoTile
-            icon={Layers}
-            label="Impresión"
-            value={availableVariants.map(([name]) => VARIANT_LABEL[name] ?? name).join(" · ")}
-          />
-        )}
-      </div>
-
-      <MarketPosition
-        cardId={card.id}
-        setName={card.card_set.name}
-        price={price}
-      />
-
-      {/* Trainer and Energy cards get no species block at all: a panel that only
-          says a Pokemon is absent is a panel the card already answers. */}
-      {card.species && (
-        <Section title={`Especie · Generación ${card.species.generation}`}>
-          <div className="pt-1">
-            {/* Brand red rather than the type colour: six full-width bars in one
-                of eighteen hues is what drowns out the palette. */}
-            <StatRadar stats={card.species.stats} color="var(--primary)" />
-            <SpeciesTrivia speciesId={card.species.id} />
-          </div>
-        </Section>
-      )}
-
-      {card.species && <EvolutionLine speciesId={card.species.id} />}
-
-      <div className="grid gap-6 xl:grid-cols-2 xl:items-start">
-      {card.species && (
-        <SpeciesStrip
-          speciesId={card.species.id}
-          currentCardId={card.id}
-          name={card.name}
-        />
-      )}
-
+      <div className="order-3 mt-6 lg:mt-0">
       <Section title="En tu colección">
         {editing ? (
           <EditForm
@@ -270,6 +194,86 @@ export default function ItemDetailPage() {
         )}
       </Section>
       </div>
+      </aside>
+
+      <div className="order-2 mt-7 space-y-6 lg:mt-0">
+      <header className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="font-display truncate text-[28px] leading-none font-semibold tracking-[-0.03em]">
+            {card.name}
+          </h1>
+          <p className="text-muted-foreground mt-2 font-mono text-sm tabular-nums">
+            {card.number}
+            <span className="text-muted-foreground/50">/{card.card_set.printed_total}</span>
+            <span className="mx-2">·</span>
+            {card.card_set.name}
+          </p>
+          {card.species && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {card.species.types.map((type) => (
+                <TypeChip key={type} type={type} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {price !== null && (
+          <div className="shrink-0 text-right">
+            <p className="font-display text-2xl leading-none font-semibold tabular-nums">
+              {formatUsd(price)}
+            </p>
+            <p className="text-muted-foreground mt-1.5 text-xs">orientativo</p>
+          </div>
+        )}
+      </header>
+
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        {card.rarity && <InfoTile icon={Sparkles} label="Rareza" value={card.rarity} />}
+        {card.hp !== null && <InfoTile icon={Heart} label="PS" value={card.hp} />}
+        {card.card_set.release_date && (
+          <InfoTile
+            icon={CalendarDays}
+            label="Salió"
+            value={new Date(card.card_set.release_date).getFullYear()}
+          />
+        )}
+        {availableVariants.length > 0 && (
+          <InfoTile
+            icon={Layers}
+            label="Impresión"
+            value={availableVariants.map(([name]) => VARIANT_LABEL[name] ?? name).join(" · ")}
+          />
+        )}
+      </div>
+
+      <MarketPosition
+        cardId={card.id}
+        setName={card.card_set.name}
+        price={price}
+      />
+
+      {/* Trainer and Energy cards get no species block at all: a panel that only
+          says a Pokemon is absent is a panel the card already answers. */}
+      {card.species && (
+        <Section title={`Especie · Generación ${card.species.generation}`}>
+          <div className="pt-1">
+            {/* Brand red rather than the type colour: six full-width bars in one
+                of eighteen hues is what drowns out the palette. */}
+            <StatRadar stats={card.species.stats} color="var(--primary)" />
+            <SpeciesTrivia speciesId={card.species.id} />
+          </div>
+        </Section>
+      )}
+
+      {card.species && <EvolutionLine speciesId={card.species.id} />}
+
+      {card.species && (
+        <SpeciesStrip
+          speciesId={card.species.id}
+          currentCardId={card.id}
+          name={card.name}
+        />
+      )}
       </div>
       </div>
     </div>

@@ -129,8 +129,10 @@ async def species_evolutions(
 ) -> list[EvolutionMemberView]:
     """The evolution family this species belongs to, in dex order.
 
-    Empty for a species with no family, so the caller renders nothing rather
-    than a panel that only says a Pokemon evolves into no one.
+    Each member carries a printing to show it by, so the line is drawn in cards
+    rather than sprites. Empty for a species with no family, so the caller
+    renders nothing rather than a panel that only says a Pokemon evolves into
+    no one.
     """
     family = await catalog.evolution_family(db, species_id, user.id)
     return [
@@ -139,10 +141,16 @@ async def species_evolutions(
             name=member.name,
             types=member.types,
             sprite_url=member.sprite_url,
+            card_id=None if card is None else card.id,
+            card_name=None if card is None else card.name,
+            card_image_url=None
+            if card is None
+            else card.image_small_url or card.image_large_url,
+            card_category=None if card is None else card.category,
             owned=owned,
             is_current=member.id == species_id,
         )
-        for member, owned in family
+        for member, card, owned in family
     ]
 
 

@@ -17,6 +17,7 @@ BLASTOISE_ID = 9009
 MEW_ID = 9151
 CHAIN_ID = 90003
 SET_ID = "testevo"
+OLD_SET_ID = "testevoold"
 
 
 def species(species_id: int, name: str, chain_id: int | None) -> SpeciesPayload:
@@ -31,10 +32,16 @@ def species(species_id: int, name: str, chain_id: int | None) -> SpeciesPayload:
     )
 
 
-def card(card_id: str, species_id: int | None, name: str, number: str) -> CardPayload:
+def card(
+    card_id: str,
+    species_id: int | None,
+    name: str,
+    number: str,
+    set_id: str = SET_ID,
+) -> CardPayload:
     return CardPayload(
         id=card_id,
-        set_id=SET_ID,
+        set_id=set_id,
         species_id=species_id,
         category="Pokemon" if species_id else "Trainer",
         number=number,
@@ -98,7 +105,7 @@ async def test_family_comes_back_in_dex_order(
 ) -> None:
     family = await catalog.evolution_family(stocked, WARTORTLE_ID, user_id)
 
-    assert [member.name for member, _ in family] == [
+    assert [member.name for member, _, _ in family] == [
         "test-squirtle",
         "test-wartortle",
         "test-blastoise",
@@ -109,7 +116,7 @@ async def test_family_carries_the_sprite_and_types(
     stocked: AsyncSession, user_id: str
 ) -> None:
     family = await catalog.evolution_family(stocked, SQUIRTLE_ID, user_id)
-    first, _ = family[0]
+    first, _, _ = family[0]
 
     assert first.id == SQUIRTLE_ID
     assert first.sprite_url == f"https://example.test/{SQUIRTLE_ID}.png"
@@ -121,7 +128,7 @@ async def test_only_the_species_with_a_held_card_is_marked_owned(
 ) -> None:
     family = await catalog.evolution_family(stocked, SQUIRTLE_ID, user_id)
 
-    assert {member.name: owned for member, owned in family} == {
+    assert {member.name: owned for member, _, owned in family} == {
         "test-squirtle": False,
         "test-wartortle": False,
         "test-blastoise": True,
@@ -133,7 +140,58 @@ async def test_another_reader_holds_nothing_of_the_family(
 ) -> None:
     family = await catalog.evolution_family(stocked, SQUIRTLE_ID, other_user_id)
 
-    assert [owned for _, owned in family] == [False, False, False]
+    assert [owned for _, _, owned in family] == [False, False, False]
+
+
+async def test_each_member_carries_the_card_that_shows_it(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    family = await catalog.evolution_family(stocked, SQUIRTLE_ID, user_id)
+
+    assert {
+        member.name: card.id if card else None for member, card, _ in family
+    } == {
+        "test-squirtle": f"{SET_ID}-1",
+        # Printed by no set in the catalog, so the caller falls back to its sprite.
+        "test-wartortle": None,
+        "test-blastoise": f"{SET_ID}-2",
+    }
+
+
+async def test_the_printing_the_reader_holds_wins(
+    stocked: AsyncSession, user_id: str
+) -> None:
+    """An older printing they do not hold must not stand in for one they do."""
+    await catalog.upsert_sets(
+        stocked,
+        [
+            SetPayload(
+                id=OLD_SET_ID,
+                name="Older Evolution Test Set",
+                series="Base",
+                printed_total=1,
+                total=1,
+                release_date=date(1998, 1, 9),
+                logo_url=None,
+                symbol_url=None,
+                card_ids=[],
+            )
+        ],
+    )
+    await catalog.upsert_cards(
+        stocked,
+        [
+            card(f"{OLD_SET_ID}-1", BLASTOISE_ID, "Blastoise", "1", set_id=OLD_SET_ID),
+            card(f"{OLD_SET_ID}-2", SQUIRTLE_ID, "Squirtle", "2", set_id=OLD_SET_ID),
+        ],
+    )
+
+    family = await catalog.evolution_family(stocked, SQUIRTLE_ID, user_id)
+    picked = {member.name: card_.id for member, card_, _ in family if card_}
+
+    assert picked["test-blastoise"] == f"{SET_ID}-2"
+    # Nothing held either way, so the earliest release stands for the species.
+    assert picked["test-squirtle"] == f"{OLD_SET_ID}-2"
 
 
 async def test_a_species_without_a_chain_has_no_family(

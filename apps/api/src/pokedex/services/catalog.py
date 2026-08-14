@@ -162,10 +162,43 @@ async def get_card(db: AsyncSession, card_id: str) -> Card | None:
     return result.scalar_one_or_none()
 
 
+async def _printing_per_species(
+    db: AsyncSession, species_ids: Sequence[int], owner_id: str
+) -> dict[int, tuple[Card, bool]]:
+    """One card to stand for each species, and whether the reader holds it.
+
+    A printing the reader owns wins, so the family reads as their own cards;
+    among equals the earliest release wins, which is the printing the species is
+    remembered by.
+    """
+    held = (
+        select(1)
+        .select_from(CollectionItem)
+        .where(CollectionItem.user_id == owner_id, CollectionItem.card_id == Card.id)
+        .correlate(Card)
+        .exists()
+    )
+    statement = (
+        select(Card, held.label("held"))
+        .join(CardSet, CardSet.id == Card.set_id)
+        .where(Card.species_id.in_(species_ids))
+        .order_by(held.desc(), CardSet.release_date.nulls_last(), Card.number_prefix)
+    )
+
+    picks: dict[int, tuple[Card, bool]] = {}
+    for card, owned in (await db.execute(statement)).all():
+        if card.species_id is not None:
+            picks.setdefault(card.species_id, (card, owned))
+    return picks
+
+
 async def evolution_family(
     db: AsyncSession, species_id: int, owner_id: str
-) -> list[tuple[Species, bool]]:
-    """The species' evolution chain in dex order, each member marked as held or not.
+) -> list[tuple[Species, Card | None, bool]]:
+    """The species' evolution chain in dex order, each member with a card to show.
+
+    A member the catalog prints no card of carries none, and the caller falls
+    back to its sprite rather than drawing a hole in the line.
 
     Empty when the species is unknown, carries no chain, or is alone in its
     chain: a family of one is nothing to draw a line between.
@@ -174,22 +207,26 @@ async def evolution_family(
     if species is None or species.evolution_chain_id is None:
         return []
 
-    held = (
-        select(1)
-        .select_from(CollectionItem)
-        .join(Card, Card.id == CollectionItem.card_id)
-        .where(CollectionItem.user_id == owner_id, Card.species_id == Species.id)
-        .exists()
+    members = (
+        (
+            await db.execute(
+                select(Species)
+                .where(Species.evolution_chain_id == species.evolution_chain_id)
+                .order_by(Species.id)
+            )
+        )
+        .scalars()
+        .all()
     )
-    statement = (
-        select(Species, held)
-        .where(Species.evolution_chain_id == species.evolution_chain_id)
-        .order_by(Species.id)
-    )
+    if len(members) < 2:
+        return []
 
-    result = await db.execute(statement)
-    family = [(member, owned) for member, owned in result.all()]
-    return family if len(family) > 1 else []
+    picks = await _printing_per_species(db, [member.id for member in members], owner_id)
+    family: list[tuple[Species, Card | None, bool]] = []
+    for member in members:
+        card, owned = picks.get(member.id, (None, False))
+        family.append((member, card, owned))
+    return family
 
 
 async def count_species(db: AsyncSession) -> int:

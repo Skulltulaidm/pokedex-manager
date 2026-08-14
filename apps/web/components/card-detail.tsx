@@ -114,8 +114,10 @@ export function CardDetail({
             )}
           </dl>
 
+          {/* The reader's own row when they hold the card, the card's own page
+              when they do not; the add form is neither. */}
           <Link
-            href={`/collection/add?card=${card.id}`}
+            href={context?.item_id ? `/collection/${context.item_id}` : `/cards/${card.id}`}
             className="text-muted-foreground hover:text-foreground mt-5 inline-flex items-center gap-1.5 text-sm underline underline-offset-4"
           >
             Abrir la ficha completa

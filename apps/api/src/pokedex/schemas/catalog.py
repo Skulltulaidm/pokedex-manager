@@ -20,12 +20,20 @@ class SpeciesView(BaseModel):
 
 
 class EvolutionMemberView(BaseModel):
-    """One species of an evolution family, as its own Pokedex entry."""
+    """One species of an evolution family, as the card that stands for it.
+
+    The sprite stays for the members the catalog prints no card of, which is the
+    only case the line has nothing to show.
+    """
 
     id: int
     name: str
     types: list[str]
     sprite_url: str | None
+    card_id: str | None
+    card_name: str | None
+    card_image_url: str | None
+    card_category: str | None
     owned: bool
     is_current: bool
 
