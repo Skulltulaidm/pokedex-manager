@@ -25,7 +25,7 @@ COPY --from=builder /repo/apps/web/.next/standalone ./
 COPY --from=builder /repo/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder /repo/apps/web/public ./apps/web/public
 COPY --from=builder /repo/apps/web/scripts ./apps/web/scripts
-RUN cd apps/web/scripts && npm install --omit=dev --no-audit --no-fund
+RUN cd apps/web/scripts && npm ci --omit=dev --no-audit --no-fund
 
 EXPOSE 3000
 # Better Auth brings its own schema up before the server that depends on it.

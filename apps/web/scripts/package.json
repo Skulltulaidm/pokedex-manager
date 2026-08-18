@@ -4,7 +4,7 @@
   "type": "module",
   "description": "Standalone deps for migrate-auth.mjs. Next bundles better-auth into its server chunks rather than copying the package, so the migration cannot borrow the traced node_modules.",
   "dependencies": {
-    "better-auth": "^1.6.27",
-    "pg": "^8.23.0"
+    "better-auth": "1.6.27",
+    "pg": "8.23.0"
   }
 }
